@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1765448821816,
+      "tag": "0000_majestic_proudstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765513347635,
+      "tag": "0001_blushing_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765513945264,
+      "tag": "0002_odd_random",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765514331339,
+      "tag": "0003_stale_mandarin",
+      "breakpoints": true
+    }
+  ]
+}
