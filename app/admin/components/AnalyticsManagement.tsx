@@ -14,6 +14,7 @@ interface AnalyticsManagementProps {
 interface DailyStat {
   date: string;
   pageViews: number;
+  uniqueVisitors: number; // 独立访客数（UV）
   comments: number;
   clicks: number;
 }
@@ -31,6 +32,8 @@ interface TopPost {
  */
 interface AnalyticsData {
   total: number;
+  totalPV: number; // 总页面浏览量
+  totalUV: number; // 总独立访客数
   dailyStats: DailyStat[];
   typeStats: Record<string, number>;
   actionStats: Record<string, number>;
@@ -85,16 +88,18 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
       {/* 总览统计 */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">总览</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">{data.total}</div>
             <div className="text-sm text-gray-600">总事件数</div>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
-              {data.dailyStats.reduce((sum: number, d: DailyStat) => sum + d.pageViews, 0)}
-            </div>
-            <div className="text-sm text-gray-600">总页面浏览</div>
+            <div className="text-2xl font-bold text-green-600">{data.totalPV || 0}</div>
+            <div className="text-sm text-gray-600">总页面浏览 (PV)</div>
+          </div>
+          <div className="text-center p-4 bg-orange-50 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600">{data.totalUV || 0}</div>
+            <div className="text-sm text-gray-600">独立访客 (UV)</div>
           </div>
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <div className="text-2xl font-bold text-purple-600">
@@ -117,7 +122,10 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
                 日期
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                页面浏览
+                页面浏览 (PV)
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                独立访客 (UV)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 评论
@@ -132,6 +140,7 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
               <tr key={index}>
                 <td className="px-6 py-4 text-sm text-gray-900">{stat.date}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{stat.pageViews}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{stat.uniqueVisitors || 0}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{stat.comments}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{stat.clicks}</td>
               </tr>

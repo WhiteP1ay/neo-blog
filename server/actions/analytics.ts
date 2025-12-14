@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db/db";
 import { analyticsTable } from "@/server/db/schema";
-import { desc, eq, gte, and, sql } from "drizzle-orm";
+import { desc, gte } from "drizzle-orm";
 import { getSession } from "@/server/utils/auth";
 
 /**
@@ -30,7 +30,7 @@ export async function createAnalytics(data: {
   url?: string;
   ip?: string;
   userAgent?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }) {
   try {
     const result = await db
@@ -74,23 +74,49 @@ export async function getAnalyticsStats(days: number = 7) {
       .where(gte(analyticsTable.createdAt, startDate))
       .orderBy(desc(analyticsTable.createdAt));
 
-    // 按日期分组统计
-    const dailyStats: Record<string, { date: string; pageViews: number; comments: number; clicks: number }> = {};
+    // 按日期分组统计（包含PV和UV）
+    const dailyStats: Record<string, { 
+      date: string; 
+      pageViews: number; 
+      uniqueVisitors: Set<string>; // 使用Set存储唯一访客标识（IP+UserAgent）
+      comments: number; 
+      clicks: number 
+    }> = {};
     
     analytics.forEach((item) => {
       const date = new Date(item.createdAt).toLocaleDateString("zh-CN");
       if (!dailyStats[date]) {
-        dailyStats[date] = { date, pageViews: 0, comments: 0, clicks: 0 };
+        dailyStats[date] = { 
+          date, 
+          pageViews: 0, 
+          uniqueVisitors: new Set<string>(), 
+          comments: 0, 
+          clicks: 0 
+        };
       }
 
       if (item.type === "page_view") {
         dailyStats[date].pageViews++;
+        // 计算UV：使用IP+UserAgent作为唯一访客标识
+        if (item.ip && item.userAgent) {
+          const visitorKey = `${item.ip}_${item.userAgent}`;
+          dailyStats[date].uniqueVisitors.add(visitorKey);
+        }
       } else if (item.type === "comment") {
         dailyStats[date].comments++;
       } else if (item.action?.includes("click")) {
         dailyStats[date].clicks++;
       }
     });
+
+    // 转换Set为数字，便于返回
+    const dailyStatsArray = Object.values(dailyStats).map(stat => ({
+      date: stat.date,
+      pageViews: stat.pageViews,
+      uniqueVisitors: stat.uniqueVisitors.size, // UV数量
+      comments: stat.comments,
+      clicks: stat.clicks,
+    }));
 
     // 按类型统计
     const typeStats: Record<string, number> = {};
@@ -119,11 +145,24 @@ export async function getAnalyticsStats(days: number = 7) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
+    // 计算总PV和总UV
+    const totalPV = dailyStatsArray.reduce((sum, stat) => sum + stat.pageViews, 0);
+    const allUniqueVisitors = new Set<string>();
+    analytics.forEach((item) => {
+      if (item.type === "page_view" && item.ip && item.userAgent) {
+        const visitorKey = `${item.ip}_${item.userAgent}`;
+        allUniqueVisitors.add(visitorKey);
+      }
+    });
+    const totalUV = allUniqueVisitors.size;
+
     return {
       success: true,
       data: {
         total: analytics.length,
-        dailyStats: Object.values(dailyStats).sort((a, b) => 
+        totalPV, // 总页面浏览量
+        totalUV, // 总独立访客数
+        dailyStats: dailyStatsArray.sort((a, b) => 
           new Date(a.date).getTime() - new Date(b.date).getTime()
         ),
         typeStats,
