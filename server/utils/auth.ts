@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { db } from "@/server/db/db";
-import { usersTable } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+
 import bcrypt from "bcryptjs";
 
 /**
@@ -33,17 +32,17 @@ export async function getSession(): Promise<number | null> {
   if (!session) {
     return null;
   }
-  
+
   const userId = parseInt(session.value, 10);
   if (isNaN(userId)) {
     return null;
   }
-  
+
   // 验证用户是否存在
   const user = await db.query.usersTable.findFirst({
     where: (users, { eq }) => eq(users.id, userId),
   });
-  
+
   return user ? userId : null;
 }
 
@@ -58,16 +57,19 @@ export async function clearSession() {
 /**
  * 验证用户名和密码
  */
-export async function verifyPassword(username: string, password: string): Promise<number | null> {
+export async function verifyPassword(
+  username: string,
+  password: string
+): Promise<number | null> {
   try {
     const user = await db.query.usersTable.findFirst({
       where: (users, { eq }) => eq(users.name, username),
     });
-    
+
     if (!user) {
       return null;
     }
-    
+
     // 如果密码是明文（用于兼容旧数据），直接比较
     // 如果是hash，使用bcrypt验证
     let isValid = false;
@@ -78,7 +80,7 @@ export async function verifyPassword(username: string, password: string): Promis
       // 明文密码（兼容旧数据）
       isValid = user.password === password;
     }
-    
+
     return isValid ? user.id : null;
   } catch (error) {
     console.error("验证密码失败:", error);
@@ -92,4 +94,3 @@ export async function verifyPassword(username: string, password: string): Promis
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10);
 }
-
