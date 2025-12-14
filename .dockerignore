@@ -1,0 +1,40 @@
+# 依赖
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+.next
+out
+build
+
+# 环境变量
+.env
+.env*.local
+dev.env
+
+# 测试
+coverage
+.nyc_output
+
+# 其他
+.DS_Store
+*.pem
+.git
+.gitignore
+README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+.dockerignore
+compose.yml
+
+# 数据库迁移（可选，如果需要运行时迁移可以保留）
+# drizzle
