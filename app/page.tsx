@@ -44,13 +44,15 @@ export default async function Home() {
                     {post.title}
                   </h2>
                 </Link>
-                <div className="text-xs sm:text-sm text-gray-500">
-                  {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </div>
+                {post.createdAt && (
+                  <div className="text-xs sm:text-sm text-gray-500">
+                    {new Date(post.createdAt).toLocaleDateString("zh-CN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </div>
+                )}
               </article>
             ))}
           </div>

@@ -100,7 +100,7 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
             </button>
           </div>
         </div>
-        <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap break-words">
+        <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap wrap-break-word">
           {comment.content}
         </div>
 
@@ -143,13 +143,15 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
         <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
           {post.title}
         </h1>
-        <div className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">
-          {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </div>
+        {post.createdAt && (
+          <div className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">
+            {new Date(post.createdAt).toLocaleDateString("zh-CN", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </div>
+        )}
         <div
           className="prose prose-sm sm:prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: post.content }}

@@ -36,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 文章页面
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/${post.id}`,
-    lastModified: new Date(post.updatedAt),
+    lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));

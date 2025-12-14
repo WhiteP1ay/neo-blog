@@ -13,8 +13,8 @@ export type Post = {
   title: string;
   content: string;
   markdownContent: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
 /**
@@ -88,9 +88,11 @@ export async function createPost(data: {
  * Server Action: 更新文章
  */
 export async function updatePost(id: number, data: {
-  title: string;
-  content: string;
+  title?: string;
+  content?: string;
   markdownContent?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 }) {
   // 检查登录状态
   const userId = await getSession();
@@ -99,14 +101,34 @@ export async function updatePost(id: number, data: {
   }
 
   try {
+    const updateData: {
+      title?: string;
+      content?: string;
+      markdownContent?: string | null;
+      createdAt?: Date | null;
+      updatedAt?: Date | null;
+    } = {};
+
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.content !== undefined) updateData.content = data.content;
+    if (data.markdownContent !== undefined) updateData.markdownContent = data.markdownContent;
+    
+    // 处理创建日期：允许设置为null
+    if (data.createdAt !== undefined) {
+      updateData.createdAt = data.createdAt;
+    }
+    
+    // 处理修改日期：允许设置为null
+    if (data.updatedAt !== undefined) {
+      updateData.updatedAt = data.updatedAt;
+    } else if (data.title !== undefined || data.content !== undefined) {
+      // 如果更新了标题或内容，自动更新 updatedAt
+      updateData.updatedAt = new Date();
+    }
+
     const result = await db
       .update(postsTable)
-      .set({
-        title: data.title,
-        content: data.content,
-        markdownContent: data.markdownContent || null,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(postsTable.id, id))
       .returning();
     

@@ -19,8 +19,8 @@ export const postsTable = pgTable("posts", {
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(), // 存储解析后的HTML
   markdownContent: text(), // 存储原始Markdown（可选，用于下载）
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
+  createdAt: timestamp(), // 创建时间（可为空）
+  updatedAt: timestamp(), // 修改时间（可为空）
 });
 
 /**

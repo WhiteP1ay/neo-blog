@@ -43,8 +43,8 @@ export async function generateMetadata({
     ? textContent.substring(0, 150) + "..." 
     : textContent || "阅读更多内容";
 
-  const publishedTime = new Date(post.createdAt).toISOString();
-  const modifiedTime = new Date(post.updatedAt).toISOString();
+  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
+  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
 
   return {
     title: post.title,
@@ -55,8 +55,8 @@ export async function generateMetadata({
       title: post.title,
       description,
       type: "article",
-      publishedTime,
-      modifiedTime,
+      ...(publishedTime && { publishedTime }),
+      ...(modifiedTime && { modifiedTime }),
       authors: ["whitePlay"],
       siteName: "White Meta",
     },
@@ -90,16 +90,25 @@ export default async function PostPage({
 
   const post = result.data;
 
-  const publishedTime = new Date(post.createdAt).toISOString();
-  const modifiedTime = new Date(post.updatedAt).toISOString();
+  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
+  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
 
   // 结构化数据（JSON-LD）
-  const jsonLd = {
+  const jsonLd: {
+    "@context": string;
+    "@type": string;
+    headline: string;
+    datePublished?: string;
+    dateModified?: string;
+    author: { "@type": string; name: string };
+    publisher: { "@type": string; name: string };
+    description: string;
+  } = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    datePublished: publishedTime,
-    dateModified: modifiedTime,
+    ...(publishedTime && { datePublished: publishedTime }),
+    ...(modifiedTime && { dateModified: modifiedTime }),
     author: {
       "@type": "Person",
       name: "whitePlay",
@@ -125,16 +134,18 @@ export default async function PostPage({
               <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
                 {post.title}
               </h1>
-              <time 
-                dateTime={publishedTime}
-                className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 block"
-              >
-                {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </time>
+              {post.createdAt && (
+                <time 
+                  dateTime={publishedTime}
+                  className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 block"
+                >
+                  {new Date(post.createdAt).toLocaleDateString("zh-CN", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </time>
+              )}
             </header>
             <div
               className="prose prose-sm sm:prose-lg max-w-none"
