@@ -36,5 +36,5 @@ Dockerfile
 .dockerignore
 compose.yml
 
-# 数据库迁移（可选，如果需要运行时迁移可以保留）
+# 数据库迁移文件（暂不需要）
 # drizzle

@@ -108,7 +108,44 @@ docker build -t neo-blog:latest .
 docker run -p 3000:3000 \
   -e DATABASE_URL=postgresql://用户名:密码@数据库地址:5432/数据库名 \
   neo-blog:latest
+
+# test image on local
+docker run -d -p 3000:3000 \
+  -e DATABASE_URL=postgresql://example:example@localhost:5432/neo_blog \
+  --name neo-blog \
+  neo-blog:latest
 ```
+
+### GitHub Actions 自动部署
+
+项目包含 GitHub Actions 工作流，当 push 到 `deploy` 分支时会自动构建并推送镜像到 Docker Hub。
+
+#### 配置步骤
+
+1. **在 GitHub 仓库中配置 Secrets**：
+   - 进入仓库 Settings → Secrets and variables → Actions
+   - 添加以下两个 secrets：
+     - `DOCKERHUB_USERNAME`: 你的 Docker Hub 用户名
+     - `DOCKERHUB_TOKEN`: 你的 Docker Hub Access Token（在 Docker Hub → Account Settings → Security 中创建）
+
+2. **使用方式**：
+   ```bash
+   # 切换到 deploy 分支
+   git checkout deploy
+   
+   # 或者创建并切换到 deploy 分支
+   git checkout -b deploy
+   
+   # 推送代码，触发自动构建
+   git push origin deploy
+   ```
+
+3. **镜像标签**：
+   - `latest`: 最新版本（deploy 分支）
+   - `deploy`: deploy 分支标签
+   - `deploy-<commit-sha>`: 包含 commit SHA 的标签
+
+工作流文件位置：`.github/workflows/deploy.yml`
 
 ## 📖 使用指南
 
