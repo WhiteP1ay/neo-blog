@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getPostById, getPosts } from "@/server/actions/posts";
 import { CodeHighlight } from "@/app/components/CodeHighlight";
 import { PostPageClient } from "@/app/components/PostPageClient";
+import { TableOfContents } from "@/app/components/TableOfContents";
 
 export async function generateStaticParams() {
   const result = await getPosts();
@@ -128,7 +130,33 @@ export default async function PostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="min-h-screen bg-gray-50">
+        {/* 目录组件 */}
+        <TableOfContents content={post.content} />
+        
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+          {/* 返回首页按钮（顶部） */}
+          <div className="mb-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              <span>返回首页</span>
+            </Link>
+          </div>
+
           <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
             <header>
               <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
