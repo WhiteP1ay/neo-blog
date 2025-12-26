@@ -42,6 +42,8 @@ RUN adduser --system --uid 1001 nextjs
 # 复制构建产物
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# 复制 public 文件夹（standalone 模式不会自动包含）
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 
