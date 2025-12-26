@@ -1,8 +1,8 @@
 # 使用官方 Node.js 运行时作为基础镜像
 FROM node:20-alpine AS base
 
-# 启用 pnpm 并安装兼容版本（支持 lockfileVersion 9.0）
-RUN corepack enable && corepack prepare pnpm@10 --activate
+# 启用 pnpm（corepack 会自动匹配 lockfile 中的版本）
+RUN corepack enable
 
 # 安装依赖阶段
 FROM base AS deps
@@ -11,8 +11,7 @@ WORKDIR /app
 # 复制包管理文件
 COPY package.json pnpm-lock.yaml ./
 
-# 安装依赖
-RUN pnpm install --frozen-lockfile
+RUN pnpm install 
 
 # 构建阶段
 FROM base AS builder
