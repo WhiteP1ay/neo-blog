@@ -143,7 +143,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
             {new Date(comment.createdAt).toLocaleDateString("zh-CN")}
           </span>
         </div>
-        <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap break-words">
+        <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap wrap-break-word">
           {comment.content}
         </div>
         <button

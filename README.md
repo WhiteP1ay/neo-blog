@@ -39,7 +39,7 @@ npm install
 DATABASE_URL=postgresql://your_username:your_password@localhost:5432/neo_blog
 ```
 
-**注意**：如果使用 `compose.yml` 启动数据库，还需要以下环境变量用于 PostgreSQL 容器配置：
+**注意**：如果使用 `compose.yml` 启动数据库，还需要创建一个.env文件，并输入以下环境变量用于 PostgreSQL 容器配置：
 
 ```env
 DATABASE_URL=postgresql://postgres:example@localhost:5432/neo_blog

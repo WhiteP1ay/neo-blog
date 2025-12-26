@@ -13,70 +13,70 @@ export function useChinaIPDetector() {
   useEffect(() => {
     let isMounted = true;
     let timeoutId: NodeJS.Timeout;
+    let img: HTMLImageElement | null = null;
 
     /**
-     * 尝试访问Google的favicon（小文件，快速）
-     * 如果能够访问，说明不在中国大陆
+     * 通过尝试加载Google的favicon来判断是否在中国大陆
+     * Google在中国被墙，如果能加载说明不在中国大陆
      */
-    const checkGoogle = async () => {
-      const controller = new AbortController();
-      timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 2500); // 2.5秒超时
+    const checkGoogle = () => {
+      return new Promise<boolean>((resolve) => {
+        img = new Image();
+        let resolved = false;
 
-      try {
-        await fetch("https://www.google.com/favicon.ico", {
-          method: "HEAD",
-          mode: "no-cors", // 避免CORS问题
-          signal: controller.signal,
-          cache: "no-cache",
-        });
-        // 能够访问Google，不在中国大陆
-        if (isMounted) {
-          setIsChina(false);
-          setIsChecking(false);
-        }
-      } catch {
-        // 无法访问Google，可能在中国大陆
-        // 但也要考虑网络问题，所以再尝试一个备用检测
-        if (isMounted) {
-          try {
-            const controller2 = new AbortController();
-            const timeoutId2 = setTimeout(() => {
-              controller2.abort();
-            }, 2500);
-            
-            await fetch("https://github.com/favicon.ico", {
-              method: "HEAD",
-              mode: "no-cors",
-              signal: controller2.signal,
-              cache: "no-cache",
-            });
-            // 能访问GitHub，可能不在中国大陆
-            if (isMounted) {
-              setIsChina(false);
-              setIsChecking(false);
-            }
-            clearTimeout(timeoutId2);
-          } catch {
-            // 两个都访问不了，很可能在中国大陆
-            if (isMounted) {
-              setIsChina(true);
-              setIsChecking(false);
+        const cleanup = () => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeoutId);
+            if (img) {
+              img.onload = null;
+              img.onerror = null;
+              img = null;
             }
           }
-        }
-      } finally {
-        clearTimeout(timeoutId);
+        };
+
+        // 设置超时（3秒）
+        timeoutId = setTimeout(() => {
+          cleanup();
+          resolve(true); // 超时认为在中国大陆
+        }, 3000);
+
+        img.onload = () => {
+          cleanup();
+          resolve(false); // 能加载，不在中国大陆
+        };
+
+        img.onerror = () => {
+          cleanup();
+          resolve(true); // 加载失败，可能在中国大陆
+        };
+
+        // 尝试加载 Google 的 favicon，添加时间戳避免缓存
+        img.src = `https://www.google.com/favicon.ico?t=${Date.now()}`;
+      });
+    };
+
+    const checkLocation = async () => {
+      const result = await checkGoogle();
+      
+      if (isMounted) {
+        setIsChina(result);
+        setIsChecking(false);
       }
     };
 
-    checkGoogle();
+    checkLocation();
 
     return () => {
       isMounted = false;
       if (timeoutId) {
         clearTimeout(timeoutId);
+      }
+      if (img) {
+        img.onload = null;
+        img.onerror = null;
+        img = null;
       }
     };
   }, []);
