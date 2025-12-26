@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPosts } from "@/server/actions/posts";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "首页",
@@ -27,9 +28,10 @@ export default async function Home() {
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
             White Meta
           </h1>
-          <p>
+          <div className="flex items-center gap-2">
+            <Image className="rounded-full" src="/avatar1.jpg" alt="Ethan Park" width={32} height={32} />
             <Link href="/me">By Ethan Park</Link>
-          </p>
+          </div>
         </header>
 
         {posts.length === 0 ? (
@@ -43,11 +45,18 @@ export default async function Home() {
                 key={post.id}
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 sm:p-6"
               >
-                <Link href={`/${post.id}`}>
-                  <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 sm:mb-3 hover:text-blue-600 transition-colors">
-                    {post.title}
-                  </h2>
-                </Link>
+                <div className="flex items-start gap-2 mb-2 sm:mb-3">
+                  <Link href={`/${post.id}`} className="flex-1">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+                      {post.title}
+                    </h2>
+                  </Link>
+                  {post.isPinned && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap">
+                      📌 置顶
+                    </span>
+                  )}
+                </div>
                 {post.createdAt && (
                   <div className="text-xs sm:text-sm text-gray-500">
                     {new Date(post.createdAt).toLocaleDateString("zh-CN", {

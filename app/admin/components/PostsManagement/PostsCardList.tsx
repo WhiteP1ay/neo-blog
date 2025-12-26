@@ -8,6 +8,7 @@ interface PostsCardListProps {
   onDownload: (post: Post) => void;
   onDelete: (id: number) => void;
   onUpdate: (post: Post) => void;
+  onTogglePinned: (post: Post) => void;
 }
 
 /**
@@ -19,6 +20,7 @@ export function PostsCardList({
   onDownload,
   onDelete,
   onUpdate,
+  onTogglePinned,
 }: PostsCardListProps) {
   return (
     <div className="sm:hidden divide-y divide-gray-200">
@@ -35,6 +37,18 @@ export function PostsCardList({
               {new Date(post.createdAt).toLocaleDateString("zh-CN")}
             </div>
           )}
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              onClick={() => onTogglePinned(post)}
+              className={`text-xs px-2 py-1 rounded ${
+                post.isPinned
+                  ? "bg-yellow-100 text-yellow-800 border border-yellow-600"
+                  : "bg-gray-100 text-gray-600 border border-gray-300"
+              }`}
+            >
+              {post.isPinned ? "已置顶" : "置顶"}
+            </button>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onDownload(post)}

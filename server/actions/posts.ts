@@ -13,19 +13,23 @@ export type Post = {
   title: string;
   content: string;
   markdownContent: string | null;
+  isPinned: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
 
 /**
- * Server Action: 获取所有文章列表（按创建时间倒序）
+ * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
  */
 export async function getPosts() {
   try {
     const posts = await db
       .select()
       .from(postsTable)
-      .orderBy(desc(postsTable.createdAt));
+      .orderBy(
+        desc(postsTable.isPinned),
+        desc(postsTable.createdAt)
+      );
     return { success: true, data: posts };
   } catch (error) {
     console.error("获取文章列表失败:", error);
@@ -91,6 +95,7 @@ export async function updatePost(id: number, data: {
   title?: string;
   content?: string;
   markdownContent?: string | null;
+  isPinned?: boolean;
   createdAt?: Date | null;
   updatedAt?: Date | null;
 }) {
@@ -105,6 +110,7 @@ export async function updatePost(id: number, data: {
       title?: string;
       content?: string;
       markdownContent?: string | null;
+      isPinned?: boolean;
       createdAt?: Date | null;
       updatedAt?: Date | null;
     } = {};
@@ -112,6 +118,7 @@ export async function updatePost(id: number, data: {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.content !== undefined) updateData.content = data.content;
     if (data.markdownContent !== undefined) updateData.markdownContent = data.markdownContent;
+    if (data.isPinned !== undefined) updateData.isPinned = data.isPinned;
     
     // 处理创建日期：允许设置为null
     if (data.createdAt !== undefined) {
@@ -121,8 +128,8 @@ export async function updatePost(id: number, data: {
     // 处理修改日期：允许设置为null
     if (data.updatedAt !== undefined) {
       updateData.updatedAt = data.updatedAt;
-    } else if (data.title !== undefined || data.content !== undefined) {
-      // 如果更新了标题或内容，自动更新 updatedAt
+    } else if (data.title !== undefined || data.content !== undefined || data.isPinned !== undefined) {
+      // 如果更新了标题、内容或置顶状态，自动更新 updatedAt
       updateData.updatedAt = new Date();
     }
 

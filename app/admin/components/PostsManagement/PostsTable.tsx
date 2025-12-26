@@ -8,6 +8,7 @@ interface PostsTableProps {
   onDownload: (post: Post) => void;
   onDelete: (id: number) => void;
   onUpdate: (post: Post) => void;
+  onTogglePinned: (post: Post) => void;
 }
 
 /**
@@ -19,6 +20,7 @@ export function PostsTable({
   onDownload,
   onDelete,
   onUpdate,
+  onTogglePinned,
 }: PostsTableProps) {
   return (
     <div className="hidden sm:block overflow-x-auto">
@@ -30,6 +32,9 @@ export function PostsTable({
             </th>
             <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               创建时间
+            </th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              置顶
             </th>
             <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
               操作
@@ -51,6 +56,18 @@ export function PostsTable({
                 {post.createdAt
                   ? new Date(post.createdAt).toLocaleDateString("zh-CN")
                   : "-"}
+              </td>
+              <td className="px-4 sm:px-6 py-4">
+                <button
+                  onClick={() => onTogglePinned(post)}
+                  className={`text-xs sm:text-sm px-2 py-1 rounded ${
+                    post.isPinned
+                      ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {post.isPinned ? "已置顶" : "置顶"}
+                </button>
               </td>
               <td className="px-4 sm:px-6 py-4">
                 <div className="flex flex-wrap gap-2">

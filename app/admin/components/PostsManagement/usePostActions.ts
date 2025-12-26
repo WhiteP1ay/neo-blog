@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { deletePost, type Post } from "@/server/actions/posts";
+import { deletePost, updatePost, type Post } from "@/server/actions/posts";
 import { useToast } from "@/app/components/Toast";
 
 /**
@@ -62,9 +62,25 @@ export function usePostActions(onSuccess?: () => void) {
     router.push(`/admin/${id}`);
   };
 
+  /**
+   * 切换置顶状态
+   */
+  const handleTogglePinned = async (post: Post) => {
+    const result = await updatePost(post.id, {
+      isPinned: !post.isPinned,
+    });
+    if (result.success) {
+      showToast(post.isPinned ? "已取消置顶" : "已置顶", "success");
+      onSuccess?.();
+    } else {
+      showToast(`操作失败: ${result.error}`, "error");
+    }
+  };
+
   return {
     handleDeletePost,
     handleDownloadPost,
     handleEditPost,
+    handleTogglePinned,
   };
 }

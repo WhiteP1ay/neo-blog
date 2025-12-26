@@ -33,16 +33,13 @@ export function PostsManagement({
     startCreate,
   } = useFileUpload(onRefresh);
 
-  const { handleDeletePost, handleDownloadPost, handleEditPost } =
+  const { handleDeletePost, handleDownloadPost, handleEditPost, handleTogglePinned } =
     usePostActions(onRefresh);
 
   if (loading) {
     return <LoadingState />;
   }
 
-  if (posts.length === 0) {
-    return <EmptyState />;
-  }
 
   return (
     <div>
@@ -56,21 +53,28 @@ export function PostsManagement({
       />
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <PostsTable
-          posts={posts}
-          onEdit={handleEditPost}
-          onDownload={handleDownloadPost}
-          onDelete={handleDeletePost}
-          onUpdate={startEdit}
-        />
-
-        <PostsCardList
-          posts={posts}
-          onEdit={handleEditPost}
-          onDownload={handleDownloadPost}
-          onDelete={handleDeletePost}
-          onUpdate={startEdit}
-        />
+        {posts.length > 0 ? (
+          <>
+            <PostsTable
+              posts={posts}
+              onEdit={handleEditPost}
+              onDownload={handleDownloadPost}
+              onDelete={handleDeletePost}
+              onUpdate={startEdit}
+              onTogglePinned={handleTogglePinned}
+            />
+            <PostsCardList
+              posts={posts}
+              onEdit={handleEditPost}
+              onDownload={handleDownloadPost}
+              onDelete={handleDeletePost}
+              onUpdate={startEdit}
+              onTogglePinned={handleTogglePinned}
+            />
+          </>
+        ) : (
+          <EmptyState />
+        )}
       </div>
     </div>
   );
