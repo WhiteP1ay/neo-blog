@@ -1,4 +1,5 @@
 import { integer, pgTable, timestamp, varchar, text, boolean } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 /**
  * 用户表
@@ -53,3 +54,48 @@ export const analyticsTable = pgTable("analytics", {
   metadata: text(), // JSON格式的额外数据
   createdAt: timestamp().notNull().defaultNow(),
 });
+
+/**
+ * 专题表
+ */
+export const topicsTable = pgTable("topics", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar({ length: 255 }).notNull(), // 专题名称
+  description: text(), // 专题描述（可选）
+  coverImage: text(), // 封面图（base64 格式，存储在数据库中）
+  isPinned: boolean().notNull().default(false), // 是否置顶
+  isHidden: boolean().notNull().default(false), // 是否隐藏
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp().notNull().defaultNow(),
+});
+
+/**
+ * 专题-文章关联表（多对多关系，带排序）
+ */
+export const topicPostsTable = pgTable("topic_posts", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  topicId: integer().notNull().references(() => topicsTable.id, { onDelete: "cascade" }),
+  postId: integer().notNull().references(() => postsTable.id, { onDelete: "cascade" }),
+  sortOrder: integer().notNull().default(0), // 排序顺序
+  createdAt: timestamp().notNull().defaultNow(),
+});
+
+// 定义关系
+export const topicsRelations = relations(topicsTable, ({ many }) => ({
+  topicPosts: many(topicPostsTable),
+}));
+
+export const postsRelations = relations(postsTable, ({ many }) => ({
+  topicPosts: many(topicPostsTable),
+}));
+
+export const topicPostsRelations = relations(topicPostsTable, ({ one }) => ({
+  topic: one(topicsTable, {
+    fields: [topicPostsTable.topicId],
+    references: [topicsTable.id],
+  }),
+  post: one(postsTable, {
+    fields: [topicPostsTable.postId],
+    references: [postsTable.id],
+  }),
+}));

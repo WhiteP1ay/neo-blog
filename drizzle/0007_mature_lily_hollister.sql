@@ -1,0 +1,1 @@
+ALTER TABLE "topics" ALTER COLUMN "coverImage" SET DATA TYPE text;

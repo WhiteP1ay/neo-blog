@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { login } from "./actions";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { BackToHome } from "@/app/components/BackToHome";
 
 /**
  * 登录页面组件
@@ -89,9 +89,7 @@ export default function LoginPage() {
         </form>
         
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
-            返回首页
-          </Link>
+          <BackToHome showIcon={false} className="text-sm text-gray-600 hover:text-gray-900" />
         </div>
       </div>
     </div>

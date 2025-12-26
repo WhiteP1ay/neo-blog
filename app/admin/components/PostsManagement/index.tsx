@@ -3,6 +3,7 @@
 import type { Post } from "@/server/actions/posts";
 import { useFileUpload } from "./useFileUpload";
 import { usePostActions } from "./usePostActions";
+import { usePostTopics } from "./hooks/usePostTopics";
 import { FileUploadZone } from "./FileUploadZone";
 import { PostsTable } from "./PostsTable";
 import { PostsCardList } from "./PostsCardList";
@@ -36,6 +37,8 @@ export function PostsManagement({
   const { handleDeletePost, handleDownloadPost, handleEditPost, handleTogglePinned } =
     usePostActions(onRefresh);
 
+  const postTopicsMap = usePostTopics(posts);
+
   if (loading) {
     return <LoadingState />;
   }
@@ -57,6 +60,7 @@ export function PostsManagement({
           <>
             <PostsTable
               posts={posts}
+              postTopicsMap={postTopicsMap}
               onEdit={handleEditPost}
               onDownload={handleDownloadPost}
               onDelete={handleDeletePost}
@@ -65,6 +69,7 @@ export function PostsManagement({
             />
             <PostsCardList
               posts={posts}
+              postTopicsMap={postTopicsMap}
               onEdit={handleEditPost}
               onDownload={handleDownloadPost}
               onDelete={handleDeletePost}

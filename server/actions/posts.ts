@@ -1,9 +1,10 @@
 "use server";
 
 import { db } from "@/server/db/db";
-import { postsTable } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { postsTable, topicsTable, topicPostsTable } from "@/server/db/schema";
+import { desc, eq, and, asc } from "drizzle-orm";
 import { getSession } from "@/server/utils/auth";
+import type { Topic } from "./topics";
 
 /**
  * 文章类型定义
@@ -17,6 +18,13 @@ export type Post = {
   createdAt: Date | null;
   updatedAt: Date | null;
 };
+
+/**
+ * 列表项类型（专题或文章）
+ */
+export type ListItem = 
+  | { type: "topic"; data: Topic & { posts: Array<{ id: number; title: string; createdAt: Date | null }> } }
+  | { type: "post"; data: Post };
 
 /**
  * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
@@ -34,6 +42,103 @@ export async function getPosts() {
   } catch (error) {
     console.error("获取文章列表失败:", error);
     return { success: false, error: "获取文章列表失败" };
+  }
+}
+
+/**
+ * Server Action: 获取混合列表（专题+文章，用于首页展示）
+ * @param showTopics 是否显示专题
+ */
+export async function getMixedList(showTopics = true) {
+  try {
+    const items: ListItem[] = [];
+
+    // 获取专题（如果启用）
+    if (showTopics) {
+      const topics = await db
+        .select()
+        .from(topicsTable)
+        .where(eq(topicsTable.isHidden, false))
+        .orderBy(desc(topicsTable.isPinned), desc(topicsTable.createdAt));
+
+      for (const topic of topics) {
+        // 获取专题下的文章
+        const topicPosts = await db.query.topicPostsTable.findMany({
+          where: (topicPosts, { eq }) => eq(topicPosts.topicId, topic.id),
+          orderBy: (topicPosts, { asc }) => [asc(topicPosts.sortOrder)],
+          with: {
+            post: {
+              columns: {
+                id: true,
+                title: true,
+                createdAt: true,
+              },
+            },
+          },
+        });
+
+        items.push({
+          type: "topic",
+          data: {
+            ...topic,
+            posts: topicPosts.map((tp) => ({
+              id: tp.post.id,
+              title: tp.post.title,
+              createdAt: tp.post.createdAt,
+            })),
+          },
+        });
+      }
+    }
+
+    // 获取不属于任何专题的文章
+    const allTopicPosts = await db
+      .select({ postId: topicPostsTable.postId })
+      .from(topicPostsTable);
+
+    const topicPostIds = new Set(allTopicPosts.map((tp) => tp.postId));
+
+    // 获取所有文章，然后过滤出不属于专题的
+    const allPosts = await db
+      .select()
+      .from(postsTable)
+      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
+
+    const standalonePosts = allPosts.filter((post) => !topicPostIds.has(post.id));
+
+    for (const post of standalonePosts) {
+      items.push({
+        type: "post",
+        data: post,
+      });
+    }
+
+    // 按置顶优先，然后按创建时间倒序排序（专题和文章混合）
+    items.sort((a, b) => {
+      // 置顶优先
+      const aPinned = a.type === "topic" ? a.data.isPinned : a.data.isPinned;
+      const bPinned = b.type === "topic" ? b.data.isPinned : b.data.isPinned;
+      
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      
+      // 然后按创建时间倒序
+      const aDate = a.type === "topic" ? a.data.createdAt : a.data.createdAt;
+      const bDate = b.type === "topic" ? b.data.createdAt : b.data.createdAt;
+      
+      if (!aDate || !bDate) {
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+      }
+      
+      return bDate.getTime() - aDate.getTime();
+    });
+
+    return { success: true, data: items };
+  } catch (error) {
+    console.error("获取混合列表失败:", error);
+    return { success: false, error: "获取混合列表失败" };
   }
 }
 

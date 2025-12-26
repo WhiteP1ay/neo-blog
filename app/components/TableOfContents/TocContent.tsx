@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { BackToHome } from "@/app/components/BackToHome";
 import type { TocItem } from "./types";
 
 interface TocContentProps {
@@ -31,26 +31,7 @@ export function TocContent({
     <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-xs max-h-[70vh] overflow-y-auto lg:max-h-[70vh]">
       {/* 顶部操作栏 */}
       <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200">
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-          onClick={onCloseMobileMenu}
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
-          <span>返回首页</span>
-        </Link>
+        <BackToHome onClick={onCloseMobileMenu} />
         {showCollapseButton && onCollapse && (
           <button
             onClick={onCollapse}

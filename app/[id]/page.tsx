@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getPostById, getPosts } from "@/server/actions/posts";
+import {
+  getTopicsByPostId,
+  getTopicPostNavigation,
+} from "@/server/actions/topics";
 import { CodeHighlight } from "@/app/components/CodeHighlight";
 import { PostPageClient } from "@/app/components/PostPageClient";
+import { PostNavigation } from "@/app/components/PostNavigation";
 import { TableOfContents } from "@/app/components/TableOfContents";
+import { BackToHome } from "@/app/components/BackToHome";
+import { StructuredData, createBlogPostingSchema } from "@/app/components/StructuredData";
 
 export async function generateStaticParams() {
   const result = await getPosts();
@@ -38,15 +44,20 @@ export async function generateMetadata({
   }
 
   const post = result.data;
-  
+
   // 从HTML内容中提取纯文本作为描述（前150个字符）
   const textContent = post.content.replace(/<[^>]*>/g, "").trim();
-  const description = textContent.length > 150 
-    ? textContent.substring(0, 150) + "..." 
-    : textContent || "阅读更多内容";
+  const description =
+    textContent.length > 150
+      ? textContent.substring(0, 150) + "..."
+      : textContent || "阅读更多内容";
 
-  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
-  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
+  const publishedTime = post.createdAt
+    ? new Date(post.createdAt).toISOString()
+    : undefined;
+  const modifiedTime = post.updatedAt
+    ? new Date(post.updatedAt).toISOString()
+    : undefined;
 
   return {
     title: post.title,
@@ -92,69 +103,51 @@ export default async function PostPage({
 
   const post = result.data;
 
-  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
-  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
+  // 获取文章所属的专题
+  const topicsResult = await getTopicsByPostId(postId);
+  const topics =
+    topicsResult.success && topicsResult.data ? topicsResult.data : [];
+
+  // 获取专题导航（如果有专题，使用第一个专题的导航）
+  type Navigation = {
+    prev: { id: number; title: string } | null;
+    next: { id: number; title: string } | null;
+  };
+  let navigation: Navigation = { prev: null, next: null };
+  if (topics.length > 0) {
+    const navResult = await getTopicPostNavigation(topics[0].id, postId);
+    if (navResult.success && navResult.data) {
+      navigation = navResult.data;
+    }
+  }
+
+  const publishedTime = post.createdAt
+    ? new Date(post.createdAt).toISOString()
+    : undefined;
+  const modifiedTime = post.updatedAt
+    ? new Date(post.updatedAt).toISOString()
+    : undefined;
 
   // 结构化数据（JSON-LD）
-  const jsonLd: {
-    "@context": string;
-    "@type": string;
-    headline: string;
-    datePublished?: string;
-    dateModified?: string;
-    author: { "@type": string; name: string };
-    publisher: { "@type": string; name: string };
-    description: string;
-  } = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
+  const jsonLd = createBlogPostingSchema({
     headline: post.title,
-    ...(publishedTime && { datePublished: publishedTime }),
-    ...(modifiedTime && { dateModified: modifiedTime }),
-    author: {
-      "@type": "Person",
-      name: "whitePlay",
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "White Meta",
-    },
     description: post.content.replace(/<[^>]*>/g, "").substring(0, 200),
-  };
+    datePublished: publishedTime,
+    dateModified: modifiedTime,
+  });
 
   return (
     <>
       {/* 结构化数据 */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <StructuredData data={jsonLd} />
       <div className="min-h-screen bg-gray-50">
         {/* 目录组件 */}
         <TableOfContents content={post.content} />
-        
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
           {/* 返回首页按钮（顶部） */}
           <div className="mb-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              <span>返回首页</span>
-            </Link>
+            <BackToHome />
           </div>
 
           <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
@@ -163,7 +156,7 @@ export default async function PostPage({
                 {post.title}
               </h1>
               {post.createdAt && (
-                <time 
+                <time
                   dateTime={publishedTime}
                   className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 block"
                 >
@@ -181,8 +174,13 @@ export default async function PostPage({
             />
           </article>
 
-        {/* 代码高亮 */}
-        <CodeHighlight />
+          {/* 文章导航（上一篇/下一篇） */}
+          {navigation.prev || navigation.next ? (
+            <PostNavigation prev={navigation.prev} next={navigation.next} />
+          ) : null}
+
+          {/* 代码高亮 */}
+          <CodeHighlight />
 
           {/* 评论区域，由客户端组件自行判断是否显示 */}
           <PostPageClient postId={postId} />
