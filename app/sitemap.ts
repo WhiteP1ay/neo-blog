@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { getPosts } from "@/server/actions/posts";
+import { getTools } from "@/server/actions/tools";
 
 /**
  * 重新验证时间（ISR）
@@ -12,16 +13,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yourdomain.com";
 
   // 获取所有文章
-  const result = await getPosts();
-  const posts = result.success && result.data ? result.data : [];
+  const postsResult = await getPosts();
+  const posts = postsResult.success && postsResult.data ? postsResult.data : [];
 
-  // 首页
+  // 获取所有工具
+  const toolsResult = await getTools(false); // 不包含隐藏的工具
+  const tools = toolsResult.success && toolsResult.data ? toolsResult.data : [];
+
+  // 首页和重要页面
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/topics`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/tools`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/me`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.6,
     },
   ];
 

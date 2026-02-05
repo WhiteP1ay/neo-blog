@@ -8,6 +8,7 @@ import {
 import { useChinaIPDetector } from "./ChinaIPDetector";
 import { useAnalytics } from "./Analytics";
 import { useToast } from "./Toast";
+import { CommentItem } from "./CommentItem";
 
 interface CommentsSectionProps {
   postId: number;
@@ -120,64 +121,25 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
   };
 
   /**
-   * 渲染评论树
+   * 处理回复按钮点击
    */
-  const renderComment = (comment: CommentWithReplies) => {
-    return (
-      <div
-        key={comment.id}
-        className="mb-6 pb-6 border-b border-gray-200 last:border-0"
-      >
-        <div className="flex items-start justify-between mb-2 flex-wrap gap-2">
-          <div className="flex-1 min-w-0">
-            <span className="font-semibold text-gray-900 text-sm sm:text-base">
-              {comment.author}
-            </span>
-            {comment.email && (
-              <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2 break-all">
-                ({comment.email})
-              </span>
-            )}
-          </div>
-          <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-            {new Date(comment.createdAt).toLocaleDateString("zh-CN")}
-          </span>
-        </div>
-        <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap wrap-break-word">
-          {comment.content}
-        </div>
-        <button
-          onClick={() => {
-            // 埋点：点击回复按钮
-            track({
-              type: "comment",
-              action: "click_reply",
-              target: `comment_${comment.id}`,
-            });
-            setReplyingTo(comment.id);
-            setFormData((prev) => ({
-              ...prev,
-              content: `@${comment.author} `,
-            }));
-            // 滚动到底部输入框
-            setTimeout(() => {
-              formRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-            }, 100);
-          }}
-          className="text-xs sm:text-sm text-blue-600 hover:text-blue-800"
-        >
-          回复
-        </button>
-
-        {/* 渲染子评论 */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-3 sm:mt-4 ml-2 sm:ml-6 pl-2 sm:pl-4 border-l-2 border-gray-200">
-            {comment.replies.map((reply) => renderComment(reply))}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const handleReply = useCallback((commentId: number, author: string) => {
+    // 埋点：点击回复按钮
+    track({
+      type: "comment",
+      action: "click_reply",
+      target: `comment_${commentId}`,
+    });
+    setReplyingTo(commentId);
+    setFormData((prev) => ({
+      ...prev,
+      content: `@${author} `,
+    }));
+    // 滚动到底部输入框
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
+  }, [track]);
 
   // 如果检测中，默认隐藏评论功能（不显示任何内容）
   if (isChecking) {
@@ -199,7 +161,15 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       ) : comments.length === 0 ? (
         <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">暂无评论</div>
       ) : (
-        <div className="mb-6 sm:mb-8">{comments.map(renderComment)}</div>
+        <div className="mb-6 sm:mb-8">
+          {comments.map((comment) => (
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              onReply={handleReply}
+            />
+          ))}
+        </div>
       )}
 
       {/* 评论表单 */}

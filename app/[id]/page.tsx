@@ -9,7 +9,8 @@ import { CodeHighlight } from "@/app/components/CodeHighlight";
 import { PostPageClient } from "@/app/components/PostPageClient";
 import { PostNavigation } from "@/app/components/PostNavigation";
 import { TableOfContents } from "@/app/components/TableOfContents";
-import { BackToHome } from "@/app/components/BackToHome";
+import { Breadcrumb } from "@/app/components/Breadcrumb";
+import { PostHeader } from "@/app/components/PostHeader";
 import { StructuredData, createBlogPostingSchema } from "@/app/components/StructuredData";
 
 export async function generateStaticParams() {
@@ -145,29 +146,17 @@ export default async function PostPage({
         <TableOfContents content={post.content} />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
-          {/* 返回首页按钮（顶部） */}
+          {/* 面包屑导航 */}
           <div className="mb-4">
-            <BackToHome />
+            <Breadcrumb currentLabel={post.title} />
           </div>
 
           <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
-            <header>
-              <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
-                {post.title}
-              </h1>
-              {post.createdAt && (
-                <time
-                  dateTime={publishedTime}
-                  className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 block"
-                >
-                  {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </time>
-              )}
-            </header>
+            <PostHeader
+              title={post.title}
+              createdAt={post.createdAt}
+              publishedTime={publishedTime}
+            />
             <div
               className="prose prose-sm sm:prose-lg max-w-none"
               dangerouslySetInnerHTML={{ __html: post.content }}

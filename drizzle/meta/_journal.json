@@ -57,6 +57,20 @@
       "when": 1766765194307,
       "tag": "0007_mature_lily_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1770276317866,
+      "tag": "0008_naive_baron_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1770277250663,
+      "tag": "0009_nebulous_tusk",
+      "breakpoints": true
     }
   ]
 }

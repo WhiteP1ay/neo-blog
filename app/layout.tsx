@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider } from "./components/Toast";
+import { Nav } from "./components/Nav";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -40,7 +41,10 @@ export default function RootLayout({
         )}
       </head>
       <body>
-        <ToastProvider>{children}</ToastProvider>
+        <ToastProvider>
+          <Nav />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

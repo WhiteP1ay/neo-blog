@@ -1,52 +1,98 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { Breadcrumb } from "@/app/components/Breadcrumb";
+
 export const metadata: Metadata = {
-  title: "Me",
-  description: "Me",
+  title: "About",
+  description: "About White Meta",
 };
 
 export default function MePage() {
   return (
-    <article>
-      <div className="flex items-center gap-2 mb-4">
-        <Image
-          className="rounded-full"
-          src="/avatar1.jpg"
-          alt="Ethan Park"
-          width={32}
-          height={32}
-        />
-        <span className="text-xl sm:text-2xl font-bold  cursor-pointer hover:text-blue-600 transition-colors">
-          Ethan Park
-        </span>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+        <Breadcrumb />
+        <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
+          <div className="flex items-center gap-4 mb-6">
+            <Image
+              className="rounded-full"
+              src="/avatar1.jpg"
+              alt="Ethan Park"
+              width={80}
+              height={80}
+            />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Ethan Park
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">软件开发工程师</p>
+            </div>
+          </div>
+
+          <div className="prose prose-sm sm:prose-lg max-w-none text-gray-700 mb-6">
+            <p className="mb-4">
+              我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。
+            </p>
+            <p className="mb-4">
+              同时我也是个主机游戏玩家/佛学爱好者/摩托佬/业余吉他手
+            </p>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">联系方式</h2>
+            <ul className="space-y-3">
+              <li>
+                <a
+                  target="_blank"
+                  href="https://github.com/WhiteP1ay"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <span className="text-2xl">💻</span>
+                  <span>GitHub</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  target="_blank"
+                  href="https://space.bilibili.com/107889531"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <span className="text-2xl">📺</span>
+                  <span>Bilibili</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  target="_blank"
+                  href="mailto:EthanPark2233@gmail.com"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <span className="text-2xl">📧</span>
+                  <span>Email</span>
+                </a>
+              </li>
+              <li className="pt-2">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">📱</span>
+                  <div>
+                    <p className="text-gray-600 mb-2">扫码关注公众号第一时间获取最新文章</p>
+                    <Image
+                      src="/wxqr.jpg"
+                      alt="微信公众号二维码"
+                      width={150}
+                      height={150}
+                      className="rounded-lg border border-gray-200"
+                    />
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </article>
       </div>
-      <p className="text-gray-600 text-sm mb-4">
-        我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。
-        <br />
-        同时我也是个主机游戏玩家/佛学爱好者/摩托佬/业余吉他手
-        <br />
-      </p>
-      <ul className="list-none cursor-pointer text-gray-600 text-sm">
-        <li>
-          <a target="_blank" href="https://github.com/WhiteP1ay">
-            💻 GitHub
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://space.bilibili.com/107889531">
-            📺 Bilibili
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="mailto:EthanPark2233@gmail.com">
-            📧 Email
-          </a>
-        </li>
-        <li>
-          扫码关注公众号第一时间获取最新文章
-          <Image src="/wxqr.jpg" alt="Wechat" width={100} height={100} />
-        </li>
-      </ul>
-    </article>
+    </div>
   );
 }

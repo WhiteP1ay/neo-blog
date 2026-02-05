@@ -4,11 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { getPosts, type Post } from "@/server/actions/posts";
 import { PostsManagement } from "./components/PostsManagement";
 import { TopicsManagement } from "./components/TopicsManagement";
+import { ToolsManagement } from "./components/ToolsManagement";
 import { AnalyticsManagement } from "./components/AnalyticsManagement";
 import { Tabs } from "./components/Tabs";
 import { BackToHome } from "@/app/components/BackToHome";
 
-type TabType = "posts" | "topics" | "analytics";
+type TabType = "posts" | "topics" | "tools" | "analytics";
 
 /**
  * Admin管理页面 - 纯客户端组件
@@ -40,6 +41,7 @@ export default function AdminPage() {
   const tabs: Array<{ id: TabType; label: string }> = [
     { id: "posts", label: "文章管理" },
     { id: "topics", label: "专题管理" },
+    { id: "tools", label: "工具管理" },
     { id: "analytics", label: "埋点统计" },
   ];
 
@@ -57,6 +59,8 @@ export default function AdminPage() {
         )}
 
         {activeTab === "topics" && <TopicsManagement />}
+
+        {activeTab === "tools" && <ToolsManagement />}
 
         {activeTab === "analytics" && (
           <AnalyticsManagement

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Topic } from "@/server/actions/topics";
+import { formatDate } from "@/app/utils/date";
 
 interface TopicItemProps {
   topic: Topic & {
@@ -54,11 +55,7 @@ export function TopicItem({ topic }: TopicItemProps) {
       </div>
       {topic.createdAt && (
         <div className="text-xs sm:text-sm text-gray-500 mb-3">
-          {new Date(topic.createdAt).toLocaleDateString("zh-CN", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          {formatDate(topic.createdAt)}
         </div>
       )}
 
@@ -76,11 +73,7 @@ export function TopicItem({ topic }: TopicItemProps) {
               </h3>
               {post.createdAt && (
                 <div className="text-xs text-gray-500 mt-1">
-                  {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatDate(post.createdAt)}
                 </div>
               )}
             </Link>

@@ -99,3 +99,17 @@ export const topicPostsRelations = relations(topicPostsTable, ({ one }) => ({
     references: [postsTable.id],
   }),
 }));
+
+/**
+ * 工具表
+ */
+export const toolsTable = pgTable("tools", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar({ length: 255 }).notNull(), // 工具名称
+  description: text(), // 工具描述（可选）
+  coverImage: text(), // 封面图（base64 或 URL）
+  url: text().notNull(), // 工具链接URL（点击直接跳转）
+  isHidden: boolean().notNull().default(false), // 是否隐藏
+  createdAt: timestamp().notNull().defaultNow(),
+  updatedAt: timestamp().notNull().defaultNow(),
+});
