@@ -10,7 +10,7 @@ import { getTools } from "@/server/actions/tools";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://yourdomain.com";
+  const baseUrl = 'https://whitemeta.cn'
 
   // 获取所有文章
   const postsResult = await getPosts();
