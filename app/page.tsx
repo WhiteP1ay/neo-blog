@@ -37,8 +37,8 @@ export default async function Home() {
             <Breadcrumb />
             <PageHeader
               title="White Meta"
-              avatar={{ src: "/avatar1.jpg", alt: "Ethan Park" }}
-              authorLink={{ href: "/me", label: "By Ethan Park" }}
+              avatar={{ src: "/avatar1.jpg", alt: "白玩dev" }}
+              authorLink={{ href: "/me", label: "白玩dev" }}
             />
 
             {/* 专题和工具入口 */}
