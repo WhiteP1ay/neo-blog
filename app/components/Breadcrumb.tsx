@@ -95,23 +95,23 @@ export function Breadcrumb({ currentLabel }: BreadcrumbProps) {
   }
 
   return (
-    <nav className="text-sm text-gray-600 mb-4" aria-label="Breadcrumb">
+    <nav className="text-sm text-gray-600 dark:text-gray-300 mb-4" aria-label="Breadcrumb">
       <ol className="flex items-center gap-2 flex-wrap">
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
           return (
             <li key={item.href} className="flex items-center">
               {index > 0 && (
-                <span className="mx-2 text-gray-400" aria-hidden="true">
+                <span className="mx-2 text-gray-400 dark:text-gray-600" aria-hidden="true">
                   /
                 </span>
               )}
               {isLast ? (
-                <span className="text-gray-900 font-medium">{item.label}</span>
+                <span className="text-gray-900 dark:text-white font-medium">{item.label}</span>
               ) : (
                 <Link
                   href={item.href}
-                  className="hover:text-blue-600 transition-colors"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   {item.label}
                 </Link>
