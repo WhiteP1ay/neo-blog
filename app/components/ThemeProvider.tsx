@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -59,7 +59,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
     const newIsDarkMode = !isDarkMode;

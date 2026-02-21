@@ -4,7 +4,7 @@ import type { TocItem } from './types';
 /**
  * Hook: 从 DOM 中提取标题并生成目录
  */
-export function useTableOfContents(content: string) {
+export function useTableOfContents() {
   const [toc, setToc] = useState<TocItem[]>([]);
 
   useEffect(() => {
@@ -37,6 +37,7 @@ export function useTableOfContents(content: string) {
 
         // 处理重复的 ID
         if (idMap.has(id)) {
+          // biome-ignore lint/style/noNonNullAssertion: <todo>
           const count = idMap.get(id)! + 1;
           idMap.set(id, count);
           id = `${id}-${count}`;
@@ -55,7 +56,7 @@ export function useTableOfContents(content: string) {
     }, 100); // 延迟 100ms 确保 DOM 已渲染
 
     return () => clearTimeout(timer);
-  }, [content]);
+  }, []);
 
   return toc;
 }

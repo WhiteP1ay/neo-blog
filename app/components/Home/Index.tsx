@@ -21,7 +21,9 @@ export function HomePageContent() {
       <Footer />
 
       {/* 付费咨询弹窗 */}
-      <ConsultPopup isOpen={showConsultPopup} onClose={() => setShowConsultPopup(false)} />
+      <ConsultPopup isOpen={showConsultPopup} onClose={() => setShowConsultPopup(false)} onConsult={() => {
+        window.open('https://message.bilibili.com/#/whisper/mid107889531')
+      }} />
     </div>
   );
 }

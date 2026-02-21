@@ -72,7 +72,7 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
 
   // 其他路径，使用路径名作为标签
   segments.forEach((segment, index) => {
-    const href = '/' + segments.slice(0, index + 1).join('/');
+    const href = `/${segments.slice(0, index + 1).join('/')}`;
     items.push({ label: segment, href });
   });
 

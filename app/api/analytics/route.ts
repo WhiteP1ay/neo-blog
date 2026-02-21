@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createAnalytics } from '@/server/actions/analytics';
 import { parseUserAgent } from '@/server/utils/userAgent';
 

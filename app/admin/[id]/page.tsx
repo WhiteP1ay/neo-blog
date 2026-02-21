@@ -16,7 +16,7 @@ export default async function AdminPostPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const postId = parseInt(id, 10);
 
-  if (isNaN(postId)) {
+  if (Number.isNaN(postId)) {
     notFound();
   }
 

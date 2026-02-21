@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Feature } from '@/app/features';
+import type { Feature } from '@/app/features';
 
 interface FeatureCardProps {
   feature: Feature;

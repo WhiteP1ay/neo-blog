@@ -56,6 +56,8 @@ export function MobileTOC({ toc, activeId, showBackToTop, onScrollToHeading, onS
       {isMenuOpen && (
         <>
           {/* 遮罩层 */}
+          {/** biome-ignore lint/a11y/noStaticElementInteractions: <todo> */}
+          {/** biome-ignore lint/a11y/useKeyWithClickEvents: <todo> */}
           <div className="fixed inset-0 bg-gray-500 opacity-30 z-40 lg:hidden" onClick={() => setIsMenuOpen(false)} />
           {/* 抽屉内容 */}
           <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden transform translate-y-0 transition-transform duration-300 ease-out">

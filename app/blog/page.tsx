@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getMixedList, type ListItem } from '@/server/actions/posts';
 import { TopicItem } from '@/app/components/TopicItem';
 import { Breadcrumb } from '@/app/components/Breadcrumb';
-import { PostCard } from '@/app/components/PostDetail/PostCard';
+import { PostCard } from './components/PostCard';
 import { WeChatSidebar } from '@/app/components/WeChatSidebar';
 
 export const metadata: Metadata = {

@@ -5,9 +5,10 @@ import { Button } from '../ui/Button';
 interface ConsultPopupProps {
   isOpen: boolean;
   onClose: () => void;
+  onConsult: () => void;
 }
 
-export function ConsultPopup({ isOpen, onClose }: ConsultPopupProps) {
+export function ConsultPopup({ isOpen, onClose, onConsult }: ConsultPopupProps) {
   if (!isOpen) {
     return null;
   }
@@ -19,15 +20,26 @@ export function ConsultPopup({ isOpen, onClose }: ConsultPopupProps) {
           <h3 className="text-xl font-medium">付费咨询</h3>
         </div>
         <div className="mb-8">
+          <p className="text-lg">
+            服务流程：
+          </p>
           <ul>
-            <li className="mb-2">1. B站私信我，直接发送你的问题或需求。</li>
-            <li className="mb-2">2. 我根据你的问题，在最短时间内给你答复。并协商时间和价格。</li>
-            <li className="mb-2">3. 付费并建立语音通话</li>
+            <li className="mb-2">1. B站私信我你的问题或需求</li>
+            <li className="mb-2">2. 协商确认时间和价格</li>
+            <li className="mb-2">3. 安排咨询会议，定制服务与方案</li>
           </ul>
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            - 最晚次日中午十二点回复私信
+            <br />
+            - 业务涵盖：付费咨询/模拟面试及总结/简历修改建议/代码review/面试题解答/课程设计咨询与技术服务
+          </p>
         </div>
         <div className="flex justify-end">
-          <Button variant="primary" size="md" onClick={onClose}>
+          <Button variant="secondary" size="md" onClick={onClose}>
             关闭
+          </Button>
+          <Button className="ml-2" variant="primary" size="md" onClick={onConsult}>
+            咨询
           </Button>
         </div>
       </div>

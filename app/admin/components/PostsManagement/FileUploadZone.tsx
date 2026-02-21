@@ -21,6 +21,7 @@ export function FileUploadZone({
   onCreateClick,
 }: FileUploadZoneProps) {
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: <todo>
     <div
       ref={dropZoneRef}
       onDrop={onDrop}

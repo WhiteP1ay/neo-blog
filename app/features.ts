@@ -35,7 +35,7 @@ export const features: Feature[] = [
   {
     id: 'consult',
     title: '付费咨询',
-    description: '获取一对一技术咨询',
+    description: '技术咨询、模拟面试',
     href: '#',
     isPopup: true,
   },

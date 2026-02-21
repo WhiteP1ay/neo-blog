@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import type { TocItem } from './types';
 
 /**
  * Hook: 跟踪滚动位置，更新激活的标题和返回顶部按钮显示状态
  */
-export function useScrollTracking(toc: TocItem[]) {
+export function useScrollTracking() {
   const [activeId, setActiveId] = useState<string>('');
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -38,7 +37,7 @@ export function useScrollTracking(toc: TocItem[]) {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [toc]); // 依赖 toc，确保标题已设置 ID
+  }, []); // 依赖 toc，确保标题已设置 ID
 
   return { activeId, showBackToTop };
 }

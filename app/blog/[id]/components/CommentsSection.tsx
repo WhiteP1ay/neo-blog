@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getCommentsByPostId, type CommentWithReplies } from '@/server/actions/comments';
-import { useChinaIPDetector } from '../ChinaIPDetector';
-import { useAnalytics } from '../Analytics';
-import { useToast } from '../Toast';
+import { useChinaIPDetector } from '@/app/components/ChinaIPDetector';
+import { useAnalytics } from '@/app/components/Analytics';
+import { useToast } from '@/app/components/Toast';
 import { CommentItem } from './CommentItem';
 
 interface CommentsSectionProps {

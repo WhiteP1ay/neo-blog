@@ -73,7 +73,7 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
     <div className="space-y-8">
       {/* 时间范围选择 */}
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-gray-700">统计时间范围：</label>
+        <span className="text-sm font-medium text-gray-700">统计时间范围：</span>
         <select
           value={days}
           onChange={(e) => onDaysChange(Number(e.target.value))}
@@ -126,8 +126,8 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {data.dailyStats.map((stat: DailyStat, index: number) => (
-              <tr key={index}>
+            {data.dailyStats.map((stat: DailyStat) => (
+              <tr key={stat.date}>
                 <td className="px-6 py-4 text-sm text-gray-900">{stat.date}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{stat.pageViews}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{stat.uniqueVisitors || 0}</td>

@@ -34,7 +34,7 @@ export async function getSession(): Promise<number | null> {
   }
 
   const userId = parseInt(session.value, 10);
-  if (isNaN(userId)) {
+  if (Number.isNaN(userId)) {
     return null;
   }
 

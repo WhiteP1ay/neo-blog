@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const topicId = parseInt(id, 10);
 
-  if (isNaN(topicId)) {
+  if (Number.isNaN(topicId)) {
     return {};
   }
 
@@ -56,7 +56,7 @@ export default async function TopicDetailPage({ params }: { params: Promise<{ id
   const { id } = await params;
   const topicId = parseInt(id, 10);
 
-  if (isNaN(topicId)) {
+  if (Number.isNaN(topicId)) {
     notFound();
   }
 

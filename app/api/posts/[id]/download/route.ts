@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getPostById } from '@/server/actions/posts';
 import { getSession } from '@/server/utils/auth';
 
 /**
  * 下载文章为Markdown文件
  */
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET({ params }: { params: Promise<{ id: string }> }) {
   // 检查登录状态
   const userId = await getSession();
   if (!userId) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const postId = parseInt(id, 10);
 
-    if (isNaN(postId)) {
+    if (Number.isNaN(postId)) {
       return NextResponse.json({ success: false, error: '无效的文章ID' }, { status: 400 });
     }
 

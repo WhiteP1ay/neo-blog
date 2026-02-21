@@ -46,9 +46,9 @@ export function ToolForm({ tool, mode, onSuccess, onCancel }: ToolFormProps) {
 
         {/* 工具名称 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <span className="block text-sm font-medium text-gray-700 mb-2">
             工具名称 <span className="text-red-500">*</span>
-          </label>
+          </span>
           <input
             type="text"
             value={name}
@@ -60,7 +60,7 @@ export function ToolForm({ tool, mode, onSuccess, onCancel }: ToolFormProps) {
 
         {/* 工具描述 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">工具描述（可选）</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">工具描述（可选）</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -72,9 +72,9 @@ export function ToolForm({ tool, mode, onSuccess, onCancel }: ToolFormProps) {
 
         {/* 工具链接URL */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <span className="block text-sm font-medium text-gray-700 mb-2">
             工具链接URL <span className="text-red-500">*</span>
-          </label>
+          </span>
           <input
             type="url"
             value={url}
@@ -90,7 +90,7 @@ export function ToolForm({ tool, mode, onSuccess, onCancel }: ToolFormProps) {
 
         {/* 封面图 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</span>
           <div className="flex gap-4">
             <div className="flex-1">
               <input

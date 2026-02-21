@@ -3,11 +3,11 @@ import type { Metadata } from 'next';
 import { getPostById, getPosts } from '@/server/actions/posts';
 import { getTopicsByPostId, getTopicPostNavigation } from '@/server/actions/topics';
 import { CodeHighlight } from '@/app/components/CodeHighlight';
-import { PostPageClient } from '@/app/components/PostDetail/PostPageClient';
-import { PostNavigation } from '@/app/components/PostDetail/PostNavigation';
-import { TableOfContents } from '@/app/components/TableOfContents';
+import { PostPageClient } from './components/PostPageClient';
+import { PostNavigation } from './components/PostNavigation';
+import { TableOfContents } from './components/TableOfContents';
 import { Breadcrumb } from '@/app/components/Breadcrumb';
-import { PostHeader } from '@/app/components/PostDetail/PostHeader';
+import { PostHeader } from './components/PostHeader';
 import { StructuredData, createBlogPostingSchema } from '@/app/components/StructuredData';
 
 export async function generateStaticParams() {
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   // 从HTML内容中提取纯文本作为描述（前150个字符）
   const textContent = post.content.replace(/<[^>]*>/g, '').trim();
-  const description = textContent.length > 150 ? textContent.substring(0, 150) + '...' : textContent || '阅读更多内容';
+  const description = textContent.length > 150 ? `${textContent.substring(0, 150)}...` : textContent || '阅读更多内容';
 
   const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
   const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
@@ -120,7 +120,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <StructuredData data={jsonLd} />
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* 目录组件 */}
-        <TableOfContents content={post.content} />
+        <TableOfContents />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
           {/* 面包屑导航 */}

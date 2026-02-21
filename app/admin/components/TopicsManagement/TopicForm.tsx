@@ -52,9 +52,9 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 专题名称 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <span className="block text-sm font-medium text-gray-700 mb-2">
             专题名称 <span className="text-red-500">*</span>
-          </label>
+          </span>
           <input
             type="text"
             value={name}
@@ -66,7 +66,7 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 专题描述 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">专题描述（可选）</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">专题描述（可选）</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -78,7 +78,7 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 封面图 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</span>
           <div className="flex gap-4">
             <div className="flex-1">
               <input
@@ -137,13 +137,13 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 批量上传 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">批量上传文章</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">批量上传文章</span>
           <BatchUploadZone onFilesUploaded={handleBatchAddPosts} />
         </div>
 
         {/* 文章管理 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">文章管理</label>
+          <span className="block text-sm font-medium text-gray-700 mb-2">文章管理</span>
           <div className="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto">
             {allPosts.length === 0 ? (
               <p className="text-sm text-gray-500">暂无文章</p>

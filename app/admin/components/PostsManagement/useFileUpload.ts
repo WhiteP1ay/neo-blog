@@ -46,7 +46,7 @@ export function useFileUpload(onSuccess?: () => void) {
    */
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.name.endsWith('.md')) {
+    if (file?.name.endsWith('.md')) {
       handleFileUpload(file, editingPost?.id);
     } else {
       showToast('请选择.md文件', 'warning');
@@ -60,7 +60,7 @@ export function useFileUpload(onSuccess?: () => void) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith('.md')) {
+    if (file?.name.endsWith('.md')) {
       handleFileUpload(file);
     } else {
       showToast('请拖拽.md文件', 'warning');

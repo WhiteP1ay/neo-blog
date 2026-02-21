@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noNonNullAssertion: <todo> */
 'use server';
 
 import { db } from '@/server/db/db';

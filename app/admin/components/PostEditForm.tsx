@@ -204,7 +204,7 @@ export function PostEditForm({ post }: PostEditFormProps) {
 
             {/* 专题选择 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">所属专题（可多选）</label>
+              <span className="block text-sm font-medium text-gray-700 mb-2">所属专题（可多选）</span>
               <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                 {allTopics.length === 0 ? (
                   <p className="text-sm text-gray-500">暂无专题</p>
