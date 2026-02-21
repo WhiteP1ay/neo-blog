@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface PageHeaderProps {
-  title: string;
   avatar?: {
     src: string;
     alt: string;
@@ -16,7 +15,7 @@ interface PageHeaderProps {
 /**
  * 页面头部组件
  */
-export function PageHeader({ title, avatar, authorLink }: PageHeaderProps) {
+export function PageHeader({ avatar, authorLink }: PageHeaderProps) {
   return (
     <header className="mb-8 sm:mb-12 flex items-center justify-end">
       {avatar && authorLink && (

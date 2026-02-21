@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db/db";
 import { postsTable, topicsTable, topicPostsTable } from "@/server/db/schema";
-import { desc, eq, and, asc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getSession } from "@/server/utils/auth";
 import type { Topic } from "./topics";
 

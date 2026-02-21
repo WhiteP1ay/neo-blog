@@ -58,6 +58,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleTheme = () => {

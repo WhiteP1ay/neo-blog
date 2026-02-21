@@ -3,6 +3,7 @@
  * 这样可以在 TypeScript 中获得类型提示和自动补全
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 namespace NodeJS {
   interface ProcessEnv {
     // Node 环境

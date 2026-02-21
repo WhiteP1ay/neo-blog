@@ -1,6 +1,5 @@
 import { MetadataRoute } from "next";
 import { getPosts } from "@/server/actions/posts";
-import { getTools } from "@/server/actions/tools";
 
 /**
  * 重新验证时间（ISR）
@@ -15,10 +14,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 获取所有文章
   const postsResult = await getPosts();
   const posts = postsResult.success && postsResult.data ? postsResult.data : [];
-
-  // 获取所有工具
-  const toolsResult = await getTools(false); // 不包含隐藏的工具
-  const tools = toolsResult.success && toolsResult.data ? toolsResult.data : [];
 
   // 首页和重要页面
   const routes: MetadataRoute.Sitemap = [
