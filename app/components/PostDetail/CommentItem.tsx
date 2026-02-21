@@ -2,6 +2,7 @@
 
 import type { CommentWithReplies } from "@/server/actions/comments";
 import { formatDateShort } from "@/app/utils/date";
+import { Button } from "@/app/components/ui/Button";
 
 interface CommentItemProps {
   comment: CommentWithReplies;
@@ -32,12 +33,11 @@ export function CommentItem({ comment, onReply }: CommentItemProps) {
       <div className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap wrap-break-word">
         {comment.content}
       </div>
-      <button
+      <Button
         onClick={() => onReply(comment.id, comment.author)}
-        className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
       >
         回复
-      </button>
+      </Button>
 
       {/* 渲染子评论 */}
       {comment.replies && comment.replies.length > 0 && (

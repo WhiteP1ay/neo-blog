@@ -5,9 +5,9 @@ import {
   getCommentsByPostId,
   type CommentWithReplies,
 } from "@/server/actions/comments";
-import { useChinaIPDetector } from "./ChinaIPDetector";
-import { useAnalytics } from "./Analytics";
-import { useToast } from "./Toast";
+import { useChinaIPDetector } from "../ChinaIPDetector";
+import { useAnalytics } from "../Analytics";
+import { useToast } from "../Toast";
 import { CommentItem } from "./CommentItem";
 
 interface CommentsSectionProps {

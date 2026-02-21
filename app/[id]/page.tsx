@@ -6,11 +6,11 @@ import {
   getTopicPostNavigation,
 } from "@/server/actions/topics";
 import { CodeHighlight } from "@/app/components/CodeHighlight";
-import { PostPageClient } from "@/app/components/PostPageClient";
-import { PostNavigation } from "@/app/components/PostNavigation";
+import { PostPageClient } from "@/app/components/PostDetail/PostPageClient";
+import { PostNavigation } from "@/app/components/PostDetail/PostNavigation";
 import { TableOfContents } from "@/app/components/TableOfContents";
 import { Breadcrumb } from "@/app/components/Breadcrumb";
-import { PostHeader } from "@/app/components/PostHeader";
+import { PostHeader } from "@/app/components/PostDetail/PostHeader";
 import { StructuredData, createBlogPostingSchema } from "@/app/components/StructuredData";
 
 export async function generateStaticParams() {

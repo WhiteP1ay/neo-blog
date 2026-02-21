@@ -30,6 +30,11 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[0] === "about") {
+    items.push({ label: "About", href: "/about" });
+    return items;
+  }
+
   if (segments[0] === "topics") {
     items.push({ label: "专题", href: "/topics" });
     if (segments.length > 1) {
@@ -49,8 +54,18 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
     return items;
   }
 
+  if (segments[0] === "blog") {
+    items.push({ label: "博客", href: "/blog" });
+    if (segments.length > 1) {
+      // 博客详情页或其他子页面
+      items.push({ label: "文章", href: `/${segments.join("/")}` });
+    }
+    return items;
+  }
+
   // 处理文章页面（数字ID）
   if (/^\d+$/.test(segments[0])) {
+    items.push({ label: "博客", href: "/blog" });
     items.push({ label: "文章", href: `/${segments[0]}` });
     return items;
   }
@@ -65,9 +80,6 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
 }
 
 interface BreadcrumbProps {
-  /**
-   * 自定义当前页面的标签（用于动态内容如文章标题、专题名称）
-   */
   currentLabel?: string;
 }
 

@@ -1,9 +1,8 @@
-import { ReactNode } from "react";
+
 
 interface SwitchProps {
   checked: boolean;
   onChange: () => void;
-  label?: string;
   ariaLabel?: string;
 }
 
@@ -11,24 +10,20 @@ interface SwitchProps {
  * 主题切换开关组件
  * 带有太阳/月亮图标，支持平滑过渡动画
  */
-export function Switch({ checked, onChange, label, ariaLabel }: SwitchProps) {
+export function Switch({ checked, onChange, ariaLabel }: SwitchProps) {
   return (
-    <div className={`flex items-center gap-3 ${label ? "" : "justify-end"}`}>
-      {label && (
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-          {label}
-        </span>
-      )}
+    <div className={`flex items-center gap-3 justify-end `}>
+
       <button
         onClick={onChange}
-        className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900"
+        className="relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 cursor-pointer"
         aria-label={ariaLabel || (checked ? "启用亮色模式" : "启用暗色模式")}
         role="switch"
         aria-checked={checked}
       >
         {/* 背景圆圈 */}
         <span className={`absolute inset-0 rounded-full transition-colors ${checked ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
-        
+
         {/* 滑块 */}
         <span className={`relative inline-block h-5 w-5 transform rounded-full transition-transform ${checked ? 'translate-x-6 bg-white' : 'translate-x-1 bg-gray-300'}`}>
           {/* 图标容器 */}

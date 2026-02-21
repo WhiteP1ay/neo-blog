@@ -5,23 +5,14 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useTheme } from "./ThemeProvider";
 import { Switch } from "./SwitchTheme";
+import { navItems } from "@/app/nav";
 
 export function Nav() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isDarkMode, toggleTheme } = useTheme();
 
-  const navItems = [
-    { href: "/me", label: "About" },
-    { href: "/topics", label: "专题" },
-    { href: "/tools", label: "工具" },
-    { href: "/privacy", label: "隐私政策" },
-  ];
-
   const isActive = (href: string) => {
-    if (href === "/me") {
-      return pathname === "/me";
-    }
     return pathname?.startsWith(href);
   };
 
@@ -43,30 +34,23 @@ export function Nav() {
                 key={item.href}
                 href={item.href}
                 className={`text-sm font-medium transition-colors ${isActive(item.href)
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                   }`}
               >
                 {item.label}
               </Link>
             ))}
-            <a
-              href="mailto:EthanPark2233@gmail.com"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              Email
-            </a>
-            <Link
-              href="/admin"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-opacity opacity-0 hover:opacity-100"
-              title="管理后台"
-            >
-              管理
-            </Link>
             <Switch
               checked={isDarkMode}
               onChange={toggleTheme}
             />
+            <Link
+              href="/admin"
+              className="opacity-0"
+            >
+              管理
+            </Link>
 
           </div>
 
@@ -111,8 +95,8 @@ export function Nav() {
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`text-sm font-medium transition-colors ${isActive(item.href)
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                     }`}
                 >
                   {item.label}
@@ -135,7 +119,6 @@ export function Nav() {
               <Switch
                 checked={isDarkMode}
                 onChange={toggleTheme}
-                label={isDarkMode ? "亮色模式" : "暗色模式"}
               />
 
             </div>
