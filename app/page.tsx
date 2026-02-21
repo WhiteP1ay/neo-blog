@@ -29,7 +29,7 @@ export default async function Home() {
   const items: ListItem[] = result.success && result.data ? result.data : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <div className="flex gap-8">
           {/* 主内容区域 */}

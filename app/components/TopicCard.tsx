@@ -14,7 +14,7 @@ export function TopicCard({ topic }: TopicCardProps) {
   return (
     <Link
       href={`/topics/${topic.id}`}
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
     >
       {topic.coverImage ? (
         <div className="relative w-full h-48 overflow-hidden">
@@ -26,9 +26,9 @@ export function TopicCard({ topic }: TopicCardProps) {
           />
         </div>
       ) : (
-        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
           <svg
-            className="w-16 h-16 text-gray-400"
+            className="w-16 h-16 text-gray-400 dark:text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -44,21 +44,21 @@ export function TopicCard({ topic }: TopicCardProps) {
       )}
       <div className="p-4 sm:p-6">
         <div className="flex items-start justify-between mb-2">
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {topic.name}
           </h2>
           {topic.isPinned && (
-            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap ml-2">
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 whitespace-nowrap ml-2">
               📌 置顶
             </span>
           )}
         </div>
         {topic.description && (
-          <p className="text-sm text-gray-600 line-clamp-3 mt-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mt-2">
             {topic.description}
           </p>
         )}
-        <div className="text-xs text-gray-500 mt-4">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
           {formatDate(topic.createdAt)}
         </div>
       </div>

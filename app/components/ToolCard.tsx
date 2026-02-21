@@ -15,7 +15,7 @@ export function ToolCard({ tool }: ToolCardProps) {
       href={tool.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
     >
       {tool.coverImage ? (
         <div className="relative w-full h-48 overflow-hidden">
@@ -27,9 +27,9 @@ export function ToolCard({ tool }: ToolCardProps) {
           />
         </div>
       ) : (
-        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+        <div className="w-full h-48 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
           <svg
-            className="w-16 h-16 text-gray-400"
+            className="w-16 h-16 text-gray-400 dark:text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -50,15 +50,15 @@ export function ToolCard({ tool }: ToolCardProps) {
         </div>
       )}
       <div className="p-4 sm:p-6">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
           {tool.name}
         </h2>
         {tool.description && (
-          <p className="text-sm text-gray-600 line-clamp-3 mt-2">
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mt-2">
             {tool.description}
           </p>
         )}
-        <div className="text-xs text-gray-500 mt-4">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
           {formatDate(tool.createdAt)}
         </div>
       </div>

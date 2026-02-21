@@ -141,7 +141,7 @@ export default async function PostPage({
     <>
       {/* 结构化数据 */}
       <StructuredData data={jsonLd} />
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* 目录组件 */}
         <TableOfContents content={post.content} />
 
@@ -151,7 +151,7 @@ export default async function PostPage({
             <Breadcrumb currentLabel={post.title} />
           </div>
 
-          <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
+          <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
             <PostHeader
               title={post.title}
               createdAt={post.createdAt}

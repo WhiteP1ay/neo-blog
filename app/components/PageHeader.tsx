@@ -18,10 +18,7 @@ interface PageHeaderProps {
  */
 export function PageHeader({ title, avatar, authorLink }: PageHeaderProps) {
   return (
-    <header className="mb-8 sm:mb-12 flex items-center justify-between">
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
-        {title}
-      </h1>
+    <header className="mb-8 sm:mb-12 flex items-center justify-end">
       {avatar && authorLink && (
         <div className="flex items-center gap-2">
           <Image
@@ -31,7 +28,7 @@ export function PageHeader({ title, avatar, authorLink }: PageHeaderProps) {
             width={32}
             height={32}
           />
-          <Link href={authorLink.href} className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+          <Link href={authorLink.href} className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {authorLink.label}
           </Link>
         </div>

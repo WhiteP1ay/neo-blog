@@ -13,35 +13,35 @@ interface CommentItemProps {
  */
 export function CommentItem({ comment, onReply }: CommentItemProps) {
   return (
-    <div className="mb-6 pb-6 border-b border-gray-200 last:border-0">
+    <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700 last:border-0">
       <div className="flex items-start justify-between mb-2 flex-wrap gap-2">
         <div className="flex-1 min-w-0">
-          <span className="font-semibold text-gray-900 text-sm sm:text-base">
+          <span className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
             {comment.author}
           </span>
           {comment.email && (
-            <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2 break-all">
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 ml-1 sm:ml-2 break-all">
               ({comment.email})
             </span>
           )}
         </div>
-        <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
           {formatDateShort(comment.createdAt)}
         </span>
       </div>
-      <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap wrap-break-word">
+      <div className="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-wrap wrap-break-word">
         {comment.content}
       </div>
       <button
         onClick={() => onReply(comment.id, comment.author)}
-        className="text-xs sm:text-sm text-blue-600 hover:text-blue-800"
+        className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
       >
         回复
       </button>
 
       {/* 渲染子评论 */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-3 sm:mt-4 ml-2 sm:ml-6 pl-2 sm:pl-4 border-l-2 border-gray-200">
+        <div className="mt-3 sm:mt-4 ml-2 sm:ml-6 pl-2 sm:pl-4 border-l-2 border-gray-200 dark:border-gray-600">
           {comment.replies.map((reply) => (
             <CommentItem
               key={reply.id}

@@ -12,7 +12,7 @@ interface TopicHeroProps {
  */
 export function TopicHero({ topic }: TopicHeroProps) {
   return (
-    <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+    <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-pink-900/40">
       {topic.coverImage ? (
         <Image
           src={topic.coverImage}

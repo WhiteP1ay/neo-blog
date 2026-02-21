@@ -12,13 +12,13 @@ interface PostHeaderProps {
 export function PostHeader({ title, createdAt, publishedTime }: PostHeaderProps) {
   return (
     <header>
-      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
+      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
         {title}
       </h1>
       {createdAt && (
         <time
           dateTime={publishedTime}
-          className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 block"
+          className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 sm:mb-8 block"
         >
           {formatDate(createdAt)}
         </time>

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function MePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <Breadcrumb />
-        <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
+        <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8">
           <div className="flex items-center gap-4 mb-6">
             <Image
               className="rounded-full"
@@ -23,14 +23,14 @@ export default function MePage() {
               height={80}
             />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 白玩dev
               </h1>
-              <p className="text-sm text-gray-500 mt-1">软件开发工程师</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">软件开发工程师</p>
             </div>
           </div>
 
-          <div className="prose prose-sm sm:prose-lg max-w-none text-gray-700 mb-6">
+          <div className="prose prose-sm sm:prose-lg max-w-none text-gray-700 dark:text-gray-300 mb-6">
             <p className="mb-4">
               我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。
             </p>
@@ -39,15 +39,15 @@ export default function MePage() {
             </p>
           </div>
 
-          <div className="border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">联系方式</h2>
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">联系方式</h2>
             <ul className="space-y-3">
               <li>
                 <a
                   target="_blank"
                   href="https://space.bilibili.com/107889531"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Tv />
                   <span>Bilibili</span>
@@ -58,7 +58,7 @@ export default function MePage() {
                   target="_blank"
                   href="https://www.youtube.com/@whiteplay-dev"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Youtube />
                   <span>YouTube</span>
@@ -70,7 +70,7 @@ export default function MePage() {
                   target="_blank"
                   href="https://github.com/WhiteP1ay"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Github />
                   <span>GitHub</span>
@@ -81,7 +81,7 @@ export default function MePage() {
                   target="_blank"
                   href="mailto:EthanPark2233@gmail.com"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   <Mail />
                   <span>Email</span>
@@ -91,14 +91,14 @@ export default function MePage() {
                 <div className="flex items-start gap-3">
                   <Smartphone />
                   <div>
-                    <p>个人微信：WhitePlay2233</p>
-                    <p className="text-gray-600 mb-2">扫码关注公众号第一时间获取最新文章</p>
+                    <p className="dark:text-gray-300">个人微信：WhitePlay2233</p>
+                    <p className="text-gray-600 dark:text-gray-400 mb-2">扫码关注公众号第一时间获取最新文章</p>
                     <Image
                       src="/wxqr.jpg"
                       alt="微信公众号二维码"
                       width={150}
                       height={150}
-                      className="rounded-lg border border-gray-200"
+                      className="rounded-lg border border-gray-200 dark:border-gray-700"
                     />
                   </div>
                 </div>

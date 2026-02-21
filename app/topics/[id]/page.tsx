@@ -83,26 +83,26 @@ export default async function TopicDetailPage({
   const posts = topic.topicPosts || [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Hero Section */}
       <TopicHero topic={topic} />
 
       {/* 文章列表区域 */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             文章列表
           </h2>
-          <p className="text-sm text-gray-500">共 {posts.length} 篇文章</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">共 {posts.length} 篇文章</p>
         </div>
 
         {posts.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
             <EmptyState
               message="暂无文章"
               icon={
                 <svg
-                  className="w-16 h-16 text-gray-300"
+                  className="w-16 h-16 text-gray-300 dark:text-gray-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

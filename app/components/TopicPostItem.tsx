@@ -15,15 +15,15 @@ interface TopicPostItemProps {
 export function TopicPostItem({ post }: TopicPostItemProps) {
   return (
     <Link href={`/${post.id}`} className="block group">
-      <article className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8 border border-gray-100 hover:border-blue-200">
+      <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 p-6 sm:p-8 border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800">
         <div className="flex items-start gap-4">
           {/* 内容 */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2">
+            <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
               {post.title}
             </h3>
             {post.createdAt && (
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -47,7 +47,7 @@ export function TopicPostItem({ post }: TopicPostItemProps) {
           {/* 箭头图标 */}
           <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
             <svg
-              className="w-6 h-6 text-blue-600"
+              className="w-6 h-6 text-blue-600 dark:text-blue-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
