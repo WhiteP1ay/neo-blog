@@ -22,7 +22,7 @@ export function TopicItem({ topic }: TopicItemProps) {
       <div className="flex items-start gap-2 mb-2 sm:mb-3">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex-shrink-0 mt-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          className="shrink-0 mt-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           aria-label={isExpanded ? '收起' : '展开'}
         >
           <svg
@@ -54,7 +54,7 @@ export function TopicItem({ topic }: TopicItemProps) {
           {topic.posts.map((post) => (
             <Link
               key={post.id}
-              href={`/${post.id}`}
+              href={`/blog/${post.id}`}
               className="block py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-2 -ml-2 transition-colors"
             >
               <h3 className="text-base sm:text-lg font-medium text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
