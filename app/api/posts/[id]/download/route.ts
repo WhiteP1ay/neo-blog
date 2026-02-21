@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getPostById } from '@/server/actions/posts';
 import { getSession } from '@/server/utils/auth';
 
 /**
  * 下载文章为Markdown文件
  */
-export async function GET({ params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // 检查登录状态
   const userId = await getSession();
   if (!userId) {
