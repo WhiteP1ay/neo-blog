@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-import { getTopics } from "@/server/actions/topics";
-import { Breadcrumb } from "@/app/components/Breadcrumb";
-import { TopicCard } from "@/app/components/TopicCard";
-import { EmptyState } from "@/app/components/EmptyState";
+import type { Metadata } from 'next';
+import { getTopics } from '@/server/actions/topics';
+import { Breadcrumb } from '@/app/components/Breadcrumb';
+import { TopicCard } from '@/app/components/TopicCard';
+import { EmptyState } from '@/app/components/EmptyState';
 
 export const metadata: Metadata = {
-  title: "专题",
-  description: "White Meta 博客 - 专题列表",
+  title: '专题',
+  description: 'White Meta 博客 - 专题列表',
 };
 
 export const revalidate = 60;
@@ -39,4 +39,3 @@ export default async function TopicsPage() {
     </div>
   );
 }
-

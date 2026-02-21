@@ -7,4 +7,3 @@ export interface TocItem {
 export interface TableOfContentsProps {
   content: string; // HTML 内容
 }
-

@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 export function TypewriterText() {
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [phase, setPhase] = useState(0); // 0: 打字中, 1: 完成, 2: 等待
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const fullText = "WhiteMeta";
-  const domainText = ".cn";
+  const fullText = 'WhiteMeta';
+  const domainText = '.cn';
   const typingSpeed = 150; // 打字速度（毫秒/字符）
   const pauseDuration = 8000; // 完成后的暂停时间（毫秒）
 
@@ -41,7 +41,7 @@ export function TypewriterText() {
     } else if (phase === 2) {
       // 暂停后重置
       timeoutId = setTimeout(() => {
-        setText("");
+        setText('');
         setCurrentIndex(0);
         setPhase(0);
       }, pauseDuration);

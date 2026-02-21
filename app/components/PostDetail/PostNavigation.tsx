@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
 interface PostNavigationProps {
   prev: { id: number; title: string } | null;
@@ -61,4 +61,3 @@ export function PostNavigation({ prev, next }: PostNavigationProps) {
     </div>
   );
 }
-

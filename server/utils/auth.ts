@@ -1,12 +1,12 @@
-import { cookies } from "next/headers";
-import { db } from "@/server/db/db";
+import { cookies } from 'next/headers';
+import { db } from '@/server/db/db';
 
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 
 /**
  * Session key
  */
-const SESSION_KEY = "admin_session";
+const SESSION_KEY = 'admin_session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7天
 
 /**
@@ -16,10 +16,10 @@ export async function createSession(userId: number) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_KEY, userId.toString(), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     maxAge: SESSION_MAX_AGE,
-    path: "/",
+    path: '/',
   });
 }
 
@@ -57,10 +57,7 @@ export async function clearSession() {
 /**
  * 验证用户名和密码
  */
-export async function verifyPassword(
-  username: string,
-  password: string
-): Promise<number | null> {
+export async function verifyPassword(username: string, password: string): Promise<number | null> {
   try {
     const user = await db.query.usersTable.findFirst({
       where: (users, { eq }) => eq(users.name, username),
@@ -73,7 +70,7 @@ export async function verifyPassword(
     // 如果密码是明文（用于兼容旧数据），直接比较
     // 如果是hash，使用bcrypt验证
     let isValid = false;
-    if (user.password.startsWith("$2a$") || user.password.startsWith("$2b$")) {
+    if (user.password.startsWith('$2a$') || user.password.startsWith('$2b$')) {
       // bcrypt hash
       isValid = await bcrypt.compare(password, user.password);
     } else {
@@ -83,7 +80,7 @@ export async function verifyPassword(
 
     return isValid ? user.id : null;
   } catch (error) {
-    console.error("验证密码失败:", error);
+    console.error('验证密码失败:', error);
     return null;
   }
 }

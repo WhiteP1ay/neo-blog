@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import type { Tool } from "@/server/actions/tools";
+import type { Tool } from '@/server/actions/tools';
 
 interface ToolsTableProps {
   tools: Tool[];
@@ -13,36 +13,19 @@ interface ToolsTableProps {
 /**
  * 工具表格组件
  */
-export function ToolsTable({
-  tools,
-  onEdit,
-  onDelete,
-  onToggleHidden,
-}: ToolsTableProps) {
+export function ToolsTable({ tools, onEdit, onDelete, onToggleHidden }: ToolsTableProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                名称
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                描述
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                链接
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                状态
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                创建时间
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                操作
-              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">链接</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -56,12 +39,10 @@ export function ToolsTable({
               tools.map((tool) => (
                 <tr key={tool.id}>
                   <td className="px-4 sm:px-6 py-4">
-                    <div className="text-sm sm:text-base font-medium text-gray-900">
-                      {tool.name}
-                    </div>
+                    <div className="text-sm sm:text-base font-medium text-gray-900">{tool.name}</div>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                    {tool.description || "-"}
+                    {tool.description || '-'}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <a
@@ -76,16 +57,14 @@ export function ToolsTable({
                   <td className="px-4 sm:px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                        tool.isHidden
-                          ? "bg-gray-100 text-gray-600"
-                          : "bg-green-100 text-green-800"
+                        tool.isHidden ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'
                       }`}
                     >
-                      {tool.isHidden ? "已隐藏" : "显示中"}
+                      {tool.isHidden ? '已隐藏' : '显示中'}
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
-                    {new Date(tool.createdAt).toLocaleDateString("zh-CN")}
+                    {new Date(tool.createdAt).toLocaleDateString('zh-CN')}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <div className="flex flex-wrap gap-2">
@@ -99,7 +78,7 @@ export function ToolsTable({
                         onClick={() => onToggleHidden(tool)}
                         className="text-gray-600 hover:text-gray-800 text-xs sm:text-sm"
                       >
-                        {tool.isHidden ? "显示" : "隐藏"}
+                        {tool.isHidden ? '显示' : '隐藏'}
                       </button>
                       <button
                         onClick={() => onDelete(tool.id)}
@@ -118,4 +97,3 @@ export function ToolsTable({
     </div>
   );
 }
-

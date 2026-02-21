@@ -1,5 +1,5 @@
-import { MetadataRoute } from "next";
-import { getPosts } from "@/server/actions/posts";
+import { MetadataRoute } from 'next';
+import { getPosts } from '@/server/actions/posts';
 
 /**
  * 重新验证时间（ISR）
@@ -9,7 +9,7 @@ import { getPosts } from "@/server/actions/posts";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://whitemeta.cn'
+  const baseUrl = 'https://whitemeta.cn';
 
   // 获取所有文章
   const postsResult = await getPosts();
@@ -20,31 +20,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
       url: `${baseUrl}/topics`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/tools`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/me`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.6,
     },
   ];
@@ -53,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/${post.id}`,
     lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
-    changeFrequency: "weekly" as const,
+    changeFrequency: 'weekly' as const,
     priority: 0.8,
   }));
 

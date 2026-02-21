@@ -1,9 +1,9 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import { getTopicById, getTopics } from "@/server/actions/topics";
-import { TopicHero } from "@/app/components/TopicHero";
-import { TopicPostItem } from "@/app/components/TopicPostItem";
-import { EmptyState } from "@/app/components/EmptyState";
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getTopicById, getTopics } from '@/server/actions/topics';
+import { TopicHero } from '@/app/components/TopicHero';
+import { TopicPostItem } from '@/app/components/TopicPostItem';
+import { EmptyState } from '@/app/components/EmptyState';
 
 export const revalidate = 60;
 
@@ -22,11 +22,7 @@ export async function generateStaticParams() {
 /**
  * 生成专题页面的 metadata（SEO优化）
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const topicId = parseInt(id, 10);
 
@@ -47,7 +43,7 @@ export async function generateMetadata({
     openGraph: {
       title: topic.name,
       description: topic.description || `${topic.name} - 专题文章集合`,
-      type: "website",
+      type: 'website',
       ...(topic.coverImage && { images: [topic.coverImage] }),
     },
   };
@@ -56,11 +52,7 @@ export async function generateMetadata({
 /**
  * 专题详情页面
  */
-export default async function TopicDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function TopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const topicId = parseInt(id, 10);
 
@@ -90,9 +82,7 @@ export default async function TopicDetailPage({
       {/* 文章列表区域 */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            文章列表
-          </h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">文章列表</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">共 {posts.length} 篇文章</p>
         </div>
 

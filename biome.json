@@ -1,0 +1,16 @@
+{
+  "files": {
+    "includes": ["**", "!test/**", "!node_modules/**", "!.next/**", "!public/**", "!drizzle/**"]
+  },
+
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "lineWidth": 120
+    }
+  }
+}

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { getTools, type Tool } from "@/server/actions/tools";
-import { ToolsTable } from "./ToolsTable";
-import { ToolForm } from "./ToolForm";
-import { useToast } from "@/app/components/Toast";
+import { useState, useEffect, useCallback } from 'react';
+import { getTools, type Tool } from '@/server/actions/tools';
+import { ToolsTable } from './ToolsTable';
+import { ToolForm } from './ToolForm';
+import { useToast } from '@/app/components/Toast';
 
-type ViewMode = "list" | "create" | "edit";
+type ViewMode = 'list' | 'create' | 'edit';
 
 /**
  * 工具管理组件
@@ -14,7 +14,7 @@ type ViewMode = "list" | "create" | "edit";
 export function ToolsManagement() {
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
   const { showToast } = useToast();
 
@@ -27,7 +27,7 @@ export function ToolsManagement() {
     if (result.success && result.data) {
       setTools(result.data);
     } else {
-      showToast(`加载失败: ${result.error}`, "error");
+      showToast(`加载失败: ${result.error}`, 'error');
     }
     setLoading(false);
   }, [showToast]);
@@ -41,7 +41,7 @@ export function ToolsManagement() {
    */
   const handleCreate = () => {
     setEditingTool(null);
-    setViewMode("create");
+    setViewMode('create');
   };
 
   /**
@@ -49,33 +49,24 @@ export function ToolsManagement() {
    */
   const handleEdit = (tool: Tool) => {
     setEditingTool(tool);
-    setViewMode("edit");
+    setViewMode('edit');
   };
 
   /**
    * 处理返回列表
    */
   const handleBack = () => {
-    setViewMode("list");
+    setViewMode('list');
     setEditingTool(null);
     loadTools();
   };
 
-  if (loading && viewMode === "list") {
-    return (
-      <div className="text-center py-8 text-gray-500">加载中...</div>
-    );
+  if (loading && viewMode === 'list') {
+    return <div className="text-center py-8 text-gray-500">加载中...</div>;
   }
 
-  if (viewMode === "create" || viewMode === "edit") {
-    return (
-      <ToolForm
-        tool={editingTool}
-        mode={viewMode}
-        onSuccess={handleBack}
-        onCancel={handleBack}
-      />
-    );
+  if (viewMode === 'create' || viewMode === 'edit') {
+    return <ToolForm tool={editingTool} mode={viewMode} onSuccess={handleBack} onCancel={handleBack} />;
   }
 
   return (
@@ -94,27 +85,27 @@ export function ToolsManagement() {
         tools={tools}
         onEdit={handleEdit}
         onDelete={async (id) => {
-          if (confirm("确定要删除这个工具吗？")) {
-            const { deleteTool } = await import("@/server/actions/tools");
+          if (confirm('确定要删除这个工具吗？')) {
+            const { deleteTool } = await import('@/server/actions/tools');
             const result = await deleteTool(id);
             if (result.success) {
-              showToast("删除成功", "success");
+              showToast('删除成功', 'success');
               loadTools();
             } else {
-              showToast(`删除失败: ${result.error}`, "error");
+              showToast(`删除失败: ${result.error}`, 'error');
             }
           }
         }}
         onToggleHidden={async (tool) => {
-          const { updateTool } = await import("@/server/actions/tools");
+          const { updateTool } = await import('@/server/actions/tools');
           const result = await updateTool(tool.id, {
             isHidden: !tool.isHidden,
           });
           if (result.success) {
-            showToast(tool.isHidden ? "已显示" : "已隐藏", "success");
+            showToast(tool.isHidden ? '已显示' : '已隐藏', 'success');
             loadTools();
           } else {
-            showToast(`操作失败: ${result.error}`, "error");
+            showToast(`操作失败: ${result.error}`, 'error');
           }
         }}
         onRefresh={loadTools}
@@ -122,4 +113,3 @@ export function ToolsManagement() {
     </div>
   );
 }
-

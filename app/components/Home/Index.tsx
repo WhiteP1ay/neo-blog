@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { FeatureCardList } from "./FeatureCardList";
-import { ConsultPopup } from "./ConsultPopup";
-import { Main } from "./Main";
-import { Footer } from "./Footer";
+import { useState } from 'react';
+import { FeatureCardList } from './FeatureCardList';
+import { ConsultPopup } from './ConsultPopup';
+import { Main } from './Main';
+import { Footer } from './Footer';
 
 export function HomePageContent() {
   const [showConsultPopup, setShowConsultPopup] = useState(false);
@@ -21,10 +21,7 @@ export function HomePageContent() {
       <Footer />
 
       {/* 付费咨询弹窗 */}
-      <ConsultPopup
-        isOpen={showConsultPopup}
-        onClose={() => setShowConsultPopup(false)}
-      />
+      <ConsultPopup isOpen={showConsultPopup} onClose={() => setShowConsultPopup(false)} />
     </div>
   );
 }

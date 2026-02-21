@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
-import { useToast } from "@/app/components/Toast";
-import type { Post } from "@/server/actions/posts";
+import { useState, useRef } from 'react';
+import { useToast } from '@/app/components/Toast';
+import type { Post } from '@/server/actions/posts';
 
 /**
  * 文件上传Hook
@@ -16,28 +16,28 @@ export function useFileUpload(onSuccess?: () => void) {
    */
   const handleFileUpload = async (file: File, postId?: number) => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append('file', file);
     if (postId) {
-      formData.append("postId", postId.toString());
+      formData.append('postId', postId.toString());
     }
 
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
+      const response = await fetch('/api/upload', {
+        method: 'POST',
         body: formData,
       });
 
       const result = await response.json();
       if (result.success) {
-        showToast(postId ? "文章更新成功" : "文章创建成功", "success");
+        showToast(postId ? '文章更新成功' : '文章创建成功', 'success');
         onSuccess?.();
         setEditingPost(null);
       } else {
-        showToast(`上传失败: ${result.error}`, "error");
+        showToast(`上传失败: ${result.error}`, 'error');
       }
     } catch (error) {
-      console.error("上传失败:", error);
-      showToast("上传失败", "error");
+      console.error('上传失败:', error);
+      showToast('上传失败', 'error');
     }
   };
 
@@ -46,12 +46,12 @@ export function useFileUpload(onSuccess?: () => void) {
    */
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.name.endsWith(".md")) {
+    if (file && file.name.endsWith('.md')) {
       handleFileUpload(file, editingPost?.id);
     } else {
-      showToast("请选择.md文件", "warning");
+      showToast('请选择.md文件', 'warning');
     }
-    e.target.value = "";
+    e.target.value = '';
   };
 
   /**
@@ -60,10 +60,10 @@ export function useFileUpload(onSuccess?: () => void) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith(".md")) {
+    if (file && file.name.endsWith('.md')) {
       handleFileUpload(file);
     } else {
-      showToast("请拖拽.md文件", "warning");
+      showToast('请拖拽.md文件', 'warning');
     }
   };
 

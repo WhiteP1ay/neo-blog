@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { db } from "@/server/db/db";
-import { commentsTable } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
-import { getSession } from "@/server/utils/auth";
+import { db } from '@/server/db/db';
+import { commentsTable } from '@/server/db/schema';
+import { desc, eq } from 'drizzle-orm';
+import { getSession } from '@/server/utils/auth';
 
 /**
  * 评论类型定义
@@ -66,8 +66,8 @@ export async function getCommentsByPostId(postId: number) {
 
     return { success: true, data: rootComments };
   } catch (error) {
-    console.error("获取评论失败:", error);
-    return { success: false, error: "获取评论失败" };
+    console.error('获取评论失败:', error);
+    return { success: false, error: '获取评论失败' };
   }
 }
 
@@ -97,8 +97,8 @@ export async function createComment(data: {
 
     return { success: true, data: result[0] };
   } catch (error) {
-    console.error("创建评论失败:", error);
-    return { success: false, error: "创建评论失败" };
+    console.error('创建评论失败:', error);
+    return { success: false, error: '创建评论失败' };
   }
 }
 
@@ -109,22 +109,19 @@ export async function deleteComment(id: number) {
   // 检查登录状态
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
-    const result = await db
-      .delete(commentsTable)
-      .where(eq(commentsTable.id, id))
-      .returning();
+    const result = await db.delete(commentsTable).where(eq(commentsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: "评论不存在" };
+      return { success: false, error: '评论不存在' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("删除评论失败:", error);
-    return { success: false, error: "删除评论失败" };
+    console.error('删除评论失败:', error);
+    return { success: false, error: '删除评论失败' };
   }
 }

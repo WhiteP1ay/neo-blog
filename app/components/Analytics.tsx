@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 /**
  * 埋点事件类型
@@ -18,10 +18,10 @@ export type AnalyticsEvent = {
 async function trackEvent(event: AnalyticsEvent) {
   try {
     // 发送到埋点API
-    await fetch("/api/analytics", {
-      method: "POST",
+    await fetch('/api/analytics', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         ...event,
@@ -32,7 +32,7 @@ async function trackEvent(event: AnalyticsEvent) {
     });
   } catch (error) {
     // 静默失败，不影响用户体验
-    console.error("Analytics error:", error);
+    console.error('Analytics error:', error);
   }
 }
 
@@ -45,7 +45,7 @@ export function useAnalytics() {
    */
   const track = (event: AnalyticsEvent) => {
     // 使用 requestIdleCallback 或 setTimeout 异步发送，不阻塞主线程
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       requestIdleCallback(() => trackEvent(event), { timeout: 2000 });
     } else {
       setTimeout(() => trackEvent(event), 0);
@@ -61,10 +61,9 @@ export function useAnalytics() {
 export function usePageView(pageId?: string) {
   useEffect(() => {
     trackEvent({
-      type: "page_view",
-      action: "view_page",
-      target: pageId || (typeof window !== "undefined" ? window.location.pathname : ""),
+      type: 'page_view',
+      action: 'view_page',
+      target: pageId || (typeof window !== 'undefined' ? window.location.pathname : ''),
     });
   }, [pageId]); // 只在 pageId 变化时触发
 }
-

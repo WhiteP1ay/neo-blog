@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import type { Topic } from "@/server/actions/topics";
+import type { Topic } from '@/server/actions/topics';
 
 interface TopicsTableProps {
   topics: Topic[];
@@ -14,37 +14,19 @@ interface TopicsTableProps {
 /**
  * 专题表格组件
  */
-export function TopicsTable({
-  topics,
-  onEdit,
-  onDelete,
-  onToggleHidden,
-  onTogglePinned,
-}: TopicsTableProps) {
+export function TopicsTable({ topics, onEdit, onDelete, onToggleHidden, onTogglePinned }: TopicsTableProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                名称
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                描述
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                置顶
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                状态
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                创建时间
-              </th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                操作
-              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">置顶</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -59,9 +41,7 @@ export function TopicsTable({
                 <tr key={topic.id}>
                   <td className="px-4 sm:px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm sm:text-base font-medium text-gray-900">
-                        {topic.name}
-                      </span>
+                      <span className="text-sm sm:text-base font-medium text-gray-900">{topic.name}</span>
                       {topic.isPinned && (
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
                           置顶
@@ -70,33 +50,31 @@ export function TopicsTable({
                     </div>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                    {topic.description || "-"}
+                    {topic.description || '-'}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <button
                       onClick={() => onTogglePinned(topic)}
                       className={`text-xs sm:text-sm px-2 py-1 rounded ${
                         topic.isPinned
-                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {topic.isPinned ? "已置顶" : "置顶"}
+                      {topic.isPinned ? '已置顶' : '置顶'}
                     </button>
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                        topic.isHidden
-                          ? "bg-gray-100 text-gray-600"
-                          : "bg-green-100 text-green-800"
+                        topic.isHidden ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'
                       }`}
                     >
-                      {topic.isHidden ? "已隐藏" : "显示中"}
+                      {topic.isHidden ? '已隐藏' : '显示中'}
                     </span>
                   </td>
                   <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
-                    {new Date(topic.createdAt).toLocaleDateString("zh-CN")}
+                    {new Date(topic.createdAt).toLocaleDateString('zh-CN')}
                   </td>
                   <td className="px-4 sm:px-6 py-4">
                     <div className="flex flex-wrap gap-2">
@@ -110,7 +88,7 @@ export function TopicsTable({
                         onClick={() => onToggleHidden(topic)}
                         className="text-gray-600 hover:text-gray-800 text-xs sm:text-sm"
                       >
-                        {topic.isHidden ? "显示" : "隐藏"}
+                        {topic.isHidden ? '显示' : '隐藏'}
                       </button>
                       <button
                         onClick={() => onDelete(topic.id)}
@@ -129,4 +107,3 @@ export function TopicsTable({
     </div>
   );
 }
-

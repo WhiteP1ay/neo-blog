@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { useTheme } from "./ThemeProvider";
-import { Switch } from "./SwitchTheme";
-import { navItems } from "@/app/nav";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { useTheme } from './ThemeProvider';
+import { Switch } from './SwitchTheme';
+import { navItems } from '@/app/nav';
 
 export function Nav() {
   const pathname = usePathname();
@@ -22,9 +22,7 @@ export function Nav() {
         <div className="flex items-center justify-between h-16">
           {/* Logo/Home Link */}
           <Link href="/" className="flex items-center">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              White Meta
-            </h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">White Meta</h1>
           </Link>
 
           {/* Desktop Navigation */}
@@ -33,25 +31,19 @@ export function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-sm font-medium transition-colors ${isActive(item.href)
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                  }`}
+                className={`text-sm font-medium transition-colors ${
+                  isActive(item.href)
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                }`}
               >
                 {item.label}
               </Link>
             ))}
-            <Switch
-              checked={isDarkMode}
-              onChange={toggleTheme}
-            />
-            <Link
-              href="/admin"
-              className="opacity-0"
-            >
+            <Switch checked={isDarkMode} onChange={toggleTheme} />
+            <Link href="/admin" className="opacity-0">
               管理
             </Link>
-
           </div>
 
           {/* Mobile Menu Button */}
@@ -60,26 +52,11 @@ export function Nav() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               )}
             </svg>
           </button>
@@ -94,10 +71,11 @@ export function Nav() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-sm font-medium transition-colors ${isActive(item.href)
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
-                    }`}
+                  className={`text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
+                  }`}
                 >
                   {item.label}
                 </Link>
@@ -116,11 +94,7 @@ export function Nav() {
               >
                 管理
               </Link>
-              <Switch
-                checked={isDarkMode}
-                onChange={toggleTheme}
-              />
-
+              <Switch checked={isDarkMode} onChange={toggleTheme} />
             </div>
           </div>
         )}
@@ -128,4 +102,3 @@ export function Nav() {
     </nav>
   );
 }
-

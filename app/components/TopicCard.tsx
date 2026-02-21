@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
-import type { Topic } from "@/server/actions/topics";
-import { formatDate } from "@/app/utils/date";
+import Link from 'next/link';
+import Image from 'next/image';
+import type { Topic } from '@/server/actions/topics';
+import { formatDate } from '@/app/utils/date';
 
 interface TopicCardProps {
   topic: Topic;
@@ -54,15 +54,10 @@ export function TopicCard({ topic }: TopicCardProps) {
           )}
         </div>
         {topic.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mt-2">
-            {topic.description}
-          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3 mt-2">{topic.description}</p>
         )}
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-          {formatDate(topic.createdAt)}
-        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-4">{formatDate(topic.createdAt)}</div>
       </div>
     </Link>
   );
 }
-

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 /**
  * 检测用户是否在中国大陆
@@ -59,7 +59,7 @@ export function useChinaIPDetector() {
 
     const checkLocation = async () => {
       const result = await checkGoogle();
-      
+
       if (isMounted) {
         setIsChina(result);
         setIsChecking(false);
@@ -83,4 +83,3 @@ export function useChinaIPDetector() {
 
   return { isChina, isChecking };
 }
-

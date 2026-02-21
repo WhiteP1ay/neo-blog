@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useTableOfContents } from "./useTableOfContents";
-import { useScrollTracking, useScrollActions } from "./useScrollTracking";
-import { DesktopTOC } from "./DesktopTOC";
-import { MobileTOC } from "./MobileTOC";
-import type { TableOfContentsProps } from "./types";
+import { useTableOfContents } from './useTableOfContents';
+import { useScrollTracking, useScrollActions } from './useScrollTracking';
+import { DesktopTOC } from './DesktopTOC';
+import { MobileTOC } from './MobileTOC';
+import type { TableOfContentsProps } from './types';
 
 /**
  * 文章目录组件
@@ -43,4 +43,3 @@ export function TableOfContents({ content }: TableOfContentsProps) {
     </>
   );
 }
-

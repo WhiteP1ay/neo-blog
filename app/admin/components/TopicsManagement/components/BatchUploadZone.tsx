@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRef } from "react";
-import { useToast } from "@/app/components/Toast";
+import { useRef } from 'react';
+import { useToast } from '@/app/components/Toast';
 
 interface BatchUploadZoneProps {
   onFilesUploaded: (postIds: number[]) => void;
@@ -16,10 +16,10 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
   const { showToast } = useToast();
 
   const handleFileUpload = async (files: FileList) => {
-    const mdFiles = Array.from(files).filter((file) => file.name.endsWith(".md"));
+    const mdFiles = Array.from(files).filter((file) => file.name.endsWith('.md'));
 
     if (mdFiles.length === 0) {
-      showToast("请选择.md文件", "warning");
+      showToast('请选择.md文件', 'warning');
       return;
     }
 
@@ -28,10 +28,10 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
     for (const file of mdFiles) {
       try {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
 
-        const response = await fetch("/api/upload", {
-          method: "POST",
+        const response = await fetch('/api/upload', {
+          method: 'POST',
           body: formData,
         });
 
@@ -40,15 +40,15 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
           postIds.push(result.data.id);
         }
       } catch (error) {
-        console.error("上传失败:", error);
+        console.error('上传失败:', error);
       }
     }
 
     if (postIds.length > 0) {
-      showToast(`成功上传 ${postIds.length} 篇文章`, "success");
+      showToast(`成功上传 ${postIds.length} 篇文章`, 'success');
       onFilesUploaded(postIds);
     } else {
-      showToast("上传失败", "error");
+      showToast('上传失败', 'error');
     }
   };
 
@@ -57,7 +57,7 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
     if (files && files.length > 0) {
       handleFileUpload(files);
     }
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -79,17 +79,8 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
       onDragOver={handleDragOver}
       className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 text-center hover:border-blue-400 transition-colors"
     >
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".md"
-        multiple
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      <p className="text-sm text-gray-600 mb-2">
-        批量上传 Markdown 文件添加文章到专题
-      </p>
+      <input ref={fileInputRef} type="file" accept=".md" multiple onChange={handleFileSelect} className="hidden" />
+      <p className="text-sm text-gray-600 mb-2">批量上传 Markdown 文件添加文章到专题</p>
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
@@ -102,4 +93,3 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
     </div>
   );
 }
-

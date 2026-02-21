@@ -1,20 +1,27 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { createTopic, updateTopic, getTopicById, addPostToTopic, removePostFromTopic, updateTopicPostSortOrder } from "@/server/actions/topics";
-import { getPosts, type Post } from "@/server/actions/posts";
-import { useToast } from "@/app/components/Toast";
-import type { Topic } from "@/server/actions/topics";
+import { useState, useEffect } from 'react';
+import {
+  createTopic,
+  updateTopic,
+  getTopicById,
+  addPostToTopic,
+  removePostFromTopic,
+  updateTopicPostSortOrder,
+} from '@/server/actions/topics';
+import { getPosts, type Post } from '@/server/actions/posts';
+import { useToast } from '@/app/components/Toast';
+import type { Topic } from '@/server/actions/topics';
 
 interface UseTopicFormProps {
   topic: Topic | null;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   onSuccess: () => void;
 }
 
 export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [coverImageError, setCoverImageError] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -26,9 +33,9 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
 
   // 加载专题数据（编辑模式）
   useEffect(() => {
-    if (mode === "edit" && topic) {
+    if (mode === 'edit' && topic) {
       setName(topic.name);
-      setDescription(topic.description || "");
+      setDescription(topic.description || '');
       setCoverImage(topic.coverImage);
       setIsPinned(topic.isPinned);
       setIsHidden(topic.isHidden);
@@ -42,7 +49,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
             topicPosts.map((tp) => ({
               postId: tp.postId,
               sortOrder: tp.sortOrder,
-            }))
+            })),
           );
         }
       };
@@ -63,7 +70,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
 
   // 验证 URL 是否有效
   const isValidUrl = (url: string): boolean => {
-    if (!url || url.trim() === "") return false;
+    if (!url || url.trim() === '') return false;
     try {
       new URL(url.trim());
       return true;
@@ -75,7 +82,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
   // 处理封面图 URL 输入
   const handleCoverImageChange = (url: string) => {
     const trimmedUrl = url.trim();
-    if (trimmedUrl === "") {
+    if (trimmedUrl === '') {
       setCoverImage(null);
       setCoverImageError(false);
       return;
@@ -137,7 +144,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      showToast("请输入专题名称", "error");
+      showToast('请输入专题名称', 'error');
       return;
     }
 
@@ -145,7 +152,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
     try {
       let topicId: number;
 
-      if (mode === "create") {
+      if (mode === 'create') {
         const result = await createTopic({
           name: name.trim(),
           description: description.trim() || null,
@@ -155,7 +162,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
         });
 
         if (!result.success) {
-          showToast(`创建失败: ${result.error}`, "error");
+          showToast(`创建失败: ${result.error}`, 'error');
           setLoading(false);
           return;
         }
@@ -173,7 +180,7 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
         });
 
         if (!result.success) {
-          showToast(`更新失败: ${result.error}`, "error");
+          showToast(`更新失败: ${result.error}`, 'error');
           setLoading(false);
           return;
         }
@@ -182,11 +189,10 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
       }
 
       // 更新专题内的文章
-      if (mode === "edit" && topic) {
+      if (mode === 'edit' && topic) {
         const currentTopicResult = await getTopicById(topic.id);
-        const currentTopicPosts = currentTopicResult.success && currentTopicResult.data
-          ? currentTopicResult.data.topicPosts || []
-          : [];
+        const currentTopicPosts =
+          currentTopicResult.success && currentTopicResult.data ? currentTopicResult.data.topicPosts || [] : [];
 
         const currentPostIds = new Set(currentTopicPosts.map((tp) => tp.postId));
         const newPostIds = new Set(selectedPosts.map((p) => p.postId));
@@ -216,11 +222,11 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
         await updateTopicPostSortOrder(topicId, selectedPosts);
       }
 
-      showToast(mode === "create" ? "创建成功" : "更新成功", "success");
+      showToast(mode === 'create' ? '创建成功' : '更新成功', 'success');
       onSuccess();
     } catch (error) {
-      console.error("保存失败:", error);
-      showToast("保存失败", "error");
+      console.error('保存失败:', error);
+      showToast('保存失败', 'error');
     } finally {
       setLoading(false);
     }
@@ -250,4 +256,3 @@ export function useTopicForm({ topic, mode, onSuccess }: UseTopicFormProps) {
     handleSubmit,
   };
 }
-

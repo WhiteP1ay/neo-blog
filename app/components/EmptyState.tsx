@@ -14,4 +14,3 @@ export function EmptyState({ message, icon }: EmptyStateProps) {
     </div>
   );
 }
-

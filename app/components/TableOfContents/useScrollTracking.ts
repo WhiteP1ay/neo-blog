@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import type { TocItem } from "./types";
+import { useEffect, useState } from 'react';
+import type { TocItem } from './types';
 
 /**
  * Hook: 跟踪滚动位置，更新激活的标题和返回顶部按钮显示状态
  */
 export function useScrollTracking(toc: TocItem[]) {
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>('');
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
@@ -15,9 +15,9 @@ export function useScrollTracking(toc: TocItem[]) {
 
       // 更新当前激活的标题
       const headings = document.querySelectorAll(
-        "article h1, article h2, article h3, article h4, article h5, article h6"
+        'article h1, article h2, article h3, article h4, article h5, article h6',
       );
-      let current = "";
+      let current = '';
 
       headings.forEach((heading) => {
         const rect = heading.getBoundingClientRect();
@@ -32,11 +32,11 @@ export function useScrollTracking(toc: TocItem[]) {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener('scroll', handleScroll);
     handleScroll(); // 初始调用
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [toc]); // 依赖 toc，确保标题已设置 ID
 
@@ -56,7 +56,7 @@ export function useScrollActions() {
 
       window.scrollTo({
         top: offsetPosition,
-        behavior: "smooth",
+        behavior: 'smooth',
       });
 
       onScroll?.();
@@ -66,10 +66,9 @@ export function useScrollActions() {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 
   return { scrollToHeading, scrollToTop };
 }
-

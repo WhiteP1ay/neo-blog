@@ -1,10 +1,10 @@
-import { integer, pgTable, timestamp, varchar, text, boolean } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { integer, pgTable, timestamp, varchar, text, boolean } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 /**
  * 用户表
  */
-export const usersTable = pgTable("users", {
+export const usersTable = pgTable('users', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
   password: varchar({ length: 255 }).notNull(),
@@ -15,7 +15,7 @@ export const usersTable = pgTable("users", {
 /**
  * 文章表
  */
-export const postsTable = pgTable("posts", {
+export const postsTable = pgTable('posts', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(), // 存储解析后的HTML
@@ -28,9 +28,11 @@ export const postsTable = pgTable("posts", {
 /**
  * 评论表
  */
-export const commentsTable = pgTable("comments", {
+export const commentsTable = pgTable('comments', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  postId: integer().notNull().references(() => postsTable.id, { onDelete: "cascade" }),
+  postId: integer()
+    .notNull()
+    .references(() => postsTable.id, { onDelete: 'cascade' }),
   parentId: integer(), // 回复的父评论ID，null表示顶级评论
   author: varchar({ length: 255 }).notNull(), // 评论者昵称
   email: varchar({ length: 255 }), // 邮箱（可选）
@@ -43,7 +45,7 @@ export const commentsTable = pgTable("comments", {
 /**
  * 埋点数据表
  */
-export const analyticsTable = pgTable("analytics", {
+export const analyticsTable = pgTable('analytics', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   type: varchar({ length: 50 }).notNull(), // 事件类型：page_view, comment, etc.
   action: varchar({ length: 100 }), // 具体操作
@@ -58,7 +60,7 @@ export const analyticsTable = pgTable("analytics", {
 /**
  * 专题表
  */
-export const topicsTable = pgTable("topics", {
+export const topicsTable = pgTable('topics', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(), // 专题名称
   description: text(), // 专题描述（可选）
@@ -72,10 +74,14 @@ export const topicsTable = pgTable("topics", {
 /**
  * 专题-文章关联表（多对多关系，带排序）
  */
-export const topicPostsTable = pgTable("topic_posts", {
+export const topicPostsTable = pgTable('topic_posts', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  topicId: integer().notNull().references(() => topicsTable.id, { onDelete: "cascade" }),
-  postId: integer().notNull().references(() => postsTable.id, { onDelete: "cascade" }),
+  topicId: integer()
+    .notNull()
+    .references(() => topicsTable.id, { onDelete: 'cascade' }),
+  postId: integer()
+    .notNull()
+    .references(() => postsTable.id, { onDelete: 'cascade' }),
   sortOrder: integer().notNull().default(0), // 排序顺序
   createdAt: timestamp().notNull().defaultNow(),
 });
@@ -103,7 +109,7 @@ export const topicPostsRelations = relations(topicPostsTable, ({ one }) => ({
 /**
  * 工具表
  */
-export const toolsTable = pgTable("tools", {
+export const toolsTable = pgTable('tools', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(), // 工具名称
   description: text(), // 工具描述（可选）

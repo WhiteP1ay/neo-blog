@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import type { Post } from "@/server/actions/posts";
-import { useFileUpload } from "./useFileUpload";
-import { usePostActions } from "./usePostActions";
-import { usePostTopics } from "./hooks/usePostTopics";
-import { FileUploadZone } from "./FileUploadZone";
-import { PostsTable } from "./PostsTable";
-import { PostsCardList } from "./PostsCardList";
-import { LoadingState } from "./LoadingState";
-import { EmptyState } from "./EmptyState";
+import type { Post } from '@/server/actions/posts';
+import { useFileUpload } from './useFileUpload';
+import { usePostActions } from './usePostActions';
+import { usePostTopics } from './hooks/usePostTopics';
+import { FileUploadZone } from './FileUploadZone';
+import { PostsTable } from './PostsTable';
+import { PostsCardList } from './PostsCardList';
+import { LoadingState } from './LoadingState';
+import { EmptyState } from './EmptyState';
 
 interface PostsManagementProps {
   posts: Post[];
@@ -19,30 +19,17 @@ interface PostsManagementProps {
 /**
  * 文章管理组件
  */
-export function PostsManagement({
-  posts,
-  loading,
-  onRefresh,
-}: PostsManagementProps) {
-  const {
-    fileInputRef,
-    dropZoneRef,
-    handleFileSelect,
-    handleDrop,
-    handleDragOver,
-    startEdit,
-    startCreate,
-  } = useFileUpload(onRefresh);
+export function PostsManagement({ posts, loading, onRefresh }: PostsManagementProps) {
+  const { fileInputRef, dropZoneRef, handleFileSelect, handleDrop, handleDragOver, startEdit, startCreate } =
+    useFileUpload(onRefresh);
 
-  const { handleDeletePost, handleDownloadPost, handleEditPost, handleTogglePinned } =
-    usePostActions(onRefresh);
+  const { handleDeletePost, handleDownloadPost, handleEditPost, handleTogglePinned } = usePostActions(onRefresh);
 
   const postTopicsMap = usePostTopics(posts);
 
   if (loading) {
     return <LoadingState />;
   }
-
 
   return (
     <div>

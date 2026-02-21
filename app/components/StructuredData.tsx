@@ -15,12 +15,7 @@ interface StructuredDataProps {
  * 将 JSON-LD 数据注入到页面中，用于 SEO
  */
 export function StructuredData({ data }: StructuredDataProps) {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
 }
 
 /**
@@ -31,19 +26,19 @@ export function createBlogPostingSchema({
   description,
   datePublished,
   dateModified,
-  author = { "@type": "Person", name: "whitePlay" },
-  publisher = { "@type": "Organization", name: "White Meta" },
+  author = { '@type': 'Person', name: 'whitePlay' },
+  publisher = { '@type': 'Organization', name: 'White Meta' },
 }: {
   headline: string;
   description: string;
   datePublished?: string;
   dateModified?: string;
-  author?: { "@type": string; name: string };
-  publisher?: { "@type": string; name: string };
+  author?: { '@type': string; name: string };
+  publisher?: { '@type': string; name: string };
 }) {
   return {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
     headline,
     ...(datePublished && { datePublished }),
     ...(dateModified && { dateModified }),
@@ -52,4 +47,3 @@ export function createBlogPostingSchema({
     description,
   };
 }
-

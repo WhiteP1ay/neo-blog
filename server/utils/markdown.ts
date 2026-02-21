@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { marked } from 'marked';
 
 /**
  * 将Markdown文本转换为HTML
@@ -9,8 +9,7 @@ export function markdownToHTML(markdown: string): string {
   try {
     return marked.parse(markdown) as string;
   } catch (error) {
-    console.error("Markdown解析失败:", error);
-    throw new Error("Markdown解析失败");
+    console.error('Markdown解析失败:', error);
+    throw new Error('Markdown解析失败');
   }
 }
-

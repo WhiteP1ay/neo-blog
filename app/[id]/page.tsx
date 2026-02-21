@@ -1,17 +1,14 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import { getPostById, getPosts } from "@/server/actions/posts";
-import {
-  getTopicsByPostId,
-  getTopicPostNavigation,
-} from "@/server/actions/topics";
-import { CodeHighlight } from "@/app/components/CodeHighlight";
-import { PostPageClient } from "@/app/components/PostDetail/PostPageClient";
-import { PostNavigation } from "@/app/components/PostDetail/PostNavigation";
-import { TableOfContents } from "@/app/components/TableOfContents";
-import { Breadcrumb } from "@/app/components/Breadcrumb";
-import { PostHeader } from "@/app/components/PostDetail/PostHeader";
-import { StructuredData, createBlogPostingSchema } from "@/app/components/StructuredData";
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getPostById, getPosts } from '@/server/actions/posts';
+import { getTopicsByPostId, getTopicPostNavigation } from '@/server/actions/topics';
+import { CodeHighlight } from '@/app/components/CodeHighlight';
+import { PostPageClient } from '@/app/components/PostDetail/PostPageClient';
+import { PostNavigation } from '@/app/components/PostDetail/PostNavigation';
+import { TableOfContents } from '@/app/components/TableOfContents';
+import { Breadcrumb } from '@/app/components/Breadcrumb';
+import { PostHeader } from '@/app/components/PostDetail/PostHeader';
+import { StructuredData, createBlogPostingSchema } from '@/app/components/StructuredData';
 
 export async function generateStaticParams() {
   const result = await getPosts();
@@ -27,11 +24,7 @@ export const revalidate = 60;
 /**
  * 生成文章页面的metadata（SEO优化）
  */
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const postId = parseInt(id, 10);
 
@@ -47,35 +40,28 @@ export async function generateMetadata({
   const post = result.data;
 
   // 从HTML内容中提取纯文本作为描述（前150个字符）
-  const textContent = post.content.replace(/<[^>]*>/g, "").trim();
-  const description =
-    textContent.length > 150
-      ? textContent.substring(0, 150) + "..."
-      : textContent || "阅读更多内容";
+  const textContent = post.content.replace(/<[^>]*>/g, '').trim();
+  const description = textContent.length > 150 ? textContent.substring(0, 150) + '...' : textContent || '阅读更多内容';
 
-  const publishedTime = post.createdAt
-    ? new Date(post.createdAt).toISOString()
-    : undefined;
-  const modifiedTime = post.updatedAt
-    ? new Date(post.updatedAt).toISOString()
-    : undefined;
+  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
+  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
 
   return {
     title: post.title,
     description,
-    keywords: [post.title, "博客", "技术文章"],
-    authors: [{ name: "whitePlay" }],
+    keywords: [post.title, '博客', '技术文章'],
+    authors: [{ name: 'whitePlay' }],
     openGraph: {
       title: post.title,
       description,
-      type: "article",
+      type: 'article',
       ...(publishedTime && { publishedTime }),
       ...(modifiedTime && { modifiedTime }),
-      authors: ["whitePlay"],
-      siteName: "White Meta",
+      authors: ['whitePlay'],
+      siteName: 'White Meta',
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: post.title,
       description,
     },
@@ -85,11 +71,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const postId = parseInt(id, 10);
 
@@ -106,8 +88,7 @@ export default async function PostPage({
 
   // 获取文章所属的专题
   const topicsResult = await getTopicsByPostId(postId);
-  const topics =
-    topicsResult.success && topicsResult.data ? topicsResult.data : [];
+  const topics = topicsResult.success && topicsResult.data ? topicsResult.data : [];
 
   // 获取专题导航（如果有专题，使用第一个专题的导航）
   type Navigation = {
@@ -122,17 +103,13 @@ export default async function PostPage({
     }
   }
 
-  const publishedTime = post.createdAt
-    ? new Date(post.createdAt).toISOString()
-    : undefined;
-  const modifiedTime = post.updatedAt
-    ? new Date(post.updatedAt).toISOString()
-    : undefined;
+  const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
+  const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
 
   // 结构化数据（JSON-LD）
   const jsonLd = createBlogPostingSchema({
     headline: post.title,
-    description: post.content.replace(/<[^>]*>/g, "").substring(0, 200),
+    description: post.content.replace(/<[^>]*>/g, '').substring(0, 200),
     datePublished: publishedTime,
     dateModified: modifiedTime,
   });
@@ -152,21 +129,12 @@ export default async function PostPage({
           </div>
 
           <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
-            <PostHeader
-              title={post.title}
-              createdAt={post.createdAt}
-              publishedTime={publishedTime}
-            />
-            <div
-              className="prose prose-sm sm:prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+            <PostHeader title={post.title} createdAt={post.createdAt} publishedTime={publishedTime} />
+            <div className="prose prose-sm sm:prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
           </article>
 
           {/* 文章导航（上一篇/下一篇） */}
-          {navigation.prev || navigation.next ? (
-            <PostNavigation prev={navigation.prev} next={navigation.next} />
-          ) : null}
+          {navigation.prev || navigation.next ? <PostNavigation prev={navigation.prev} next={navigation.next} /> : null}
 
           {/* 代码高亮 */}
           <CodeHighlight />

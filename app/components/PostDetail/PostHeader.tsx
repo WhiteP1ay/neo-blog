@@ -1,4 +1,4 @@
-import { formatDate } from "@/app/utils/date";
+import { formatDate } from '@/app/utils/date';
 
 interface PostHeaderProps {
   title: string;
@@ -12,9 +12,7 @@ interface PostHeaderProps {
 export function PostHeader({ title, createdAt, publishedTime }: PostHeaderProps) {
   return (
     <header>
-      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-        {title}
-      </h1>
+      <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">{title}</h1>
       {createdAt && (
         <time
           dateTime={publishedTime}
@@ -26,4 +24,3 @@ export function PostHeader({ title, createdAt, publishedTime }: PostHeaderProps)
     </header>
   );
 }
-

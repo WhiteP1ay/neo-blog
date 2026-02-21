@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { formatDate } from "@/app/utils/date";
+import type { Metadata } from 'next';
+import { formatDate } from '@/app/utils/date';
 
 export const metadata: Metadata = {
-  title: "隐私政策",
-  description: "White Meta 博客隐私政策和 Cookie 政策",
+  title: '隐私政策',
+  description: 'White Meta 博客隐私政策和 Cookie 政策',
 };
 
 export default function PrivacyPage() {
@@ -15,7 +15,9 @@ export default function PrivacyPage() {
       <h2>1. 信息收集</h2>
       <p>我们收集以下类型的信息：</p>
       <ul>
-        <li>访问数据：当您访问我们的网站时，我们会自动收集某些信息，包括您的IP地址、浏览器类型、访问时间、访问的页面等。这些信息用于统计网站访问量和改善用户体验。</li>
+        <li>
+          访问数据：当您访问我们的网站时，我们会自动收集某些信息，包括您的IP地址、浏览器类型、访问时间、访问的页面等。这些信息用于统计网站访问量和改善用户体验。
+        </li>
         <li>评论数据：当您在我们的网站上发表评论时，我们会收集您提供的昵称、邮箱地址和评论内容。</li>
         <li>Cookie：我们使用Cookie来改善您的浏览体验，包括记住您的偏好设置。</li>
       </ul>
@@ -33,12 +35,17 @@ export default function PrivacyPage() {
       <h2>3. 第三方服务</h2>
       <p>我们的网站可能使用以下第三方服务：</p>
       <ul>
-        <li>Google AdSense：我们使用Google AdSense来展示广告。Google可能会使用Cookie来根据您的访问记录展示个性化广告。您可以访问Google广告设置来管理您的广告偏好。</li>
+        <li>
+          Google AdSense：我们使用Google
+          AdSense来展示广告。Google可能会使用Cookie来根据您的访问记录展示个性化广告。您可以访问Google广告设置来管理您的广告偏好。
+        </li>
         <li>分析服务：我们使用网站分析工具来了解访问者如何使用我们的网站。</li>
       </ul>
 
       <h2>4. 数据安全</h2>
-      <p>我们采取合理的技术和管理措施来保护您的个人信息，防止未经授权的访问、使用、披露或破坏。然而，请注意，互联网传输方法或电子存储方法都不是100%安全的。</p>
+      <p>
+        我们采取合理的技术和管理措施来保护您的个人信息，防止未经授权的访问、使用、披露或破坏。然而，请注意，互联网传输方法或电子存储方法都不是100%安全的。
+      </p>
 
       <h2>5. 您的权利</h2>
       <p>您有权：</p>
@@ -49,7 +56,9 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>6. Cookie政策</h2>
-      <p>我们使用Cookie来改善您的浏览体验。您可以通过浏览器设置来控制Cookie的使用。请注意，禁用Cookie可能会影响网站的某些功能。</p>
+      <p>
+        我们使用Cookie来改善您的浏览体验。您可以通过浏览器设置来控制Cookie的使用。请注意，禁用Cookie可能会影响网站的某些功能。
+      </p>
       <p>我们使用的Cookie类型包括：</p>
       <ul>
         <li>必要Cookie：这些Cookie是网站运行所必需的，无法关闭。</li>
@@ -58,7 +67,9 @@ export default function PrivacyPage() {
       </ul>
 
       <h2>7. 隐私政策的变更</h2>
-      <p>我们可能会不时更新本隐私政策。我们会在本页面上发布新的隐私政策，并更新&ldquo;最后更新日期&rdquo;。我们建议您定期查看本隐私政策以了解任何变更。</p>
+      <p>
+        我们可能会不时更新本隐私政策。我们会在本页面上发布新的隐私政策，并更新&ldquo;最后更新日期&rdquo;。我们建议您定期查看本隐私政策以了解任何变更。
+      </p>
 
       <h2>8. 联系我们</h2>
       <p>如果您对本隐私政策有任何疑问或建议，请通过以下方式联系我们：</p>
@@ -66,4 +77,3 @@ export default function PrivacyPage() {
     </div>
   );
 }
-

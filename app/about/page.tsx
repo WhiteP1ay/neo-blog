@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
-import Image from "next/image";
-import { Breadcrumb } from "@/app/components/Breadcrumb";
-import { Youtube, Github, Tv, Mail, Smartphone, Joystick, Guitar, Motorbike, ShipWheel } from "lucide-react";
+import type { Metadata } from 'next';
+import Image from 'next/image';
+import { Breadcrumb } from '@/app/components/Breadcrumb';
+import { Youtube, Github, Tv, Mail, Smartphone, Joystick, Guitar, Motorbike, ShipWheel } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: "About",
-  description: "About White Meta",
+  title: 'About',
+  description: 'About White Meta',
 };
 
 export default function AboutPage() {
@@ -15,27 +15,25 @@ export default function AboutPage() {
         <Breadcrumb />
         <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8">
           <div className="flex items-center gap-4 mb-6">
-            <Image
-              className="rounded-full"
-              src="/avatar1.jpg"
-              alt="Ethan Park"
-              width={80}
-              height={80}
-            />
+            <Image className="rounded-full" src="/avatar1.jpg" alt="Ethan Park" width={80} height={80} />
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                白玩dev
-              </h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">白玩dev</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">软件开发工程师</p>
             </div>
           </div>
 
           <div className="prose prose-sm sm:prose-lg max-w-none text-gray-700 dark:text-gray-300 mb-6">
-            <p className="mb-4">
-              我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。
-            </p>
+            <p className="mb-4">我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。</p>
             <p className="mb-4 flex">
-              同时我也是个<Joystick className="mx-1" />主机游戏玩家<ShipWheel className="mx-1" />佛学爱好者<Motorbike className="mx-1" />摩托佬<Guitar className="mx-1" />业余吉他手。
+              同时我也是个
+              <Joystick className="mx-1" />
+              主机游戏玩家
+              <ShipWheel className="mx-1" />
+              佛学爱好者
+              <Motorbike className="mx-1" />
+              摩托佬
+              <Guitar className="mx-1" />
+              业余吉他手。
             </p>
           </div>
 

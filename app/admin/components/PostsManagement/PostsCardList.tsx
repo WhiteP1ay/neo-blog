@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { Post } from "@/server/actions/posts";
-import type { Topic } from "@/server/actions/topics";
+import type { Post } from '@/server/actions/posts';
+import type { Topic } from '@/server/actions/topics';
 
 interface PostsCardListProps {
   posts: Post[];
@@ -30,7 +30,7 @@ export function PostsCardList({
       {posts.map((post) => {
         const topics = postTopicsMap.get(post.id) || [];
         const isInTopics = topics.length > 0;
-        
+
         return (
           <div key={post.id} className="p-4">
             <button
@@ -40,9 +40,7 @@ export function PostsCardList({
               {post.title}
             </button>
             {post.createdAt && (
-              <div className="text-xs text-gray-500 mb-2">
-                {new Date(post.createdAt).toLocaleDateString("zh-CN")}
-              </div>
+              <div className="text-xs text-gray-500 mb-2">{new Date(post.createdAt).toLocaleDateString('zh-CN')}</div>
             )}
             {topics.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
@@ -63,11 +61,11 @@ export function PostsCardList({
                   onClick={() => onTogglePinned(post)}
                   className={`text-xs px-2 py-1 rounded ${
                     post.isPinned
-                      ? "bg-yellow-100 text-yellow-800 border border-yellow-600"
-                      : "bg-gray-100 text-gray-600 border border-gray-300"
+                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-600'
+                      : 'bg-gray-100 text-gray-600 border border-gray-300'
                   }`}
                 >
-                  {post.isPinned ? "已置顶" : "置顶"}
+                  {post.isPinned ? '已置顶' : '置顶'}
                 </button>
               )}
             </div>

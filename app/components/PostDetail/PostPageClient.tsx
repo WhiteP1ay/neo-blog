@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { CommentsSection } from "./CommentsSection";
-import { usePageView } from "../Analytics";
+import { CommentsSection } from './CommentsSection';
+import { usePageView } from '../Analytics';
 
 interface PostPageClientProps {
   postId: number;
@@ -17,4 +17,3 @@ export function PostPageClient({ postId }: PostPageClientProps) {
 
   return <CommentsSection postId={postId} />;
 }
-

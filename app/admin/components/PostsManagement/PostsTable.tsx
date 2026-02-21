@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { Post } from "@/server/actions/posts";
-import type { Topic } from "@/server/actions/topics";
+import type { Post } from '@/server/actions/posts';
+import type { Topic } from '@/server/actions/topics';
 
 interface PostsTableProps {
   posts: Post[];
@@ -30,28 +30,18 @@ export function PostsTable({
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              标题
-            </th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              创建时间
-            </th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              所属专题
-            </th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              置顶
-            </th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-              操作
-            </th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">所属专题</th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">置顶</th>
+            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {posts.map((post) => {
             const topics = postTopicsMap.get(post.id) || [];
             const isInTopics = topics.length > 0;
-            
+
             return (
               <tr key={post.id}>
                 <td className="px-4 sm:px-6 py-4">
@@ -63,9 +53,7 @@ export function PostsTable({
                   </button>
                 </td>
                 <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
-                  {post.createdAt
-                    ? new Date(post.createdAt).toLocaleDateString("zh-CN")
-                    : "-"}
+                  {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : '-'}
                 </td>
                 <td className="px-4 sm:px-6 py-4">
                   {topics.length > 0 ? (
@@ -89,11 +77,11 @@ export function PostsTable({
                       onClick={() => onTogglePinned(post)}
                       className={`text-xs sm:text-sm px-2 py-1 rounded ${
                         post.isPinned
-                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {post.isPinned ? "已置顶" : "置顶"}
+                      {post.isPinned ? '已置顶' : '置顶'}
                     </button>
                   ) : (
                     <span className="text-xs text-gray-400">-</span>

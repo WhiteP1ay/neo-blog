@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { getAnalyticsStats } from "@/server/actions/analytics";
-import { useState, useEffect, useCallback } from "react";
+import { getAnalyticsStats } from '@/server/actions/analytics';
+import { useState, useEffect, useCallback } from 'react';
 
 interface AnalyticsManagementProps {
   days: number;
@@ -118,21 +118,11 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                日期
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                页面浏览 (PV)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                独立访客 (UV)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                评论
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                点击
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">页面浏览 (PV)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">独立访客 (UV)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">评论</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">点击</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -157,12 +147,8 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                事件类型
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                数量
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">事件类型</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">数量</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -184,12 +170,8 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                操作
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                数量
-              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">数量</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -212,22 +194,15 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  文章ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  浏览次数
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">文章ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">浏览次数</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {data.topPosts.map((post: TopPost) => (
                 <tr key={post.target}>
                   <td className="px-6 py-4 text-sm">
-                    <a
-                      href={`/${post.target.replace("post_", "")}`}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
+                    <a href={`/${post.target.replace('post_', '')}`} className="text-blue-600 hover:text-blue-800">
                       {post.target}
                     </a>
                   </td>
@@ -241,4 +216,3 @@ export function AnalyticsManagement({ days, onDaysChange }: AnalyticsManagementP
     </div>
   );
 }
-

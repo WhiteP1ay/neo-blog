@@ -1,6 +1,6 @@
-import Link from "next/link";
-import type { Post } from "@/server/actions/posts";
-import { formatDate } from "@/app/utils/date";
+import Link from 'next/link';
+import type { Post } from '@/server/actions/posts';
+import { formatDate } from '@/app/utils/date';
 
 interface PostCardProps {
   post: Post;
@@ -26,11 +26,8 @@ export function PostCard({ post, showPinned = true }: PostCardProps) {
         )}
       </div>
       {post.createdAt && (
-        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          {formatDate(post.createdAt)}
-        </div>
+        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{formatDate(post.createdAt)}</div>
       )}
     </article>
   );
 }
-

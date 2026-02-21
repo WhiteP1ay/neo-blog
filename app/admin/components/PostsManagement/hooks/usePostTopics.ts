@@ -1,17 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { getTopicsByPostId } from "@/server/actions/topics";
-import type { Post } from "@/server/actions/posts";
-import type { Topic } from "@/server/actions/topics";
+import { useState, useEffect } from 'react';
+import { getTopicsByPostId } from '@/server/actions/topics';
+import type { Post } from '@/server/actions/posts';
+import type { Topic } from '@/server/actions/topics';
 
 /**
  * Hook: 获取文章所属的专题
  */
 export function usePostTopics(posts: Post[]) {
-  const [postTopicsMap, setPostTopicsMap] = useState<Map<number, Topic[]>>(
-    new Map()
-  );
+  const [postTopicsMap, setPostTopicsMap] = useState<Map<number, Topic[]>>(new Map());
 
   useEffect(() => {
     const loadTopics = async () => {

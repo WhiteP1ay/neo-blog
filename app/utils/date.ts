@@ -8,14 +8,14 @@
  * @returns 格式化后的日期字符串，例如：2024年1月1日
  */
 export function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  
-  return dateObj.toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+  if (!date) return '';
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+  return dateObj.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
 }
 
@@ -25,10 +25,9 @@ export function formatDate(date: Date | string | null | undefined): string {
  * @returns 格式化后的日期字符串，例如：2024/1/1
  */
 export function formatDateShort(date: Date | string | null | undefined): string {
-  if (!date) return "";
-  
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  
-  return dateObj.toLocaleDateString("zh-CN");
-}
+  if (!date) return '';
 
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+
+  return dateObj.toLocaleDateString('zh-CN');
+}

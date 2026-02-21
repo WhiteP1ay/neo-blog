@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { db } from "@/server/db/db";
-import { analyticsTable } from "@/server/db/schema";
-import { desc, gte } from "drizzle-orm";
-import { getSession } from "@/server/utils/auth";
+import { db } from '@/server/db/db';
+import { analyticsTable } from '@/server/db/schema';
+import { desc, gte } from 'drizzle-orm';
+import { getSession } from '@/server/utils/auth';
 
 /**
  * 埋点数据类型定义
@@ -48,8 +48,8 @@ export async function createAnalytics(data: {
 
     return { success: true, data: result[0] };
   } catch (error) {
-    console.error("创建埋点记录失败:", error);
-    return { success: false, error: "创建埋点记录失败" };
+    console.error('创建埋点记录失败:', error);
+    return { success: false, error: '创建埋点记录失败' };
   }
 }
 
@@ -60,7 +60,7 @@ export async function getAnalyticsStats(days: number = 7) {
   // 检查登录状态
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
@@ -75,42 +75,45 @@ export async function getAnalyticsStats(days: number = 7) {
       .orderBy(desc(analyticsTable.createdAt));
 
     // 按日期分组统计（包含PV和UV）
-    const dailyStats: Record<string, { 
-      date: string; 
-      pageViews: number; 
-      uniqueVisitors: Set<string>; // 使用Set存储唯一访客标识（IP+UserAgent）
-      comments: number; 
-      clicks: number 
-    }> = {};
-    
+    const dailyStats: Record<
+      string,
+      {
+        date: string;
+        pageViews: number;
+        uniqueVisitors: Set<string>; // 使用Set存储唯一访客标识（IP+UserAgent）
+        comments: number;
+        clicks: number;
+      }
+    > = {};
+
     analytics.forEach((item) => {
-      const date = new Date(item.createdAt).toLocaleDateString("zh-CN");
+      const date = new Date(item.createdAt).toLocaleDateString('zh-CN');
       if (!dailyStats[date]) {
-        dailyStats[date] = { 
-          date, 
-          pageViews: 0, 
-          uniqueVisitors: new Set<string>(), 
-          comments: 0, 
-          clicks: 0 
+        dailyStats[date] = {
+          date,
+          pageViews: 0,
+          uniqueVisitors: new Set<string>(),
+          comments: 0,
+          clicks: 0,
         };
       }
 
-      if (item.type === "page_view") {
+      if (item.type === 'page_view') {
         dailyStats[date].pageViews++;
         // 计算UV：使用IP+UserAgent作为唯一访客标识
         if (item.ip && item.userAgent) {
           const visitorKey = `${item.ip}_${item.userAgent}`;
           dailyStats[date].uniqueVisitors.add(visitorKey);
         }
-      } else if (item.type === "comment") {
+      } else if (item.type === 'comment') {
         dailyStats[date].comments++;
-      } else if (item.action?.includes("click")) {
+      } else if (item.action?.includes('click')) {
         dailyStats[date].clicks++;
       }
     });
 
     // 转换Set为数字，便于返回
-    const dailyStatsArray = Object.values(dailyStats).map(stat => ({
+    const dailyStatsArray = Object.values(dailyStats).map((stat) => ({
       date: stat.date,
       pageViews: stat.pageViews,
       uniqueVisitors: stat.uniqueVisitors.size, // UV数量
@@ -135,7 +138,7 @@ export async function getAnalyticsStats(days: number = 7) {
     // 最受欢迎的文章（按page_view统计）
     const postViews: Record<string, number> = {};
     analytics.forEach((item) => {
-      if (item.type === "page_view" && item.target) {
+      if (item.type === 'page_view' && item.target) {
         postViews[item.target] = (postViews[item.target] || 0) + 1;
       }
     });
@@ -149,7 +152,7 @@ export async function getAnalyticsStats(days: number = 7) {
     const totalPV = dailyStatsArray.reduce((sum, stat) => sum + stat.pageViews, 0);
     const allUniqueVisitors = new Set<string>();
     analytics.forEach((item) => {
-      if (item.type === "page_view" && item.ip && item.userAgent) {
+      if (item.type === 'page_view' && item.ip && item.userAgent) {
         const visitorKey = `${item.ip}_${item.userAgent}`;
         allUniqueVisitors.add(visitorKey);
       }
@@ -162,9 +165,7 @@ export async function getAnalyticsStats(days: number = 7) {
         total: analytics.length,
         totalPV, // 总页面浏览量
         totalUV, // 总独立访客数
-        dailyStats: dailyStatsArray.sort((a, b) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        ),
+        dailyStats: dailyStatsArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
         typeStats,
         actionStats,
         topPosts,
@@ -172,8 +173,7 @@ export async function getAnalyticsStats(days: number = 7) {
       },
     };
   } catch (error) {
-    console.error("获取埋点统计失败:", error);
-    return { success: false, error: "获取埋点统计失败" };
+    console.error('获取埋点统计失败:', error);
+    return { success: false, error: '获取埋点统计失败' };
   }
 }
-

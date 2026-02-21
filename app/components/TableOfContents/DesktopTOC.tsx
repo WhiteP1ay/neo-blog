@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { TocContent } from "./TocContent";
-import type { TocItem } from "./types";
+import { useState } from 'react';
+import { TocContent } from './TocContent';
+import type { TocItem } from './types';
 
 interface DesktopTOCProps {
   toc: TocItem[];
@@ -15,13 +15,7 @@ interface DesktopTOCProps {
 /**
  * PC 端目录组件
  */
-export function DesktopTOC({
-  toc,
-  activeId,
-  showBackToTop,
-  onScrollToHeading,
-  onScrollToTop,
-}: DesktopTOCProps) {
+export function DesktopTOC({ toc, activeId, showBackToTop, onScrollToHeading, onScrollToTop }: DesktopTOCProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   if (toc.length === 0) {
@@ -42,12 +36,7 @@ export function DesktopTOC({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
       ) : (
@@ -64,4 +53,3 @@ export function DesktopTOC({
     </div>
   );
 }
-

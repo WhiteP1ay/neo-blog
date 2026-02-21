@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   DndContext,
@@ -8,15 +8,15 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import type { Post } from "@/server/actions/posts";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { Post } from '@/server/actions/posts';
 
 interface SortablePostItemProps {
   post: Post;
@@ -24,14 +24,7 @@ interface SortablePostItemProps {
 }
 
 function SortablePostItem({ post, onRemove }: SortablePostItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: post.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: post.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -47,18 +40,8 @@ function SortablePostItem({ post, onRemove }: SortablePostItemProps) {
       {...attributes}
       {...listeners}
     >
-      <svg
-        className="w-4 h-4 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 8h16M4 16h16"
-        />
+      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
       </svg>
       <span className="text-sm text-gray-700 flex-1">{post.title}</span>
       <button
@@ -82,17 +65,12 @@ interface SortablePostListProps {
   onRemove: (postId: number) => void;
 }
 
-export function SortablePostList({
-  posts,
-  allPosts,
-  onReorder,
-  onRemove,
-}: SortablePostListProps) {
+export function SortablePostList({ posts, allPosts, onReorder, onRemove }: SortablePostListProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const sortedPosts = [...posts].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -120,22 +98,11 @@ export function SortablePostList({
   return (
     <div className="mt-4">
       <p className="text-sm font-medium text-gray-700 mb-2">已选文章（可拖拽排序）</p>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={postItems.map((p) => p.id)}
-          strategy={verticalListSortingStrategy}
-        >
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={postItems.map((p) => p.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {postItems.map((post) => (
-              <SortablePostItem
-                key={post.id}
-                post={post}
-                onRemove={onRemove}
-              />
+              <SortablePostItem key={post.id} post={post} onRemove={onRemove} />
             ))}
           </div>
         </SortableContext>
@@ -143,4 +110,3 @@ export function SortablePostList({
     </div>
   );
 }
-

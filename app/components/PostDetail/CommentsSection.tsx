@@ -1,14 +1,11 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  getCommentsByPostId,
-  type CommentWithReplies,
-} from "@/server/actions/comments";
-import { useChinaIPDetector } from "../ChinaIPDetector";
-import { useAnalytics } from "../Analytics";
-import { useToast } from "../Toast";
-import { CommentItem } from "./CommentItem";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { getCommentsByPostId, type CommentWithReplies } from '@/server/actions/comments';
+import { useChinaIPDetector } from '../ChinaIPDetector';
+import { useAnalytics } from '../Analytics';
+import { useToast } from '../Toast';
+import { CommentItem } from './CommentItem';
 
 interface CommentsSectionProps {
   postId: number;
@@ -25,9 +22,9 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [formData, setFormData] = useState({
-    author: "",
-    email: "",
-    content: "",
+    author: '',
+    email: '',
+    content: '',
   });
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -54,14 +51,14 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     e.preventDefault();
 
     if (!formData.author.trim() || !formData.content.trim()) {
-      showToast("请填写昵称和评论内容", "warning");
+      showToast('请填写昵称和评论内容', 'warning');
       return;
     }
 
     // 埋点：评论提交
     track({
-      type: "comment",
-      action: "submit_comment",
+      type: 'comment',
+      action: 'submit_comment',
       target: `post_${postId}`,
       metadata: {
         hasReply: !!replyingTo,
@@ -70,10 +67,10 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     });
 
     try {
-      const response = await fetch("/api/comments", {
-        method: "POST",
+      const response = await fetch('/api/comments', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           postId,
@@ -88,58 +85,64 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       if (result.success) {
         // 埋点：评论提交成功
         track({
-          type: "comment",
-          action: "submit_comment_success",
+          type: 'comment',
+          action: 'submit_comment_success',
           target: `post_${postId}`,
         });
 
         // 重置表单
-        setFormData({ author: "", email: "", content: "" });
+        setFormData({ author: '', email: '', content: '' });
         setReplyingTo(null);
         // 重新加载评论
         await loadComments();
       } else {
         // 埋点：评论提交失败
         track({
-          type: "comment",
-          action: "submit_comment_failed",
+          type: 'comment',
+          action: 'submit_comment_failed',
           target: `post_${postId}`,
           metadata: { error: result.error },
         });
-        showToast(`评论提交失败: ${result.error}`, "error");
+        showToast(`评论提交失败: ${result.error}`, 'error');
       }
     } catch (error) {
-      console.error("提交评论失败:", error);
+      console.error('提交评论失败:', error);
       // 埋点：评论提交异常
       track({
-        type: "comment",
-        action: "submit_comment_error",
+        type: 'comment',
+        action: 'submit_comment_error',
         target: `post_${postId}`,
       });
-      showToast("评论提交失败", "error");
+      showToast('评论提交失败', 'error');
     }
   };
 
   /**
    * 处理回复按钮点击
    */
-  const handleReply = useCallback((commentId: number, author: string) => {
-    // 埋点：点击回复按钮
-    track({
-      type: "comment",
-      action: "click_reply",
-      target: `comment_${commentId}`,
-    });
-    setReplyingTo(commentId);
-    setFormData((prev) => ({
-      ...prev,
-      content: `@${author} `,
-    }));
-    // 滚动到底部输入框
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 100);
-  }, [track]);
+  const handleReply = useCallback(
+    (commentId: number, author: string) => {
+      // 埋点：点击回复按钮
+      track({
+        type: 'comment',
+        action: 'click_reply',
+        target: `comment_${commentId}`,
+      });
+      setReplyingTo(commentId);
+      setFormData((prev) => ({
+        ...prev,
+        content: `@${author} `,
+      }));
+      // 滚动到底部输入框
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 100);
+    },
+    [track],
+  );
 
   // 如果检测中，默认隐藏评论功能（不显示任何内容）
   if (isChecking) {
@@ -163,11 +166,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       ) : (
         <div className="mb-6 sm:mb-8">
           {comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              onReply={handleReply}
-            />
+            <CommentItem key={comment.id} comment={comment} onReply={handleReply} />
           ))}
         </div>
       )}
@@ -185,9 +184,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
             type="text"
             placeholder="昵称 *"
             value={formData.author}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, author: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
             className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
@@ -195,9 +192,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
             type="email"
             placeholder="邮箱（可选）"
             value={formData.email}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, email: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
             className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -205,9 +200,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
         <textarea
           placeholder="评论内容 *"
           value={formData.content}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, content: e.target.value }))
-          }
+          onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
           rows={4}
           className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
@@ -219,7 +212,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
               type="button"
               onClick={() => {
                 setReplyingTo(null);
-                setFormData((prev) => ({ ...prev, content: "" }));
+                setFormData((prev) => ({ ...prev, content: '' }));
               }}
               className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
             >

@@ -1,7 +1,7 @@
-import Image from "next/image";
-import type { Topic } from "@/server/actions/topics";
-import { Breadcrumb } from "./Breadcrumb";
-import { formatDate } from "@/app/utils/date";
+import Image from 'next/image';
+import type { Topic } from '@/server/actions/topics';
+import { Breadcrumb } from './Breadcrumb';
+import { formatDate } from '@/app/utils/date';
 
 interface TopicHeroProps {
   topic: Topic;
@@ -14,13 +14,7 @@ export function TopicHero({ topic }: TopicHeroProps) {
   return (
     <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-pink-900/40">
       {topic.coverImage ? (
-        <Image
-          src={topic.coverImage}
-          alt={topic.name}
-          fill
-          className="object-cover"
-          priority
-        />
+        <Image src={topic.coverImage} alt={topic.name} fill className="object-cover" priority />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
           <svg
@@ -53,13 +47,9 @@ export function TopicHero({ topic }: TopicHeroProps) {
                 📌 置顶
               </span>
             )}
-            <span className="text-sm text-white/80">
-              {formatDate(topic.createdAt)}
-            </span>
+            <span className="text-sm text-white/80">{formatDate(topic.createdAt)}</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-            {topic.name}
-          </h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">{topic.name}</h1>
           {topic.description && (
             <p className="text-base sm:text-lg text-white/90 max-w-2xl leading-relaxed drop-shadow-md">
               {topic.description}
@@ -70,4 +60,3 @@ export function TopicHero({ topic }: TopicHeroProps) {
     </div>
   );
 }
-

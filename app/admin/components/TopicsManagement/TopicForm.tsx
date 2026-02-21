@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import type { Topic } from "@/server/actions/topics";
-import { useTopicForm } from "./hooks/useTopicForm";
-import { SortablePostList } from "./components/SortablePostList";
-import { BatchUploadZone } from "./components/BatchUploadZone";
+import Image from 'next/image';
+import type { Topic } from '@/server/actions/topics';
+import { useTopicForm } from './hooks/useTopicForm';
+import { SortablePostList } from './components/SortablePostList';
+import { BatchUploadZone } from './components/BatchUploadZone';
 
 interface TopicFormProps {
   topic: Topic | null;
-  mode: "create" | "edit";
+  mode: 'create' | 'edit';
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -42,18 +42,13 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
   return (
     <div>
       <div className="mb-4">
-        <button
-          onClick={onCancel}
-          className="text-sm text-blue-600 hover:text-blue-800"
-        >
+        <button onClick={onCancel} className="text-sm text-blue-600 hover:text-blue-800">
           ← 返回列表
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {mode === "create" ? "创建专题" : "编辑专题"}
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{mode === 'create' ? '创建专题' : '编辑专题'}</h2>
 
         {/* 专题名称 */}
         <div className="mb-4">
@@ -71,9 +66,7 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 专题描述 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            专题描述（可选）
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">专题描述（可选）</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -85,26 +78,20 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 封面图 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            封面图 URL（可选）
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</label>
           <div className="flex gap-4">
             <div className="flex-1">
               <input
                 type="url"
-                value={coverImage || ""}
+                value={coverImage || ''}
                 onChange={(e) => handleCoverImageChange(e.target.value)}
                 placeholder="请输入图片 URL，例如：https://example.com/image.jpg"
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  coverImageError && coverImage
-                    ? "border-red-300 bg-red-50"
-                    : "border-gray-300"
+                  coverImageError && coverImage ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
               />
               {coverImageError && coverImage && (
-                <p className="text-xs text-red-600 mt-1">
-                  URL 格式无效，请输入完整的图片地址
-                </p>
+                <p className="text-xs text-red-600 mt-1">URL 格式无效，请输入完整的图片地址</p>
               )}
             </div>
             {coverImage && !coverImageError && (
@@ -150,17 +137,13 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
 
         {/* 批量上传 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            批量上传文章
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">批量上传文章</label>
           <BatchUploadZone onFilesUploaded={handleBatchAddPosts} />
         </div>
 
         {/* 文章管理 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            文章管理
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">文章管理</label>
           <div className="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto">
             {allPosts.length === 0 ? (
               <p className="text-sm text-gray-500">暂无文章</p>
@@ -201,7 +184,7 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
             disabled={loading}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "保存中..." : mode === "create" ? "创建" : "更新"}
+            {loading ? '保存中...' : mode === 'create' ? '创建' : '更新'}
           </button>
           <button
             type="button"

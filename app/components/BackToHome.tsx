@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 interface BackToHomeProps {
   /**
@@ -24,39 +24,19 @@ interface BackToHomeProps {
 /**
  * 返回首页组件（可复用）
  */
-export function BackToHome({
-  showIcon = true,
-  className,
-  onClick,
-  label = "返回首页",
-}: BackToHomeProps) {
+export function BackToHome({ showIcon = true, className, onClick, label = '返回首页' }: BackToHomeProps) {
   const defaultClassName = showIcon
-    ? "inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors"
-    : "text-sm text-gray-600 hover:text-gray-900";
+    ? 'inline-flex items-center gap-2 text-sm text-gray-600 hover:text-blue-600 transition-colors'
+    : 'text-sm text-gray-600 hover:text-gray-900';
 
   return (
-    <Link
-      href="/"
-      className={className || defaultClassName}
-      onClick={onClick}
-    >
+    <Link href="/" className={className || defaultClassName} onClick={onClick}>
       {showIcon && (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-          />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
       )}
       <span>{label}</span>
     </Link>
   );
 }
-

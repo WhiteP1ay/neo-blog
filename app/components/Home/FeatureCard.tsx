@@ -1,9 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { Feature } from "@/app/features";
-
-
+import Link from 'next/link';
+import { Feature } from '@/app/features';
 
 interface FeatureCardProps {
   feature: Feature;
@@ -12,14 +10,15 @@ interface FeatureCardProps {
 
 export function FeatureCard({ feature, onConsultClick }: FeatureCardProps) {
   return (
-    <div key={feature.id} className="group border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+    <div
+      key={feature.id}
+      className="group border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+    >
       <div className="mb-6">
         <h2 className="text-2xl font-medium mb-3 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
           {feature.title}
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-          {feature.description}
-        </p>
+        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
       </div>
       <button
         onClick={() => {
@@ -34,9 +33,7 @@ export function FeatureCard({ feature, onConsultClick }: FeatureCardProps) {
             了解更多
           </Link>
         ) : (
-          <span className="group-hover:underline">
-            立即咨询
-          </span>
+          <span className="group-hover:underline">立即咨询</span>
         )}
       </button>
     </div>

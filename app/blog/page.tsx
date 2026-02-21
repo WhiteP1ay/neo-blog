@@ -1,18 +1,18 @@
-import type { Metadata } from "next";
-import { getMixedList, type ListItem } from "@/server/actions/posts";
-import { TopicItem } from "@/app/components/TopicItem";
-import { Breadcrumb } from "@/app/components/Breadcrumb";
-import { PostCard } from "@/app/components/PostDetail/PostCard";
-import { WeChatSidebar } from "@/app/components/WeChatSidebar";
+import type { Metadata } from 'next';
+import { getMixedList, type ListItem } from '@/server/actions/posts';
+import { TopicItem } from '@/app/components/TopicItem';
+import { Breadcrumb } from '@/app/components/Breadcrumb';
+import { PostCard } from '@/app/components/PostDetail/PostCard';
+import { WeChatSidebar } from '@/app/components/WeChatSidebar';
 
 export const metadata: Metadata = {
-  title: "博客",
-  description: "White Meta 博客 - 技术文章和编程分享",
-  keywords: ["博客", "技术文章", "编程", "开发"],
+  title: '博客',
+  description: 'White Meta 博客 - 技术文章和编程分享',
+  keywords: ['博客', '技术文章', '编程', '开发'],
   openGraph: {
-    title: "White Meta 博客",
-    description: "技术文章和编程分享",
-    type: "website",
+    title: 'White Meta 博客',
+    description: '技术文章和编程分享',
+    type: 'website',
   },
 };
 
@@ -34,13 +34,11 @@ export default async function BlogPage() {
           <div className="flex-1 min-w-0">
             <Breadcrumb />
             {items.length === 0 ? (
-              <div className="text-center py-8 sm:py-12 text-gray-500">
-                暂无内容
-              </div>
+              <div className="text-center py-8 sm:py-12 text-gray-500">暂无内容</div>
             ) : (
               <div className="space-y-4 sm:space-y-6">
                 {items.map((item) => {
-                  if (item.type === "topic") {
+                  if (item.type === 'topic') {
                     return <TopicItem key={`topic-${item.data.id}`} topic={item.data} />;
                   } else {
                     return <PostCard key={`post-${item.data.id}`} post={item.data} />;

@@ -1,9 +1,9 @@
-"use server";
+'use server';
 
-import { db } from "@/server/db/db";
-import { topicsTable, topicPostsTable } from "@/server/db/schema";
-import { desc, eq, and } from "drizzle-orm";
-import { getSession } from "@/server/utils/auth";
+import { db } from '@/server/db/db';
+import { topicsTable, topicPostsTable } from '@/server/db/schema';
+import { desc, eq, and } from 'drizzle-orm';
+import { getSession } from '@/server/utils/auth';
 
 /**
  * 专题类型定义
@@ -58,8 +58,8 @@ export async function getTopics(includeHidden = false) {
       .orderBy(desc(topicsTable.isPinned), desc(topicsTable.createdAt));
     return { success: true, data: topics };
   } catch (error) {
-    console.error("获取专题列表失败:", error);
-    return { success: false, error: "获取专题列表失败" };
+    console.error('获取专题列表失败:', error);
+    return { success: false, error: '获取专题列表失败' };
   }
 }
 
@@ -87,13 +87,13 @@ export async function getTopicById(id: number) {
     });
 
     if (!topic) {
-      return { success: false, error: "专题不存在" };
+      return { success: false, error: '专题不存在' };
     }
 
     return { success: true, data: topic };
   } catch (error) {
-    console.error("获取专题失败:", error);
-    return { success: false, error: "获取专题失败" };
+    console.error('获取专题失败:', error);
+    return { success: false, error: '获取专题失败' };
   }
 }
 
@@ -109,7 +109,7 @@ export async function createTopic(data: {
 }) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
@@ -126,8 +126,8 @@ export async function createTopic(data: {
 
     return { success: true, data: result[0] };
   } catch (error) {
-    console.error("创建专题失败:", error);
-    return { success: false, error: "创建专题失败" };
+    console.error('创建专题失败:', error);
+    return { success: false, error: '创建专题失败' };
   }
 }
 
@@ -142,11 +142,11 @@ export async function updateTopic(
     coverImage?: string | null;
     isPinned?: boolean;
     isHidden?: boolean;
-  }
+  },
 ) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
@@ -166,20 +166,16 @@ export async function updateTopic(
     if (data.isHidden !== undefined) updateData.isHidden = data.isHidden;
     updateData.updatedAt = new Date();
 
-    const result = await db
-      .update(topicsTable)
-      .set(updateData)
-      .where(eq(topicsTable.id, id))
-      .returning();
+    const result = await db.update(topicsTable).set(updateData).where(eq(topicsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: "专题不存在" };
+      return { success: false, error: '专题不存在' };
     }
 
     return { success: true, data: result[0] };
   } catch (error) {
-    console.error("更新专题失败:", error);
-    return { success: false, error: "更新专题失败" };
+    console.error('更新专题失败:', error);
+    return { success: false, error: '更新专题失败' };
   }
 }
 
@@ -189,23 +185,20 @@ export async function updateTopic(
 export async function deleteTopic(id: number) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
-    const result = await db
-      .delete(topicsTable)
-      .where(eq(topicsTable.id, id))
-      .returning();
+    const result = await db.delete(topicsTable).where(eq(topicsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: "专题不存在" };
+      return { success: false, error: '专题不存在' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("删除专题失败:", error);
-    return { success: false, error: "删除专题失败" };
+    console.error('删除专题失败:', error);
+    return { success: false, error: '删除专题失败' };
   }
 }
 
@@ -215,18 +208,17 @@ export async function deleteTopic(id: number) {
 export async function addPostToTopic(topicId: number, postId: number, sortOrder?: number) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
     // 检查是否已存在
     const existing = await db.query.topicPostsTable.findFirst({
-      where: (topicPosts, { and, eq }) =>
-        and(eq(topicPosts.topicId, topicId), eq(topicPosts.postId, postId)),
+      where: (topicPosts, { and, eq }) => and(eq(topicPosts.topicId, topicId), eq(topicPosts.postId, postId)),
     });
 
     if (existing) {
-      return { success: false, error: "文章已在该专题中" };
+      return { success: false, error: '文章已在该专题中' };
     }
 
     // 如果没有指定排序，获取当前最大排序值
@@ -253,8 +245,8 @@ export async function addPostToTopic(topicId: number, postId: number, sortOrder?
 
     return { success: true, data: result[0] };
   } catch (error) {
-    console.error("添加文章到专题失败:", error);
-    return { success: false, error: "添加文章到专题失败" };
+    console.error('添加文章到专题失败:', error);
+    return { success: false, error: '添加文章到专题失败' };
   }
 }
 
@@ -264,28 +256,23 @@ export async function addPostToTopic(topicId: number, postId: number, sortOrder?
 export async function removePostFromTopic(topicId: number, postId: number) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
     const result = await db
       .delete(topicPostsTable)
-      .where(
-        and(
-          eq(topicPostsTable.topicId, topicId),
-          eq(topicPostsTable.postId, postId)
-        )
-      )
+      .where(and(eq(topicPostsTable.topicId, topicId), eq(topicPostsTable.postId, postId)))
       .returning();
 
     if (result.length === 0) {
-      return { success: false, error: "文章不在该专题中" };
+      return { success: false, error: '文章不在该专题中' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("从专题中移除文章失败:", error);
-    return { success: false, error: "从专题中移除文章失败" };
+    console.error('从专题中移除文章失败:', error);
+    return { success: false, error: '从专题中移除文章失败' };
   }
 }
 
@@ -294,11 +281,11 @@ export async function removePostFromTopic(topicId: number, postId: number) {
  */
 export async function updateTopicPostSortOrder(
   topicId: number,
-  postOrders: Array<{ postId: number; sortOrder: number }>
+  postOrders: Array<{ postId: number; sortOrder: number }>,
 ) {
   const userId = await getSession();
   if (!userId) {
-    return { success: false, error: "未登录" };
+    return { success: false, error: '未登录' };
   }
 
   try {
@@ -308,19 +295,14 @@ export async function updateTopicPostSortOrder(
         await tx
           .update(topicPostsTable)
           .set({ sortOrder })
-          .where(
-            and(
-              eq(topicPostsTable.topicId, topicId),
-              eq(topicPostsTable.postId, postId)
-            )
-          );
+          .where(and(eq(topicPostsTable.topicId, topicId), eq(topicPostsTable.postId, postId)));
       }
     });
 
     return { success: true };
   } catch (error) {
-    console.error("更新专题文章排序失败:", error);
-    return { success: false, error: "更新专题文章排序失败" };
+    console.error('更新专题文章排序失败:', error);
+    return { success: false, error: '更新专题文章排序失败' };
   }
 }
 
@@ -342,8 +324,8 @@ export async function getTopicsByPostId(postId: number) {
       data: topicPosts.map((tp) => tp.topic),
     };
   } catch (error) {
-    console.error("获取文章所属专题失败:", error);
-    return { success: false, error: "获取文章所属专题失败" };
+    console.error('获取文章所属专题失败:', error);
+    return { success: false, error: '获取文章所属专题失败' };
   }
 }
 
@@ -353,8 +335,7 @@ export async function getTopicsByPostId(postId: number) {
 export async function getTopicPostNavigation(topicId: number, postId: number) {
   try {
     const currentPost = await db.query.topicPostsTable.findFirst({
-      where: (topicPosts, { and, eq }) =>
-        and(eq(topicPosts.topicId, topicId), eq(topicPosts.postId, postId)),
+      where: (topicPosts, { and, eq }) => and(eq(topicPosts.topicId, topicId), eq(topicPosts.postId, postId)),
     });
 
     if (!currentPost) {
@@ -364,10 +345,7 @@ export async function getTopicPostNavigation(topicId: number, postId: number) {
     // 获取上一篇
     const prevPost = await db.query.topicPostsTable.findFirst({
       where: (topicPosts, { and, eq, lt }) =>
-        and(
-          eq(topicPosts.topicId, topicId),
-          lt(topicPosts.sortOrder, currentPost.sortOrder)
-        ),
+        and(eq(topicPosts.topicId, topicId), lt(topicPosts.sortOrder, currentPost.sortOrder)),
       orderBy: (topicPosts, { desc }) => [desc(topicPosts.sortOrder)],
       with: {
         post: {
@@ -382,10 +360,7 @@ export async function getTopicPostNavigation(topicId: number, postId: number) {
     // 获取下一篇
     const nextPost = await db.query.topicPostsTable.findFirst({
       where: (topicPosts, { and, eq, gt }) =>
-        and(
-          eq(topicPosts.topicId, topicId),
-          gt(topicPosts.sortOrder, currentPost.sortOrder)
-        ),
+        and(eq(topicPosts.topicId, topicId), gt(topicPosts.sortOrder, currentPost.sortOrder)),
       orderBy: (topicPosts, { asc }) => [asc(topicPosts.sortOrder)],
       with: {
         post: {
@@ -405,8 +380,7 @@ export async function getTopicPostNavigation(topicId: number, postId: number) {
       },
     };
   } catch (error) {
-    console.error("获取专题文章导航失败:", error);
-    return { success: false, error: "获取专题文章导航失败" };
+    console.error('获取专题文章导航失败:', error);
+    return { success: false, error: '获取专题文章导航失败' };
   }
 }
-
