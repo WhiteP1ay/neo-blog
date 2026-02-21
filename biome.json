@@ -1,8 +1,25 @@
 {
   "files": {
-    "includes": ["**", "!test/**", "!node_modules/**", "!.next/**", "!public/**", "!drizzle/**"]
+    "includes": ["**", "!test", "!node_modules", "!.next", "!public", "!drizzle", "!app/global.css"]
   },
-
+  "linter": {
+    "rules": {
+      "a11y": {
+        "useButtonType": "off",
+        "noSvgWithoutTitle": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
+  },
   "formatter": {
     "indentStyle": "space",
     "lineWidth": 100

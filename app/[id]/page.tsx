@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const postId = parseInt(id, 10);
 
-  if (isNaN(postId)) {
+  if (Number.isNaN(postId)) {
     return {};
   }
 
@@ -75,7 +75,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const postId = parseInt(id, 10);
 
-  if (isNaN(postId)) {
+  if (Number.isNaN(postId)) {
     notFound();
   }
 

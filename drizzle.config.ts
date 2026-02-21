@@ -6,6 +6,7 @@ export default defineConfig({
   schema: './server/db/schema.ts',
   dialect: 'postgresql',
   dbCredentials: {
+    // biome-ignore lint/style/noNonNullAssertion: DATABASE_URL 是必须的
     url: process.env.DATABASE_URL!,
   },
 });
