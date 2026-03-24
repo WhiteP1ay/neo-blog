@@ -171,3 +171,173 @@ body {
 }
 
 /* 正文排版由 @tailwindcss/typography 的 prose / dark:prose-invert 提供 */
+
+/*
+ * Shiki 双主题（defaultColor:false）：每个 token 的 --shiki-light / --shiki-dark 写在行内。
+ * typography 的 `pre code { color: inherit }` 会让子 span 全继承成一段灰/绿，必须用更高优先级打回各 token 色。
+ */
+.shiki {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg) !important;
+  /* 比 prose 正文更紧凑；避免 .line + 默认行高叠成「行距过大」 */
+  line-height: 1.45;
+  font-size: 0.8125rem;
+  padding: 0.625rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .shiki {
+    font-size: 0.875rem;
+    padding: 0.75rem 1.125rem;
+  }
+}
+
+html.dark .shiki {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg) !important;
+}
+
+.shiki .line {
+  display: block;
+  line-height: 1.45;
+}
+
+.prose pre.shiki code {
+  color: unset !important;
+  font-weight: 400 !important;
+}
+
+.prose pre.shiki code span {
+  color: var(--shiki-light) !important;
+}
+
+html.dark .prose pre.shiki code span {
+  color: var(--shiki-dark) !important;
+}
+
+/* 无外层 .prose 包裹时（少数布局）仍保证 token 着色 */
+.shiki code span {
+  color: var(--shiki-light) !important;
+}
+
+html.dark .shiki code span {
+  color: var(--shiki-dark) !important;
+}
+
+/* 代码区域：与 pre 内边距一致，复制按钮占位 */
+pre.not-prose.shiki code {
+  display: block;
+  padding: 0 !important;
+  padding-right: 4.5rem !important;
+  line-height: inherit;
+  font-size: inherit;
+}
+
+/*
+ * 首页专题侧栏毛玻璃：扩展 backdrop 采样区 + mask 裁切（Chrome 下不能用 overflow 替代），
+ * 思路与 web.dev / Josh Comeau 一文一致，社交上常被摘要转发（如 MozDevNet 等 thread）。
+ * https://www.joshwcomeau.com/css/backdrop-filter/
+ * https://web.dev/articles/backdrop-filter
+ */
+.home-topic-glass-host {
+  position: relative;
+  isolation: isolate;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.38);
+  box-shadow:
+    0 12px 40px -8px rgb(0 0 0 / 0.14),
+    0 2px 8px -2px rgb(0 0 0 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    inset -1px 0 0 rgb(255 255 255 / 0.12);
+}
+
+.dark .home-topic-glass-host {
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    0 16px 48px -10px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    inset -1px 0 0 rgb(255 255 255 / 0.04);
+}
+
+.home-topic-glass-backdrop {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  width: 124%;
+  height: 112%;
+  top: -6%;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    122deg,
+    rgb(255 255 255 / 0.38) 0%,
+    rgb(255 255 255 / 0.12) 48%,
+    rgb(255 255 255 / 0.04) 100%
+  );
+  -webkit-backdrop-filter: blur(52px) saturate(1.8);
+  backdrop-filter: blur(52px) saturate(1.8);
+  /* 裁回侧栏可视宽度：约 100% / 1.24 */
+  mask-image: linear-gradient(to right, #000 0%, #000 80.645%, transparent 80.645%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 80.645%, transparent 80.645%);
+}
+
+.dark .home-topic-glass-backdrop {
+  background: linear-gradient(
+    122deg,
+    rgb(24 24 27 / 0.62) 0%,
+    rgb(24 24 27 / 0.32) 50%,
+    rgb(9 9 11 / 0.18) 100%
+  );
+  -webkit-backdrop-filter: blur(52px) saturate(1.65);
+  backdrop-filter: blur(52px) saturate(1.65);
+}
+
+/* 朝列表一侧的「玻璃厚度」：窄条单独采样，略提高亮度 */
+.home-topic-glass-edge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  z-index: 1;
+  pointer-events: none;
+  border-top-right-radius: inherit;
+  border-bottom-right-radius: inherit;
+  background: rgb(255 255 255 / 0.06);
+  -webkit-backdrop-filter: blur(28px) brightness(1.1);
+  backdrop-filter: blur(28px) brightness(1.1);
+  mask-image: linear-gradient(to left, #000 0%, #000 22%, transparent 22%);
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 22%, transparent 22%);
+}
+
+.dark .home-topic-glass-edge {
+  background: rgb(255 255 255 / 0.04);
+  -webkit-backdrop-filter: blur(28px) brightness(1.06);
+  backdrop-filter: blur(28px) brightness(1.06);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .home-topic-glass-backdrop {
+    width: 100%;
+    height: 100%;
+    top: 0;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .home-topic-glass-edge {
+    display: none;
+  }
+
+  .home-topic-glass-host {
+    background: var(--card);
+  }
+}
+
+.home-topic-glass-content {
+  position: relative;
+  z-index: 2;
+}

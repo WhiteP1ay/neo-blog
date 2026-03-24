@@ -2,8 +2,9 @@
 
 import { db } from '@/server/db/db';
 import { postsTable, topicsTable, topicPostsTable } from '@/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import { getSession } from '@/server/utils/auth';
+import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
 import type { Topic } from './topics';
 
 /**
@@ -74,6 +75,102 @@ export async function getLatestPostsForHome(limit = 5) {
   }
 }
 
+/** 首页三栏：单篇列表项（含置顶标记） */
+export type HomeExplorerPostPreview = {
+  id: number;
+  title: string;
+  createdAt: Date | null;
+  isPinned: boolean;
+};
+
+/**
+ * 首页三栏：左侧分类；topicKey 为未分类或真实专题 id
+ */
+export type HomeExplorerCategory = {
+  topicKey: 'uncategorized' | number;
+  name: string;
+  isPinned: boolean;
+  /** 未分类为 0；真实专题为库内 sortOrder */
+  sortOrder: number;
+  createdAt: Date | null;
+  posts: HomeExplorerPostPreview[];
+};
+
+/**
+ * 首页备忘录式浏览：未分类（无专题文章）+ 各可见专题及其文章列表
+ */
+export async function getHomeExplorerData() {
+  try {
+    const allTopicPosts = await db.select({ postId: topicPostsTable.postId }).from(topicPostsTable);
+    const topicPostIds = new Set(allTopicPosts.map((tp) => tp.postId));
+
+    const allPostRows = await db
+      .select({
+        id: postsTable.id,
+        title: postsTable.title,
+        createdAt: postsTable.createdAt,
+        isPinned: postsTable.isPinned,
+      })
+      .from(postsTable)
+      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
+
+    const uncategorizedPosts = allPostRows.filter((p) => !topicPostIds.has(p.id));
+
+    const categories: HomeExplorerCategory[] = [
+      {
+        topicKey: 'uncategorized',
+        name: '未分类',
+        isPinned: false,
+        sortOrder: 0,
+        createdAt: null,
+        posts: uncategorizedPosts,
+      },
+    ];
+
+    const topics = await db
+      .select()
+      .from(topicsTable)
+      .where(eq(topicsTable.isHidden, false))
+      .orderBy(desc(topicsTable.isPinned), asc(topicsTable.sortOrder), desc(topicsTable.createdAt));
+
+    for (const topic of topics) {
+      const topicPosts = await db.query.topicPostsTable.findMany({
+        where: (topicPosts, { eq }) => eq(topicPosts.topicId, topic.id),
+        orderBy: (topicPosts, { asc }) => [asc(topicPosts.sortOrder)],
+        with: {
+          post: {
+            columns: {
+              id: true,
+              title: true,
+              createdAt: true,
+              isPinned: true,
+            },
+          },
+        },
+      });
+
+      categories.push({
+        topicKey: topic.id,
+        name: topic.name,
+        isPinned: topic.isPinned,
+        sortOrder: topic.sortOrder,
+        createdAt: topic.createdAt,
+        posts: topicPosts.map((tp) => ({
+          id: tp.post.id,
+          title: tp.post.title,
+          createdAt: tp.post.createdAt,
+          isPinned: tp.post.isPinned,
+        })),
+      });
+    }
+
+    return { success: true as const, data: categories };
+  } catch (error) {
+    console.error('获取首页浏览数据失败:', error);
+    return { success: false as const, error: '获取首页浏览数据失败' };
+  }
+}
+
 /**
  * Server Action: 获取混合列表（专题+文章，用于首页展示）
  * @param showTopics 是否显示专题
@@ -88,7 +185,7 @@ export async function getMixedList(showTopics = true) {
         .select()
         .from(topicsTable)
         .where(eq(topicsTable.isHidden, false))
-        .orderBy(desc(topicsTable.isPinned), desc(topicsTable.createdAt));
+        .orderBy(desc(topicsTable.isPinned), asc(topicsTable.sortOrder), desc(topicsTable.createdAt));
 
       for (const topic of topics) {
         // 获取专题下的文章
@@ -168,8 +265,9 @@ export async function getMixedList(showTopics = true) {
 
 /**
  * Server Action: 根据ID获取单篇文章
+ * @param highlightCode true 时对正文中的 pre/code 做 Shiki 服务端高亮（编辑页、导出等应传 false 保持原始 HTML）
  */
-export async function getPostById(id: number) {
+export async function getPostById(id: number, highlightCode = false) {
   try {
     const post = await db.query.postsTable.findFirst({
       where: (posts, { eq }) => eq(posts.id, id),
@@ -179,7 +277,12 @@ export async function getPostById(id: number) {
       return { success: false, error: '文章不存在' };
     }
 
-    return { success: true, data: post };
+    if (!highlightCode) {
+      return { success: true, data: post };
+    }
+
+    const content = await highlightCodeBlocksInHtml(post.content);
+    return { success: true, data: { ...post, content } };
   } catch (error) {
     console.error('获取文章失败:', error);
     return { success: false, error: '获取文章失败' };

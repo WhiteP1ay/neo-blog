@@ -2,7 +2,7 @@
 
 import { db } from '@/server/db/db';
 import { topicsTable, topicPostsTable } from '@/server/db/schema';
-import { desc, eq, and } from 'drizzle-orm';
+import { and, asc, desc, eq, max, ne } from 'drizzle-orm';
 import { getSession } from '@/server/utils/auth';
 
 /**
@@ -15,6 +15,7 @@ export type Topic = {
   coverImage: string | null;
   isPinned: boolean;
   isHidden: boolean;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -55,7 +56,7 @@ export async function getTopics(includeHidden = false) {
       .select()
       .from(topicsTable)
       .where(includeHidden ? undefined : eq(topicsTable.isHidden, false))
-      .orderBy(desc(topicsTable.isPinned), desc(topicsTable.createdAt));
+      .orderBy(desc(topicsTable.isPinned), asc(topicsTable.sortOrder), desc(topicsTable.createdAt));
     return { success: true, data: topics };
   } catch (error) {
     console.error('获取专题列表失败:', error);
@@ -113,14 +114,23 @@ export async function createTopic(data: {
   }
 
   try {
+    const pinned = data.isPinned || false;
+    const maxRow = await db
+      .select({ m: max(topicsTable.sortOrder) })
+      .from(topicsTable)
+      .where(and(eq(topicsTable.isPinned, pinned), eq(topicsTable.isHidden, data.isHidden || false)));
+
+    const nextSort = (maxRow[0]?.m ?? -1) + 1;
+
     const result = await db
       .insert(topicsTable)
       .values({
         name: data.name,
         description: data.description || null,
         coverImage: data.coverImage || null,
-        isPinned: data.isPinned || false,
+        isPinned: pinned,
         isHidden: data.isHidden || false,
+        sortOrder: nextSort,
       })
       .returning();
 
@@ -150,12 +160,20 @@ export async function updateTopic(
   }
 
   try {
+    const existing = await db.query.topicsTable.findFirst({
+      where: (t, { eq: eqFn }) => eqFn(t.id, id),
+    });
+    if (!existing) {
+      return { success: false, error: '专题不存在' };
+    }
+
     const updateData: {
       name?: string;
       description?: string | null;
       coverImage?: string | null;
       isPinned?: boolean;
       isHidden?: boolean;
+      sortOrder?: number;
       updatedAt?: Date;
     } = {};
 
@@ -165,6 +183,21 @@ export async function updateTopic(
     if (data.isPinned !== undefined) updateData.isPinned = data.isPinned;
     if (data.isHidden !== undefined) updateData.isHidden = data.isHidden;
     updateData.updatedAt = new Date();
+
+    const nextHidden = data.isHidden !== undefined ? data.isHidden : existing.isHidden;
+    if (data.isPinned !== undefined && data.isPinned !== existing.isPinned) {
+      const maxRow = await db
+        .select({ m: max(topicsTable.sortOrder) })
+        .from(topicsTable)
+        .where(
+          and(
+            eq(topicsTable.isPinned, data.isPinned),
+            eq(topicsTable.isHidden, nextHidden),
+            ne(topicsTable.id, id),
+          ),
+        );
+      updateData.sortOrder = (maxRow[0]?.m ?? -1) + 1;
+    }
 
     const result = await db.update(topicsTable).set(updateData).where(eq(topicsTable.id, id)).returning();
 
@@ -303,6 +336,83 @@ export async function updateTopicPostSortOrder(
   } catch (error) {
     console.error('更新专题文章排序失败:', error);
     return { success: false, error: '更新专题文章排序失败' };
+  }
+}
+
+/**
+ * Server Action: 更新专题在侧边栏的排序（仅调整 sortOrder，不改变 isPinned）
+ */
+export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number; sortOrder: number }>) {
+  const userId = await getSession();
+  if (!userId) {
+    return { success: false as const, error: '未登录' };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      for (const { topicId, sortOrder } of topicOrders) {
+        await tx
+          .update(topicsTable)
+          .set({ sortOrder, updatedAt: new Date() })
+          .where(eq(topicsTable.id, topicId));
+      }
+    });
+
+    return { success: true as const };
+  } catch (error) {
+    console.error('更新专题排序失败:', error);
+    return { success: false as const, error: '更新专题排序失败' };
+  }
+}
+
+/**
+ * Server Action: 将文章移动到目标专题（备忘录式「单一归属」：先清空所有专题关联，未分类则仅清空）
+ */
+export async function movePostToTopicTarget(postId: number, targetTopicKey: 'uncategorized' | number) {
+  const userId = await getSession();
+  if (!userId) {
+    return { success: false as const, error: '未登录' };
+  }
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.delete(topicPostsTable).where(eq(topicPostsTable.postId, postId));
+
+      if (targetTopicKey === 'uncategorized') {
+        return;
+      }
+
+      const topicId = targetTopicKey;
+      const topicRow = await tx.query.topicsTable.findFirst({
+        where: (t, { eq: eqFn }) => eqFn(t.id, topicId),
+      });
+      if (!topicRow) {
+        throw new Error('TOPIC_NOT_FOUND');
+      }
+
+      const maxRows = await tx
+        .select()
+        .from(topicPostsTable)
+        .where(eq(topicPostsTable.topicId, topicId))
+        .orderBy(desc(topicPostsTable.sortOrder))
+        .limit(1);
+
+      const nextOrder = maxRows.length > 0 ? maxRows[0].sortOrder + 1 : 0;
+
+      await tx.insert(topicPostsTable).values({
+        topicId,
+        postId,
+        sortOrder: nextOrder,
+      });
+    });
+
+    return { success: true as const };
+  } catch (error) {
+    if (error instanceof Error && error.message === 'TOPIC_NOT_FOUND') {
+      return { success: false as const, error: '专题不存在' };
+    }
+    console.error('移动文章到专题失败:', error);
+    return { success: false as const, error: '移动文章失败' };
   }
 }
 

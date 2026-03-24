@@ -67,6 +67,8 @@ export const topicsTable = pgTable('topics', {
   coverImage: text(), // 封面图（base64 格式，存储在数据库中）
   isPinned: boolean().notNull().default(false), // 是否置顶
   isHidden: boolean().notNull().default(false), // 是否隐藏
+  /** 同 isPinned 分组内的展示顺序，越小越靠前 */
+  sortOrder: integer().notNull().default(0),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp().notNull().defaultNow(),
 });

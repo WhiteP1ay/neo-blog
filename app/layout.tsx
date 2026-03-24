@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import './global.css';
-import { ToastProvider } from './components/Toast';
-import { Nav } from './components/Nav';
-import { ThemeProvider } from './components/ThemeProvider';
+import { AboutPageContent } from '@/components/about/AboutPageContent';
+import { PrivacyPageContent } from '@/components/privacy/PrivacyPageContent';
+import { SitePageModalsProvider } from '@/components/SitePageModals';
+import { ToastProvider } from '@/components/Toast';
+import { ToolsPageContent } from '@/components/tools/ToolsPageContent';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import Script from 'next/script';
-import { Footer } from './components/Home/Footer';
 
 export const metadata: Metadata = {
   title: {
@@ -48,9 +50,13 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            <Nav />
-            {children}
-            <Footer />
+            <SitePageModalsProvider
+              aboutSlot={<AboutPageContent />}
+              privacySlot={<PrivacyPageContent />}
+              toolsSlot={<ToolsPageContent variant="modal" />}
+            >
+              {children}
+            </SitePageModalsProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>
