@@ -44,6 +44,36 @@ export async function getPosts() {
   }
 }
 
+/** 首页侧边列表用：仅必要字段 */
+export type HomePostPreview = {
+  id: number;
+  title: string;
+  createdAt: Date | null;
+  isPinned: boolean;
+};
+
+/**
+ * 首页最近文章（置顶优先，再按创建时间倒序）
+ */
+export async function getLatestPostsForHome(limit = 5) {
+  try {
+    const rows = await db
+      .select({
+        id: postsTable.id,
+        title: postsTable.title,
+        createdAt: postsTable.createdAt,
+        isPinned: postsTable.isPinned,
+      })
+      .from(postsTable)
+      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt))
+      .limit(limit);
+    return { success: true as const, data: rows as HomePostPreview[] };
+  } catch (error) {
+    console.error('获取首页文章失败:', error);
+    return { success: false as const, error: '获取文章失败' };
+  }
+}
+
 /**
  * Server Action: 获取混合列表（专题+文章，用于首页展示）
  * @param showTopics 是否显示专题

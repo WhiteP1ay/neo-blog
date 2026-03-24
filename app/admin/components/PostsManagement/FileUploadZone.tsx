@@ -1,8 +1,11 @@
 'use client';
 
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent } from '@/app/components/ui/card';
+
 interface FileUploadZoneProps {
-  fileInputRef: React.RefObject<HTMLInputElement>;
-  dropZoneRef: React.RefObject<HTMLDivElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  dropZoneRef: React.RefObject<HTMLDivElement | null>;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDrop: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -21,20 +24,21 @@ export function FileUploadZone({
   onCreateClick,
 }: FileUploadZoneProps) {
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: <todo>
-    <div
+    <Card
       ref={dropZoneRef}
       onDrop={onDrop}
       onDragOver={onDragOver}
-      className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-8 mb-4 sm:mb-8 text-center hover:border-blue-400 transition-colors"
+      className="mb-4 border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50 sm:mb-8"
     >
-      <input ref={fileInputRef} type="file" accept=".md" onChange={onFileSelect} className="hidden" />
-      <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
-        拖拽Markdown文件到这里创建新文章，或
-        <button onClick={onCreateClick} className="text-blue-600 hover:text-blue-800 ml-1">
-          点击选择文件
-        </button>
-      </p>
-    </div>
+      <CardContent className="p-4 text-center sm:p-8">
+        <input ref={fileInputRef} type="file" accept=".md" onChange={onFileSelect} className="hidden" />
+        <p className="text-muted-foreground mb-3 text-sm sm:mb-4 sm:text-base">
+          拖拽 Markdown 文件到这里创建新文章，或
+          <Button type="button" variant="link" className="h-auto px-1 py-0" onClick={onCreateClick}>
+            点击选择文件
+          </Button>
+        </p>
+      </CardContent>
+    </Card>
   );
 }

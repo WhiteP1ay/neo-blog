@@ -34,15 +34,15 @@ export function PostsManagement({ posts, loading, onRefresh }: PostsManagementPr
   return (
     <div>
       <FileUploadZone
-        fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
-        dropZoneRef={dropZoneRef as React.RefObject<HTMLInputElement>}
+        fileInputRef={fileInputRef}
+        dropZoneRef={dropZoneRef}
         onFileSelect={handleFileSelect}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onCreateClick={startCreate}
       />
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         {posts.length > 0 ? (
           <>
             <PostsTable

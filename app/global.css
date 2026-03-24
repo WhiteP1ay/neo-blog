@@ -1,9 +1,102 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "tw-animate-css";
+
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* shadcn/ui theme (neutral, OKLCH) — utilities: bg-background, text-foreground, etc. */
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
 
 /* 基础样式 */
 body {
-  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
+  @apply bg-background text-foreground antialiased transition-colors duration-200;
 }
 
 /* 现代化滚动条样式 */
@@ -77,186 +170,4 @@ body {
   transition: all 0.2s ease;
 }
 
-/* 文章内容样式 */
-.prose {
-  color: #374151;
-  line-height: 1.75;
-}
-
-.prose h1,
-.prose h2,
-.prose h3,
-.prose h4,
-.prose h5,
-.prose h6 {
-  font-weight: 600;
-  margin-top: 2em;
-  margin-bottom: 1em;
-  color: #111827;
-}
-
-.prose h1 {
-  font-size: 2.25em;
-}
-
-.prose h2 {
-  font-size: 1.875em;
-}
-
-.prose h3 {
-  font-size: 1.5em;
-}
-
-.prose p {
-  margin-top: 1.25em;
-  margin-bottom: 1.25em;
-}
-
-.prose a {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-.prose a:hover {
-  color: #1d4ed8;
-}
-
-.prose code {
-  background-color: #f3f4f6;
-  padding: 0.125em 0.375em;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-}
-
-.prose pre {
-  background-color: #1f2937;
-  color: #f9fafb;
-  padding: 1em;
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  margin-top: 1.5em;
-  margin-bottom: 1.5em;
-}
-
-.prose pre code {
-  background-color: transparent;
-  padding: 0;
-  color: inherit;
-}
-
-.prose ul,
-.prose ol {
-  margin-top: 1.25em;
-  margin-bottom: 1.25em;
-  padding-left: 1.625em;
-}
-
-.prose li {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
-
-.prose blockquote {
-  border-left: 4px solid #e5e7eb;
-  padding-left: 1em;
-  margin-top: 1.5em;
-  margin-bottom: 1.5em;
-  color: #6b7280;
-  font-style: italic;
-}
-
-.prose img {
-  max-width: 100%;
-  height: auto;
-  margin-top: 2em;
-  margin-bottom: 2em;
-  border-radius: 0.5rem;
-}
-
-.prose hr {
-  border-top: 1px solid #e5e7eb;
-  margin-top: 3em;
-  margin-bottom: 3em;
-}
-
-.prose table {
-  width: 100%;
-  margin-top: 1.5em;
-  margin-bottom: 1.5em;
-  border-collapse: collapse;
-}
-
-.prose th,
-.prose td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5em 0.75em;
-  text-align: left;
-}
-
-.prose th {
-  background-color: #f9fafb;
-  font-weight: 600;
-}
-
-/* 深色模式下的文章内容样式 */
-.dark .prose {
-  color: #d1d5db;
-}
-
-.dark .prose h1,
-.dark .prose h2,
-.dark .prose h3,
-.dark .prose h4,
-.dark .prose h5,
-.dark .prose h6 {
-  color: #f9fafb;
-}
-
-.dark .prose a {
-  color: #60a5fa;
-}
-
-.dark .prose a:hover {
-  color: #3b82f6;
-}
-
-.dark .prose code {
-  background-color: #374151;
-  color: #f3f4f6;
-}
-
-.dark .prose pre {
-  background-color: #111827;
-  color: #f9fafb;
-}
-
-.dark .prose blockquote {
-  border-left: 4px solid #374151;
-  color: #9ca3af;
-}
-
-.dark .prose hr {
-  border-top: 1px solid #374151;
-}
-
-.dark .prose th,
-.dark .prose td {
-  border: 1px solid #374151;
-}
-
-.dark .prose th {
-  background-color: #1f2937;
-}
-
-/* Toast 动画 */
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+/* 正文排版由 @tailwindcss/typography 的 prose / dark:prose-invert 提供 */

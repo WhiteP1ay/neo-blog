@@ -1,6 +1,16 @@
 'use client';
 
 import type { Tool } from '@/server/actions/tools';
+import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/app/components/ui/badge';
+import { Button } from '@/app/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 
 interface ToolsTableProps {
   tools: Tool[];
@@ -15,84 +25,77 @@ interface ToolsTableProps {
  */
 export function ToolsTable({ tools, onEdit, onDelete, onToggleHidden }: ToolsTableProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">链接</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead>名称</TableHead>
+              <TableHead>描述</TableHead>
+              <TableHead>链接</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>创建时间</TableHead>
+              <TableHead className="w-[80px] text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {tools.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                   暂无工具
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               tools.map((tool) => (
-                <tr key={tool.id}>
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="text-sm sm:text-base font-medium text-gray-900">{tool.name}</div>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                <TableRow key={tool.id}>
+                  <TableCell className="font-medium">{tool.name}</TableCell>
+                  <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
                     {tool.description || '-'}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
+                  </TableCell>
+                  <TableCell className="max-w-xs">
                     <a
                       href={tool.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline truncate block max-w-xs"
+                      className="text-primary truncate text-sm underline-offset-4 hover:underline"
                     >
                       {tool.url}
                     </a>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                        tool.isHidden ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'
-                      }`}
-                    >
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={tool.isHidden ? 'secondary' : 'default'}>
                       {tool.isHidden ? '已隐藏' : '显示中'}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
                     {new Date(tool.createdAt).toLocaleDateString('zh-CN')}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => onEdit(tool)}
-                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => onToggleHidden(tool)}
-                        className="text-gray-600 hover:text-gray-800 text-xs sm:text-sm"
-                      >
-                        {tool.isHidden ? '显示' : '隐藏'}
-                      </button>
-                      <button
-                        onClick={() => onDelete(tool.id)}
-                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8" aria-label="更多操作">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(tool)}>编辑</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onToggleHidden(tool)}>
+                          {tool.isHidden ? '显示' : '隐藏'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(tool.id)}
+                        >
+                          删除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

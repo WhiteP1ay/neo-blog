@@ -3,6 +3,12 @@
 import Image from 'next/image';
 import type { Tool } from '@/server/actions/tools';
 import { useToolForm } from './hooks/useToolForm';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Checkbox } from '@/app/components/ui/checkbox';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
+import { Textarea } from '@/app/components/ui/textarea';
 
 interface ToolFormProps {
   tool: Tool | null;
@@ -36,122 +42,100 @@ export function ToolForm({ tool, mode, onSuccess, onCancel }: ToolFormProps) {
   return (
     <div>
       <div className="mb-4">
-        <button onClick={onCancel} className="text-sm text-blue-600 hover:text-blue-800">
+        <Button variant="link" className="h-auto p-0 text-primary" onClick={onCancel}>
           ← 返回列表
-        </button>
+        </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{mode === 'create' ? '创建工具' : '编辑工具'}</h2>
-
-        {/* 工具名称 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">
-            工具名称 <span className="text-red-500">*</span>
-          </span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-
-        {/* 工具描述 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">工具描述（可选）</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入工具描述..."
-          />
-        </div>
-
-        {/* 工具链接URL */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">
-            工具链接URL <span className="text-red-500">*</span>
-          </span>
-          <input
-            type="url"
-            value={url}
-            onChange={(e) => handleUrlChange(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              urlError && url ? 'border-red-300 bg-red-50' : 'border-gray-300'
-            }`}
-            placeholder="https://example.com/tool"
-            required
-          />
-          {urlError && url && <p className="text-xs text-red-600 mt-1">URL 格式无效，请输入完整的链接地址</p>}
-        </div>
-
-        {/* 封面图 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</span>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <input
-                type="url"
-                value={coverImage || ''}
-                onChange={(e) => handleCoverImageChange(e.target.value)}
-                placeholder="请输入图片 URL，例如：https://example.com/image.jpg"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  coverImageError && coverImage ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-              />
-              {coverImageError && coverImage && (
-                <p className="text-xs text-red-600 mt-1">URL 格式无效，请输入完整的图片地址</p>
-              )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">{mode === 'create' ? '创建工具' : '编辑工具'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="tool-name">
+                工具名称 <span className="text-destructive">*</span>
+              </Label>
+              <Input id="tool-name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
-            {coverImage && !coverImageError && (
-              <div className="shrink-0">
-                <Image
-                  src={coverImage}
-                  alt="封面图预览"
-                  width={150}
-                  height={150}
-                  className="rounded-lg object-cover border border-gray-300"
-                  onError={handleImageError}
-                />
+
+            <div className="space-y-2">
+              <Label htmlFor="tool-desc">工具描述（可选）</Label>
+              <Textarea
+                id="tool-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="请输入工具描述..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tool-url">
+                工具链接URL <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="tool-url"
+                type="url"
+                value={url}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                className={urlError && url ? 'border-destructive' : ''}
+                placeholder="https://example.com/tool"
+                required
+              />
+              {urlError && url ? <p className="text-destructive text-xs">URL 格式无效，请输入完整的链接地址</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tool-cover">封面图 URL（可选）</Label>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-1">
+                  <Input
+                    id="tool-cover"
+                    type="url"
+                    value={coverImage || ''}
+                    onChange={(e) => handleCoverImageChange(e.target.value)}
+                    placeholder="请输入图片 URL，例如：https://example.com/image.jpg"
+                    className={coverImageError && coverImage ? 'border-destructive' : ''}
+                  />
+                  {coverImageError && coverImage ? (
+                    <p className="text-destructive text-xs">URL 格式无效，请输入完整的图片地址</p>
+                  ) : null}
+                </div>
+                {coverImage && !coverImageError ? (
+                  <div className="shrink-0">
+                    <Image
+                      src={coverImage}
+                      alt="封面图预览"
+                      width={150}
+                      height={150}
+                      className="rounded-lg border border-border object-cover"
+                      onError={handleImageError}
+                    />
+                  </div>
+                ) : null}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* 隐藏 */}
-        <div className="mb-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isHidden}
-              onChange={(e) => setIsHidden(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-gray-700">隐藏</span>
-          </label>
-        </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="tool-hidden" checked={isHidden} onCheckedChange={(v) => setIsHidden(v === true)} />
+              <Label htmlFor="tool-hidden" className="font-medium">
+                隐藏
+              </Label>
+            </div>
 
-        {/* 提交按钮 */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? '保存中...' : mode === 'create' ? '创建' : '更新'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            取消
-          </button>
-        </div>
-      </form>
+            <div className="flex flex-wrap gap-4">
+              <Button type="submit" disabled={loading}>
+                {loading ? '保存中...' : mode === 'create' ? '创建' : '更新'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                取消
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

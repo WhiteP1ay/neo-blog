@@ -2,6 +2,17 @@
 
 import type { Post } from '@/server/actions/posts';
 import type { Topic } from '@/server/actions/topics';
+import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/app/components/ui/badge';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/app/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
+import { Separator } from '@/app/components/ui/separator';
 
 interface PostsCardListProps {
   posts: Post[];
@@ -14,7 +25,7 @@ interface PostsCardListProps {
 }
 
 /**
- * 文章卡片列表组件（移动端）
+ * 文章卡片列表组件（移动端，与桌面表格同一套 shadcn 语义）
  */
 export function PostsCardList({
   posts,
@@ -26,70 +37,75 @@ export function PostsCardList({
   onTogglePinned,
 }: PostsCardListProps) {
   return (
-    <div className="sm:hidden divide-y divide-gray-200">
+    <div className="space-y-3 px-1 pb-2 sm:hidden">
       {posts.map((post) => {
         const topics = postTopicsMap.get(post.id) || [];
         const isInTopics = topics.length > 0;
 
         return (
-          <div key={post.id} className="p-4">
-            <button
-              onClick={() => onEdit(post.id)}
-              className="text-blue-600 hover:text-blue-800 text-left font-medium mb-2 block w-full"
-            >
-              {post.title}
-            </button>
-            {post.createdAt && (
-              <div className="text-xs text-gray-500 mb-2">{new Date(post.createdAt).toLocaleDateString('zh-CN')}</div>
-            )}
-            {topics.length > 0 && (
-              <div className="flex flex-wrap gap-1 mb-2">
-                <span className="text-xs text-gray-500 mr-1">所属专题:</span>
-                {topics.map((topic) => (
-                  <span
-                    key={topic.id}
-                    className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {topic.name}
-                  </span>
-                ))}
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {!isInTopics && (
-                <button
+          <Card key={post.id} className="overflow-hidden shadow-sm">
+            <CardHeader className="space-y-2 pb-2">
+              <Button
+                variant="link"
+                className="h-auto min-h-0 justify-start p-0 text-left font-medium text-primary"
+                onClick={() => onEdit(post.id)}
+              >
+                {post.title}
+              </Button>
+              {post.createdAt ? (
+                <p className="text-muted-foreground text-xs">{new Date(post.createdAt).toLocaleDateString('zh-CN')}</p>
+              ) : null}
+            </CardHeader>
+            <CardContent className="space-y-3 pt-0">
+              {topics.length > 0 ? (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs">所属专题</p>
+                  <div className="flex flex-wrap gap-1">
+                    {topics.map((topic) => (
+                      <Badge key={topic.id} variant="secondary">
+                        {topic.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {!isInTopics ? (
+                <Button
+                  type="button"
+                  variant={post.isPinned ? 'default' : 'outline'}
+                  size="sm"
+                  className="text-xs"
                   onClick={() => onTogglePinned(post)}
-                  className={`text-xs px-2 py-1 rounded ${
-                    post.isPinned
-                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-600'
-                      : 'bg-gray-100 text-gray-600 border border-gray-300'
-                  }`}
                 >
                   {post.isPinned ? '已置顶' : '置顶'}
-                </button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => onDownload(post)}
-                className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-600 rounded"
-              >
-                下载
-              </button>
-              <button
-                onClick={() => onUpdate(post)}
-                className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-600 rounded"
-              >
-                更新
-              </button>
-              <button
-                onClick={() => onDelete(post.id)}
-                className="text-red-600 hover:text-red-800 text-xs px-2 py-1 border border-red-600 rounded"
-              >
-                删除
-              </button>
-            </div>
-          </div>
+                </Button>
+              ) : null}
+
+              <Separator />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <MoreHorizontal className="size-4" />
+                      操作
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-40">
+                    <DropdownMenuItem onClick={() => onDownload(post)}>下载</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onUpdate(post)}>更新</DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => onDelete(post.id)}
+                    >
+                      删除
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
         );
       })}
     </div>

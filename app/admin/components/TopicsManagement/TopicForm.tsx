@@ -5,6 +5,12 @@ import type { Topic } from '@/server/actions/topics';
 import { useTopicForm } from './hooks/useTopicForm';
 import { SortablePostList } from './components/SortablePostList';
 import { BatchUploadZone } from './components/BatchUploadZone';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Checkbox } from '@/app/components/ui/checkbox';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
+import { Textarea } from '@/app/components/ui/textarea';
 
 interface TopicFormProps {
   topic: Topic | null;
@@ -42,159 +48,131 @@ export function TopicForm({ topic, mode, onSuccess, onCancel }: TopicFormProps) 
   return (
     <div>
       <div className="mb-4">
-        <button onClick={onCancel} className="text-sm text-blue-600 hover:text-blue-800">
+        <Button variant="link" className="h-auto p-0 text-primary" onClick={onCancel}>
           ← 返回列表
-        </button>
+        </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{mode === 'create' ? '创建专题' : '编辑专题'}</h2>
-
-        {/* 专题名称 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">
-            专题名称 <span className="text-red-500">*</span>
-          </span>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-
-        {/* 专题描述 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">专题描述（可选）</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="请输入专题描述..."
-          />
-        </div>
-
-        {/* 封面图 */}
-        <div className="mb-4">
-          <span className="block text-sm font-medium text-gray-700 mb-2">封面图 URL（可选）</span>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <input
-                type="url"
-                value={coverImage || ''}
-                onChange={(e) => handleCoverImageChange(e.target.value)}
-                placeholder="请输入图片 URL，例如：https://example.com/image.jpg"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  coverImageError && coverImage ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-              />
-              {coverImageError && coverImage && (
-                <p className="text-xs text-red-600 mt-1">URL 格式无效，请输入完整的图片地址</p>
-              )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">{mode === 'create' ? '创建专题' : '编辑专题'}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="topic-name">
+                专题名称 <span className="text-destructive">*</span>
+              </Label>
+              <Input id="topic-name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
-            {coverImage && !coverImageError && (
-              <div className="shrink-0">
-                <Image
-                  src={coverImage}
-                  alt="封面图预览"
-                  width={150}
-                  height={150}
-                  className="rounded-lg object-cover border border-gray-300"
-                  onError={handleImageError}
-                />
+
+            <div className="space-y-2">
+              <Label htmlFor="topic-desc">专题描述（可选）</Label>
+              <Textarea
+                id="topic-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                placeholder="请输入专题描述..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="topic-cover">封面图 URL（可选）</Label>
+              <div className="flex gap-4">
+                <div className="flex-1 space-y-1">
+                  <Input
+                    id="topic-cover"
+                    type="url"
+                    value={coverImage || ''}
+                    onChange={(e) => handleCoverImageChange(e.target.value)}
+                    placeholder="请输入图片 URL，例如：https://example.com/image.jpg"
+                    className={coverImageError && coverImage ? 'border-destructive' : ''}
+                  />
+                  {coverImageError && coverImage ? (
+                    <p className="text-destructive text-xs">URL 格式无效，请输入完整的图片地址</p>
+                  ) : null}
+                </div>
+                {coverImage && !coverImageError ? (
+                  <div className="shrink-0">
+                    <Image
+                      src={coverImage}
+                      alt="封面图预览"
+                      width={150}
+                      height={150}
+                      className="rounded-lg border border-border object-cover"
+                      onError={handleImageError}
+                    />
+                  </div>
+                ) : null}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* 置顶 */}
-        <div className="mb-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isPinned}
-              onChange={(e) => setIsPinned(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-gray-700">置顶</span>
-          </label>
-        </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="topic-pinned" checked={isPinned} onCheckedChange={(v) => setIsPinned(v === true)} />
+              <Label htmlFor="topic-pinned" className="font-medium">
+                置顶
+              </Label>
+            </div>
 
-        {/* 隐藏 */}
-        <div className="mb-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isHidden}
-              onChange={(e) => setIsHidden(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <span className="text-sm font-medium text-gray-700">隐藏</span>
-          </label>
-        </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="topic-hidden" checked={isHidden} onCheckedChange={(v) => setIsHidden(v === true)} />
+              <Label htmlFor="topic-hidden" className="font-medium">
+                隐藏
+              </Label>
+            </div>
 
-        {/* 批量上传 */}
-        <div className="mb-6">
-          <span className="block text-sm font-medium text-gray-700 mb-2">批量上传文章</span>
-          <BatchUploadZone onFilesUploaded={handleBatchAddPosts} />
-        </div>
+            <div className="space-y-2">
+              <Label>批量上传文章</Label>
+              <BatchUploadZone onFilesUploaded={handleBatchAddPosts} />
+            </div>
 
-        {/* 文章管理 */}
-        <div className="mb-6">
-          <span className="block text-sm font-medium text-gray-700 mb-2">文章管理</span>
-          <div className="border border-gray-300 rounded-lg p-4 max-h-96 overflow-y-auto">
-            {allPosts.length === 0 ? (
-              <p className="text-sm text-gray-500">暂无文章</p>
-            ) : (
-              <div className="space-y-2">
-                {allPosts.map((post) => {
-                  const isSelected = selectedPosts.some((p) => p.postId === post.id);
-                  return (
-                    <label
-                      key={post.id}
-                      className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handlePostToggle(post.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700 flex-1">{post.title}</span>
-                    </label>
-                  );
-                })}
+            <div className="space-y-2">
+              <Label>文章管理</Label>
+              <div className="max-h-96 overflow-y-auto rounded-md border border-border p-4">
+                {allPosts.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">暂无文章</p>
+                ) : (
+                  <div className="space-y-2">
+                    {allPosts.map((post) => {
+                      const isSelected = selectedPosts.some((p) => p.postId === post.id);
+                      return (
+                        <label
+                          key={post.id}
+                          htmlFor={`post-${post.id}`}
+                          className="hover:bg-accent/50 flex cursor-pointer items-center gap-2 rounded-md p-2"
+                        >
+                          <Checkbox
+                            id={`post-${post.id}`}
+                            checked={isSelected}
+                            onCheckedChange={() => handlePostToggle(post.id)}
+                          />
+                          <span className="flex-1 text-sm">{post.title}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <SortablePostList
-            posts={selectedPosts}
-            allPosts={allPosts}
-            onReorder={handlePostReorder}
-            onRemove={handlePostToggle}
-          />
-        </div>
+              <SortablePostList
+                posts={selectedPosts}
+                allPosts={allPosts}
+                onReorder={handlePostReorder}
+                onRemove={handlePostToggle}
+              />
+            </div>
 
-        {/* 提交按钮 */}
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? '保存中...' : mode === 'create' ? '创建' : '更新'}
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            取消
-          </button>
-        </div>
-      </form>
+            <div className="flex flex-wrap gap-4">
+              <Button type="submit" disabled={loading}>
+                {loading ? '保存中...' : mode === 'create' ? '创建' : '更新'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={onCancel}>
+                取消
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

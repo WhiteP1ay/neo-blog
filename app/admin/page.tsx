@@ -6,7 +6,7 @@ import { PostsManagement } from './components/PostsManagement';
 import { TopicsManagement } from './components/TopicsManagement';
 import { ToolsManagement } from './components/ToolsManagement';
 import { AnalyticsManagement } from './components/AnalyticsManagement';
-import { Tabs } from './components/Tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { BackToHome } from '@/app/components/BackToHome';
 
 type TabType = 'posts' | 'topics' | 'tools' | 'analytics';
@@ -46,13 +46,21 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
         <div className="mb-4 sm:mb-8">
-          <BackToHome className="text-sm sm:text-base text-blue-600 hover:text-blue-800" showIcon={false} />
+          <BackToHome className="text-sm sm:text-base text-primary hover:underline" showIcon={false} />
         </div>
 
-        <Tabs<TabType> activeTab={activeTab} tabs={tabs} onTabChange={setActiveTab} />
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)}>
+          <TabsList className="mb-6 grid h-auto w-full grid-cols-2 gap-1 p-1 sm:grid-cols-4">
+            {tabs.map((tab) => (
+              <TabsTrigger key={tab.id} value={tab.id} className="flex-1">
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         {activeTab === 'posts' && <PostsManagement posts={posts} loading={loading} onRefresh={loadPosts} />}
 

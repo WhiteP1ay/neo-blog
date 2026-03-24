@@ -2,6 +2,8 @@
 
 import { useRef } from 'react';
 import { useToast } from '@/app/components/Toast';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent } from '@/app/components/ui/card';
 
 interface BatchUploadZoneProps {
   onFilesUploaded: (postIds: number[]) => void;
@@ -73,24 +75,23 @@ export function BatchUploadZone({ onFilesUploaded }: BatchUploadZoneProps) {
   };
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: <todo>
-<div
+    <Card
       ref={dropZoneRef}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
-      className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 text-center hover:border-blue-400 transition-colors"
+      className="border-2 border-dashed border-border bg-card transition-colors hover:border-primary/50"
     >
-      <input ref={fileInputRef} type="file" accept=".md" multiple onChange={handleFileSelect} className="hidden" />
-      <p className="text-sm text-gray-600 mb-2">批量上传 Markdown 文件添加文章到专题</p>
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="text-blue-600 hover:text-blue-800 text-sm"
-      >
-        点击选择文件
-      </button>
-      <span className="text-sm text-gray-500 mx-2">或</span>
-      <span className="text-sm text-gray-500">拖拽文件到这里</span>
-    </div>
+      <CardContent className="space-y-2 p-4 text-center">
+        <input ref={fileInputRef} type="file" accept=".md" multiple onChange={handleFileSelect} className="hidden" />
+        <p className="text-muted-foreground text-sm">批量上传 Markdown 文件添加文章到专题</p>
+        <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+          <Button type="button" variant="link" className="h-auto p-0" onClick={() => fileInputRef.current?.click()}>
+            点击选择文件
+          </Button>
+          <span className="text-muted-foreground">或</span>
+          <span className="text-muted-foreground">拖拽文件到这里</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

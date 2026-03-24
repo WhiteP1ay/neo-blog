@@ -2,40 +2,41 @@
 
 import Link from 'next/link';
 import type { Feature } from '@/app/features';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/app/components/ui/card';
 
 interface FeatureCardProps {
   feature: Feature;
   onConsultClick?: () => void;
 }
 
+/**
+ * 工具/功能卡片（与首页历史样式一致，shadcn Card）
+ */
 export function FeatureCard({ feature, onConsultClick }: FeatureCardProps) {
   return (
-    <div
-      key={feature.id}
-      className="group border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
-    >
-      <div className="mb-6">
-        <h2 className="text-2xl font-medium mb-3 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
+    <Card className="group border-border transition-colors hover:border-primary/35">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-2xl font-medium transition-colors group-hover:text-primary">
           {feature.title}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
-      </div>
-      <button
-        onClick={() => {
-          if (feature.isPopup && onConsultClick) {
-            onConsultClick();
-          }
-        }}
-        className={`text-sm font-medium flex items-center gap-2 ${feature.isPopup ? 'cursor-pointer' : ''}`}
-      >
-        {!feature.isPopup ? (
-          <Link href={feature.href} className="group-hover:underline">
-            了解更多
-          </Link>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+      </CardContent>
+      <CardFooter className="pt-2">
+        {feature.isPopup ? (
+          <Button variant="link" className="h-auto p-0 text-primary" onClick={() => onConsultClick?.()}>
+            立即咨询 →
+          </Button>
         ) : (
-          <span className="group-hover:underline">立即咨询</span>
+          <Button variant="link" className="h-auto p-0" asChild>
+            <Link href={feature.href} className="text-primary">
+              了解更多 →
+            </Link>
+          </Button>
         )}
-      </button>
-    </div>
+      </CardFooter>
+    </Card>
   );
 }

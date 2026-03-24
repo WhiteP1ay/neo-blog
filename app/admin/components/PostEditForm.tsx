@@ -6,6 +6,11 @@ import { updatePost, type Post } from '@/server/actions/posts';
 import { getTopics, getTopicsByPostId, addPostToTopic, removePostFromTopic, type Topic } from '@/server/actions/topics';
 import { useToast } from '@/app/components/Toast';
 import Link from 'next/link';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Checkbox } from '@/app/components/ui/checkbox';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
 
 interface PostEditFormProps {
   post: Post;
@@ -113,152 +118,140 @@ export function PostEditForm({ post }: PostEditFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
-        {/* 返回按钮 */}
+    <div className="min-h-screen bg-muted/40">
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
         <div className="mb-6">
-          <Link href="/admin" className="text-sm sm:text-base text-blue-600 hover:text-blue-800">
-            ← 返回文章列表
-          </Link>
+          <Button variant="link" className="h-auto p-0 text-primary" asChild>
+            <Link href="/admin">← 返回文章列表</Link>
+          </Button>
         </div>
 
-        {/* 编辑表单 */}
-        <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">编辑文章元数据</h1>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 标题 */}
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                标题 *
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-                required
-              />
-            </div>
-
-            {/* 创建日期 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="createdAt" className="block text-sm font-medium text-gray-700">
-                  创建日期
-                </label>
-                {formData.createdAt && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, createdAt: '' }))}
-                    className="text-xs text-red-600 hover:text-red-800"
-                  >
-                    清空
-                  </button>
-                )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl sm:text-3xl">编辑文章元数据</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="title">标题 *</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  required
+                />
               </div>
-              <input
-                type="datetime-local"
-                id="createdAt"
-                value={formData.createdAt}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    createdAt: e.target.value,
-                  }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-            </div>
 
-            {/* 修改日期 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="updatedAt" className="block text-sm font-medium text-gray-700">
-                  修改日期
-                </label>
-                {formData.updatedAt && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, updatedAt: '' }))}
-                    className="text-xs text-red-600 hover:text-red-800"
-                  >
-                    清空
-                  </button>
-                )}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="createdAt">创建日期</Label>
+                  {formData.createdAt ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-auto px-2 py-0 text-xs"
+                      onClick={() => setFormData((prev) => ({ ...prev, createdAt: '' }))}
+                    >
+                      清空
+                    </Button>
+                  ) : null}
+                </div>
+                <Input
+                  type="datetime-local"
+                  id="createdAt"
+                  value={formData.createdAt}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      createdAt: e.target.value,
+                    }))
+                  }
+                />
               </div>
-              <input
-                type="datetime-local"
-                id="updatedAt"
-                value={formData.updatedAt}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    updatedAt: e.target.value,
-                  }))
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-              />
-            </div>
 
-            {/* 专题选择 */}
-            <div>
-              <span className="block text-sm font-medium text-gray-700 mb-2">所属专题（可多选）</span>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
-                {allTopics.length === 0 ? (
-                  <p className="text-sm text-gray-500">暂无专题</p>
-                ) : (
-                  <div className="space-y-2">
-                    {allTopics.map((topic) => (
-                      <label
-                        key={topic.id}
-                        className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedTopicIds.includes(topic.id)}
-                          onChange={() => handleTopicToggle(topic.id)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-sm text-gray-700 flex-1">{topic.name}</span>
-                        {topic.isPinned && <span className="text-xs text-yellow-600">置顶</span>}
-                        {topic.isHidden && <span className="text-xs text-gray-400">隐藏</span>}
-                      </label>
-                    ))}
-                  </div>
-                )}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="updatedAt">修改日期</Label>
+                  {formData.updatedAt ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-auto px-2 py-0 text-xs"
+                      onClick={() => setFormData((prev) => ({ ...prev, updatedAt: '' }))}
+                    >
+                      清空
+                    </Button>
+                  ) : null}
+                </div>
+                <Input
+                  type="datetime-local"
+                  id="updatedAt"
+                  value={formData.updatedAt}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      updatedAt: e.target.value,
+                    }))
+                  }
+                />
               </div>
-            </div>
 
-            {/* 文章信息（只读） */}
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">文章ID:</span> {post.id}
+              <div className="space-y-2">
+                <Label>所属专题（可多选）</Label>
+                <div className="max-h-48 overflow-y-auto rounded-md border border-border p-4">
+                  {allTopics.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">暂无专题</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {allTopics.map((topic) => (
+                        <label
+                          key={topic.id}
+                          htmlFor={`topic-${topic.id}`}
+                          className="hover:bg-accent/50 flex cursor-pointer items-center gap-2 rounded-md p-2"
+                        >
+                          <Checkbox
+                            id={`topic-${topic.id}`}
+                            checked={selectedTopicIds.includes(topic.id)}
+                            onCheckedChange={() => handleTopicToggle(topic.id)}
+                          />
+                          <span className="flex-1 text-sm">{topic.name}</span>
+                          {topic.isPinned ? (
+                            <span className="text-xs text-amber-600 dark:text-amber-400">置顶</span>
+                          ) : null}
+                          {topic.isHidden ? <span className="text-muted-foreground text-xs">隐藏</span> : null}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">内容长度:</span> {post.content.length} 字符
-              </div>
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Markdown源文件:</span> {post.markdownContent ? '已保存' : '未保存'}
-              </div>
-            </div>
 
-            {/* 操作按钮 */}
-            <div className="flex items-center justify-between pt-4">
-              <Link href="/admin" className="text-sm sm:text-base text-gray-600 hover:text-gray-800">
-                取消
-              </Link>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-              >
-                {loading ? '保存中...' : '保存更改'}
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="bg-muted/50 space-y-2 rounded-lg p-4 text-sm text-muted-foreground">
+                <div>
+                  <span className="font-medium text-foreground">文章ID:</span> {post.id}
+                </div>
+                <div>
+                  <span className="font-medium text-foreground">内容长度:</span> {post.content.length} 字符
+                </div>
+                <div>
+                  <span className="font-medium text-foreground">Markdown源文件:</span>{' '}
+                  {post.markdownContent ? '已保存' : '未保存'}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4">
+                <Button variant="ghost" asChild>
+                  <Link href="/admin">取消</Link>
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? '保存中...' : '保存更改'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { ToastProvider } from './components/Toast';
 import { Nav } from './components/Nav';
 import { ThemeProvider } from './components/ThemeProvider';
 import Script from 'next/script';
+import { Footer } from './components/Home/Footer';
 
 export const metadata: Metadata = {
   title: {
@@ -34,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV === 'production' && (
           <Script
@@ -49,6 +50,7 @@ export default function RootLayout({
           <ToastProvider>
             <Nav />
             {children}
+            <Footer />
           </ToastProvider>
         </ThemeProvider>
       </body>

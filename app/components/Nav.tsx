@@ -3,101 +3,86 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { useTheme } from './ThemeProvider';
-import { Switch } from './SwitchTheme';
+import { Menu } from 'lucide-react';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { navItems } from '@/app/nav';
+import { Button } from '@/app/components/ui/button';
+import { Separator } from '@/app/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/app/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 export function Nav() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isDarkMode, toggleTheme } = useTheme();
-
   const isActive = (href: string) => {
     return pathname?.startsWith(href);
   };
 
+  const linkClass = (href: string) =>
+    cn(
+      'text-sm font-medium transition-colors',
+      isActive(href) ? 'text-primary' : 'text-muted-foreground hover:text-primary',
+    );
+
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo/Home Link */}
+    <nav className="sticky top-0 z-50 border-b border-border bg-background">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">White Meta</h1>
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">White Meta</h1>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? 'text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                }`}
-              >
+              <Link key={item.href} href={item.href} className={linkClass(item.href)}>
                 {item.label}
               </Link>
             ))}
-            <Switch checked={isDarkMode} onChange={toggleTheme} />
+            <ThemeSwitcher variant="dropdown" />
             <Link href="/admin" className="opacity-0">
               管理
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="打开菜单">
+                <Menu className="size-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex w-[min(100vw-1rem,20rem)] flex-col">
+              <SheetHeader>
+                <SheetTitle>导航</SheetTitle>
+              </SheetHeader>
+              <nav className="mt-6 flex flex-col gap-1">
+                {navItems.map((item) => (
+                  <Button key={item.href} variant="ghost" className="justify-start font-normal" asChild>
+                    <Link href={item.href} className={linkClass(item.href)} onClick={() => setIsMobileMenuOpen(false)}>
+                      {item.label}
+                    </Link>
+                  </Button>
+                ))}
+                <Separator className="my-2" />
+                <Button variant="ghost" className="justify-start font-normal" asChild>
+                  <a
+                    href="mailto:EthanPark2233@gmail.com"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    Email
+                  </a>
+                </Button>
+                <Button variant="ghost" className="justify-start font-normal opacity-20 hover:opacity-100" asChild>
+                  <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                    管理
+                  </Link>
+                </Button>
+                <Separator className="my-2" />
+                <ThemeSwitcher variant="list" onAfterSelect={() => setIsMobileMenuOpen(false)} />
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-200 dark:border-gray-800 dark:bg-gray-900">
-            <div className="flex flex-col gap-4 pt-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-sm font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <a
-                href="mailto:EthanPark2233@gmail.com"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                Email
-              </a>
-              <Link
-                href="/admin"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-medium text-gray-600 dark:text-gray-300 transition-opacity opacity-20 hover:opacity-100"
-              >
-                管理
-              </Link>
-              <Switch checked={isDarkMode} onChange={toggleTheme} />
-            </div>
-          </div>
-        )}
       </div>
     </nav>
   );

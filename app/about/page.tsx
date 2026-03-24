@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+    <div className="min-h-screen bg-muted/40">
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
         <Breadcrumb />
-        <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8">
+        <article className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-8">
           <div className="flex items-center gap-4 mb-6">
             <Image className="rounded-full" src="/avatar1.jpg" alt="Ethan Park" width={80} height={80} />
             <div>
@@ -22,7 +22,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="prose prose-sm sm:prose-lg max-w-none text-gray-700 dark:text-gray-300 mb-6">
+          <div className="prose prose-neutral dark:prose-invert prose-sm sm:prose-lg mb-6 max-w-none">
             <p className="mb-4">我是一个软件开发工程师，喜欢研究各种技术，喜欢分享自己的经验和心得。</p>
             <p className="mb-4 flex">
               同时我也是个

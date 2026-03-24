@@ -2,6 +2,16 @@
 
 import type { Post } from '@/server/actions/posts';
 import type { Topic } from '@/server/actions/topics';
+import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/app/components/ui/badge';
+import { Button } from '@/app/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 
 interface PostsTableProps {
   posts: Post[];
@@ -26,94 +36,84 @@ export function PostsTable({
   onTogglePinned,
 }: PostsTableProps) {
   return (
-    <div className="hidden sm:block overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">所属专题</th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">置顶</th>
-            <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-200">
+    <div className="hidden sm:block overflow-x-auto rounded-md border border-border bg-card">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/50 hover:bg-muted/50">
+            <TableHead>标题</TableHead>
+            <TableHead>创建时间</TableHead>
+            <TableHead>所属专题</TableHead>
+            <TableHead>置顶</TableHead>
+            <TableHead className="w-[100px] text-right">操作</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {posts.map((post) => {
             const topics = postTopicsMap.get(post.id) || [];
             const isInTopics = topics.length > 0;
 
             return (
-              <tr key={post.id}>
-                <td className="px-4 sm:px-6 py-4">
-                  <button
-                    onClick={() => onEdit(post.id)}
-                    className="text-blue-600 hover:text-blue-800 text-left text-sm sm:text-base"
-                  >
+              <TableRow key={post.id}>
+                <TableCell>
+                  <Button variant="link" className="h-auto p-0 text-left font-normal" onClick={() => onEdit(post.id)}>
                     {post.title}
-                  </button>
-                </td>
-                <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
+                  </Button>
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
                   {post.createdAt ? new Date(post.createdAt).toLocaleDateString('zh-CN') : '-'}
-                </td>
-                <td className="px-4 sm:px-6 py-4">
+                </TableCell>
+                <TableCell>
                   {topics.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {topics.map((topic) => (
-                        <span
-                          key={topic.id}
-                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                        >
+                        <Badge key={topic.id} variant="secondary">
                           {topic.name}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="text-muted-foreground text-xs">-</span>
                   )}
-                </td>
-                <td className="px-4 sm:px-6 py-4">
+                </TableCell>
+                <TableCell>
                   {!isInTopics ? (
-                    <button
+                    <Button
+                      type="button"
+                      variant={post.isPinned ? 'default' : 'outline'}
+                      size="sm"
+                      className="text-xs"
                       onClick={() => onTogglePinned(post)}
-                      className={`text-xs sm:text-sm px-2 py-1 rounded ${
-                        post.isPinned
-                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
                     >
                       {post.isPinned ? '已置顶' : '置顶'}
-                    </button>
+                    </Button>
                   ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="text-muted-foreground text-xs">-</span>
                   )}
-                </td>
-                <td className="px-4 sm:px-6 py-4">
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={() => onDownload(post)}
-                      className="text-green-600 hover:text-green-800 text-xs sm:text-sm"
-                    >
-                      下载
-                    </button>
-                    <button
-                      onClick={() => onUpdate(post)}
-                      className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm"
-                    >
-                      更新
-                    </button>
-                    <button
-                      onClick={() => onDelete(post.id)}
-                      className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
-                    >
-                      删除
-                    </button>
-                  </div>
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" aria-label="更多操作">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => onDownload(post)}>下载</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onUpdate(post)}>更新</DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => onDelete(post.id)}
+                      >
+                        删除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -1,6 +1,16 @@
 'use client';
 
 import type { Topic } from '@/server/actions/topics';
+import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '@/app/components/ui/badge';
+import { Button } from '@/app/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
 
 interface TopicsTableProps {
   topics: Topic[];
@@ -16,93 +26,87 @@ interface TopicsTableProps {
  */
 export function TopicsTable({ topics, onEdit, onDelete, onToggleHidden, onTogglePinned }: TopicsTableProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">名称</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">描述</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">置顶</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
-              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead>名称</TableHead>
+              <TableHead>描述</TableHead>
+              <TableHead>置顶</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>创建时间</TableHead>
+              <TableHead className="w-[80px] text-right">操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {topics.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                   暂无专题
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               topics.map((topic) => (
-                <tr key={topic.id}>
-                  <td className="px-4 sm:px-6 py-4">
+                <TableRow key={topic.id}>
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm sm:text-base font-medium text-gray-900">{topic.name}</span>
+                      <span className="font-medium">{topic.name}</span>
                       {topic.isPinned && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <Badge variant="outline" className="border-amber-500/50 text-amber-700 dark:text-amber-400">
                           置顶
-                        </span>
+                        </Badge>
                       )}
                     </div>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
                     {topic.description || '-'}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <button
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      type="button"
+                      variant={topic.isPinned ? 'default' : 'outline'}
+                      size="sm"
+                      className="text-xs"
                       onClick={() => onTogglePinned(topic)}
-                      className={`text-xs sm:text-sm px-2 py-1 rounded ${
-                        topic.isPinned
-                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
                     >
                       {topic.isPinned ? '已置顶' : '置顶'}
-                    </button>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                        topic.isHidden ? 'bg-gray-100 text-gray-600' : 'bg-green-100 text-green-800'
-                      }`}
-                    >
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={topic.isHidden ? 'secondary' : 'default'}>
                       {topic.isHidden ? '已隐藏' : '显示中'}
-                    </span>
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 text-xs sm:text-sm text-gray-500">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
                     {new Date(topic.createdAt).toLocaleDateString('zh-CN')}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => onEdit(topic)}
-                        className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm"
-                      >
-                        编辑
-                      </button>
-                      <button
-                        onClick={() => onToggleHidden(topic)}
-                        className="text-gray-600 hover:text-gray-800 text-xs sm:text-sm"
-                      >
-                        {topic.isHidden ? '显示' : '隐藏'}
-                      </button>
-                      <button
-                        onClick={() => onDelete(topic.id)}
-                        className="text-red-600 hover:text-red-800 text-xs sm:text-sm"
-                      >
-                        删除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8" aria-label="更多操作">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(topic)}>编辑</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onToggleHidden(topic)}>
+                          {topic.isHidden ? '显示' : '隐藏'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(topic.id)}
+                        >
+                          删除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { CommentWithReplies } from '@/server/actions/comments';
 import { formatDateShort } from '@/app/utils/date';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/app/components/ui/button';
 
 interface CommentItemProps {
   comment: CommentWithReplies;

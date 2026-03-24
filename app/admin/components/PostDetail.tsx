@@ -5,6 +5,17 @@ import { getPostById, type Post } from '@/server/actions/posts';
 import { getCommentsByPostId, deleteComment, type CommentWithReplies } from '@/server/actions/comments';
 import { CodeHighlight } from '@/app/components/CodeHighlight';
 import { useToast } from '@/app/components/Toast';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 
 interface PostDetailProps {
   postId: number;
@@ -20,6 +31,8 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
   const [comments, setComments] = useState<CommentWithReplies[]>([]);
   const [loading, setLoading] = useState(true);
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const { showToast } = useToast();
 
   /**
@@ -51,15 +64,14 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
     loadComments();
   }, [loadPost, loadComments]);
 
-  /**
-   * 删除评论
-   */
-  const handleDeleteComment = async (id: number) => {
-    if (!confirm('确定要删除这条评论吗？')) {
+  const confirmDeleteComment = async () => {
+    if (deleteTargetId == null) {
       return;
     }
-
-    const result = await deleteComment(id);
+    setDeleteLoading(true);
+    const result = await deleteComment(deleteTargetId);
+    setDeleteLoading(false);
+    setDeleteTargetId(null);
     if (result.success) {
       showToast('删除成功', 'success');
       loadComments();
@@ -85,12 +97,15 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
             <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
               {new Date(comment.createdAt).toLocaleDateString('zh-CN')}
             </span>
-            <button
-              onClick={() => handleDeleteComment(comment.id)}
-              className="text-xs sm:text-sm text-red-600 hover:text-red-800"
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive text-xs sm:text-sm"
+              onClick={() => setDeleteTargetId(comment.id)}
             >
               删除
-            </button>
+            </Button>
           </div>
         </div>
         <div className="text-sm sm:text-base text-gray-700 mb-3 whitespace-pre-wrap wrap-break-word">
@@ -108,52 +123,73 @@ export function PostDetail({ postId, onBack }: PostDetailProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-500">加载中...</div>;
+    return <div className="text-muted-foreground py-12 text-center">加载中...</div>;
   }
 
   if (!post) {
-    return <div className="text-center py-12 text-gray-500">文章不存在</div>;
+    return <div className="text-muted-foreground py-12 text-center">文章不存在</div>;
   }
 
   return (
     <div>
-      {/* 返回按钮 */}
       <div className="mb-4 sm:mb-6">
-        <button onClick={onBack} className="text-sm sm:text-base text-blue-600 hover:text-blue-800">
+        <Button variant="link" className="h-auto p-0 text-primary" onClick={onBack}>
           ← 返回文章列表
-        </button>
+        </Button>
       </div>
 
-      {/* 文章内容 */}
-      <article className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">{post.title}</h1>
-        {post.createdAt && (
-          <div className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">
-            {new Date(post.createdAt).toLocaleDateString('zh-CN', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </div>
-        )}
-        <div className="prose prose-sm sm:prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
-      </article>
+      <Card className="mb-6 sm:mb-8">
+        <CardContent className="p-4 sm:p-8">
+          <article>
+            <h1 className="mb-4 text-2xl font-bold sm:mb-6 sm:text-4xl">{post.title}</h1>
+            {post.createdAt ? (
+              <div className="text-muted-foreground mb-6 text-xs sm:mb-8 sm:text-sm">
+                {new Date(post.createdAt).toLocaleDateString('zh-CN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </div>
+            ) : null}
+            <div
+              className="prose prose-neutral dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          </article>
+        </CardContent>
+      </Card>
 
-      {/* 代码高亮 */}
       <CodeHighlight />
 
-      {/* 评论区域 */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">评论管理</h2>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl sm:text-2xl">评论管理</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {commentsLoading ? (
+            <div className="text-muted-foreground py-6 text-center text-sm sm:py-8 sm:text-base">加载中...</div>
+          ) : comments.length === 0 ? (
+            <div className="text-muted-foreground py-6 text-center text-sm sm:py-8 sm:text-base">暂无评论</div>
+          ) : (
+            <div>{comments.map(renderComment)}</div>
+          )}
+        </CardContent>
+      </Card>
 
-        {commentsLoading ? (
-          <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">加载中...</div>
-        ) : comments.length === 0 ? (
-          <div className="text-center py-6 sm:py-8 text-gray-500 text-sm sm:text-base">暂无评论</div>
-        ) : (
-          <div>{comments.map(renderComment)}</div>
-        )}
-      </div>
+      <AlertDialog open={deleteTargetId !== null} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除评论？</AlertDialogTitle>
+            <AlertDialogDescription>此操作不可撤销。</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteLoading}>取消</AlertDialogCancel>
+            <Button variant="destructive" disabled={deleteLoading} onClick={() => void confirmDeleteComment()}>
+              {deleteLoading ? '删除中…' : '删除'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

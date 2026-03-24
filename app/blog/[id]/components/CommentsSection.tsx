@@ -5,6 +5,10 @@ import { getCommentsByPostId, type CommentWithReplies } from '@/server/actions/c
 import { useChinaIPDetector } from '@/app/components/ChinaIPDetector';
 import { useAnalytics } from '@/app/components/Analytics';
 import { useToast } from '@/app/components/Toast';
+import { Button } from '@/app/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import { Input } from '@/app/components/ui/input';
+import { Textarea } from '@/app/components/ui/textarea';
 import { CommentItem } from './CommentItem';
 
 interface CommentsSectionProps {
@@ -155,78 +159,77 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">评论</h2>
-
-      {/* 评论列表 */}
-      {loading ? (
-        <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400 text-sm sm:text-base">加载中...</div>
-      ) : comments.length === 0 ? (
-        <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400 text-sm sm:text-base">暂无评论</div>
-      ) : (
-        <div className="mb-6 sm:mb-8">
-          {comments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} onReply={handleReply} />
-          ))}
-        </div>
-      )}
-
-      {/* 评论表单 */}
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-        {replyingTo && (
-          <div className="bg-gray-50 dark:bg-gray-700 p-2 sm:p-3 rounded text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">
-            正在回复评论，评论框中的 @用户名 会被保留
+    <Card className="shadow-sm">
+      <CardHeader>
+        <CardTitle className="text-xl sm:text-2xl">评论</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="text-muted-foreground py-6 text-center text-sm sm:py-8 sm:text-base">加载中...</div>
+        ) : comments.length === 0 ? (
+          <div className="text-muted-foreground py-6 text-center text-sm sm:py-8 sm:text-base">暂无评论</div>
+        ) : (
+          <div className="mb-6 sm:mb-8">
+            {comments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} onReply={handleReply} />
+            ))}
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <input
-            type="text"
-            placeholder="昵称 *"
-            value={formData.author}
-            onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
-            className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <form ref={formRef} onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          {replyingTo ? (
+            <div className="bg-muted text-muted-foreground mb-3 rounded-md p-2 text-xs sm:mb-4 sm:p-3 sm:text-sm">
+              正在回复评论，评论框中的 @用户名 会被保留
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+            <Input
+              type="text"
+              placeholder="昵称 *"
+              value={formData.author}
+              onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
+              required
+            />
+            <Input
+              type="email"
+              placeholder="邮箱（可选）"
+              value={formData.email}
+              onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+            />
+          </div>
+
+          <Textarea
+            placeholder="评论内容 *"
+            value={formData.content}
+            onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
+            rows={4}
             required
           />
-          <input
-            type="email"
-            placeholder="邮箱（可选）"
-            value={formData.email}
-            onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-            className="px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
 
-        <textarea
-          placeholder="评论内容 *"
-          value={formData.content}
-          onChange={(e) => setFormData((prev) => ({ ...prev, content: e.target.value }))}
-          rows={4}
-          className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-
-        <div className="flex items-center justify-between gap-2">
-          {replyingTo && (
-            <button
-              type="button"
-              onClick={() => {
-                setReplyingTo(null);
-                setFormData((prev) => ({ ...prev, content: '' }));
-              }}
-              className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200"
-            >
-              取消回复
-            </button>
-          )}
-          <button
-            type="submit"
-            className="px-4 sm:px-6 py-2 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg transition-colors ml-auto"
-          >
-            提交评论
-          </button>
-        </div>
-      </form>
-    </div>
+          <div className="flex items-center justify-between gap-2">
+            {replyingTo ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs sm:text-sm"
+                onClick={() => {
+                  setReplyingTo(null);
+                  setFormData((prev) => ({ ...prev, content: '' }));
+                }}
+              >
+                取消回复
+              </Button>
+            ) : (
+              <span />
+            )}
+            <Button type="submit" className="ml-auto">
+              提交评论
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

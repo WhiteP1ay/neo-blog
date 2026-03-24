@@ -118,7 +118,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     <>
       {/* 结构化数据 */}
       <StructuredData data={jsonLd} />
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-muted/40">
         {/* 目录组件 */}
         <TableOfContents />
 
@@ -128,9 +128,12 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <Breadcrumb currentLabel={post.title} />
           </div>
 
-          <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8">
+          <article className="mb-6 rounded-lg border border-border bg-card p-4 shadow-sm sm:mb-8 sm:p-8">
             <PostHeader title={post.title} createdAt={post.createdAt} publishedTime={publishedTime} />
-            <div className="prose prose-sm sm:prose-lg max-w-none" dangerouslySetInnerHTML={{ __html: post.content }} />
+            <div
+              className="prose prose-neutral dark:prose-invert prose-sm sm:prose-lg max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
           </article>
 
           {/* 文章导航（上一篇/下一篇） */}

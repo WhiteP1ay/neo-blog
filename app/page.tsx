@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
-import { HomePageContent } from '@/app/components/Home/Index';
+import { getLatestPostsForHome } from '@/server/actions/posts';
+import { HomeRecentPosts } from '@/app/components/Home/HomeRecentPosts';
+import { HomeProfileAside } from '@/app/components/Home/HomeProfileAside';
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'White Meta',
@@ -12,9 +16,19 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * 首页 - 欢迎页
- */
-export default function Home() {
-  return <HomePageContent />;
+
+export default async function Home() {
+  const result = await getLatestPostsForHome(5);
+  const posts = result.success ? result.data : [];
+
+  return (
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <main className="h-[calc(100vh-80px)]">
+        <div className="">
+          <HomeRecentPosts posts={posts} />
+          <HomeProfileAside />
+        </div>
+      </main>
+    </div>
+  );
 }
