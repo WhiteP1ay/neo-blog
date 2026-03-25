@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './global.css';
 import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
 import { PrivacyPageContent } from '@/app/(site)/privacy/PrivacyPageContent';
-import { SitePageModalsProvider } from '@/components/SitePageModals';
+import { SiteModalsHost } from '@/components/SitePageModals';
 import { ToastProvider } from '@/components/Toast';
 import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -50,13 +50,12 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <ToastProvider>
-            <SitePageModalsProvider
+            {children}
+            <SiteModalsHost
               aboutSlot={<AboutPageContent />}
               privacySlot={<PrivacyPageContent />}
               toolsSlot={<ToolsPageContent variant="modal" />}
-            >
-              {children}
-            </SitePageModalsProvider>
+            />
           </ToastProvider>
         </ThemeProvider>
       </body>

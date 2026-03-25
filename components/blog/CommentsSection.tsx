@@ -9,15 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CommentItem } from './CommentItem';
+import { CommentItem } from '@/components/blog/CommentItem';
 
 interface CommentsSectionProps {
   postId: number;
 }
 
-/**
- * 评论区域组件
- */
 export function CommentsSection({ postId }: CommentsSectionProps) {
   const { isChina, isChecking } = useChinaIPDetector();
   const { track } = useAnalytics();
@@ -32,9 +29,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
   });
   const formRef = useRef<HTMLFormElement>(null);
 
-  /**
-   * 加载评论列表
-   */
   const loadComments = useCallback(async () => {
     setLoading(true);
     const result = await getCommentsByPostId(postId);
@@ -48,9 +42,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     loadComments();
   }, [loadComments]);
 
-  /**
-   * 处理提交评论
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -59,7 +50,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       return;
     }
 
-    // 埋点：评论提交
     track({
       type: 'comment',
       action: 'submit_comment',
@@ -80,20 +70,16 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       });
 
       if (result.success) {
-        // 埋点：评论提交成功
         track({
           type: 'comment',
           action: 'submit_comment_success',
           target: `post_${postId}`,
         });
 
-        // 重置表单
         setFormData({ author: '', email: '', content: '' });
         setReplyingTo(null);
-        // 重新加载评论
         await loadComments();
       } else {
-        // 埋点：评论提交失败
         track({
           type: 'comment',
           action: 'submit_comment_failed',
@@ -104,7 +90,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       }
     } catch (error) {
       console.error('提交评论失败:', error);
-      // 埋点：评论提交异常
       track({
         type: 'comment',
         action: 'submit_comment_error',
@@ -114,12 +99,8 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     }
   };
 
-  /**
-   * 处理回复按钮点击
-   */
   const handleReply = useCallback(
     (commentId: number, author: string) => {
-      // 埋点：点击回复按钮
       track({
         type: 'comment',
         action: 'click_reply',
@@ -130,7 +111,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
         ...prev,
         content: `@${author} `,
       }));
-      // 滚动到底部输入框
       setTimeout(() => {
         formRef.current?.scrollIntoView({
           behavior: 'smooth',
@@ -141,12 +121,10 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     [track],
   );
 
-  // 如果检测中，默认隐藏评论功能（不显示任何内容）
   if (isChecking) {
     return null;
   }
 
-  // 如果检测到在中国，隐藏评论功能
   if (isChina) {
     return null;
   }

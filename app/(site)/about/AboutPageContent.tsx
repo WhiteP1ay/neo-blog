@@ -1,9 +1,6 @@
 import Image from 'next/image';
 import { Youtube, Github, Tv, Mail, Smartphone, Joystick, Guitar, Motorbike, ShipWheel } from 'lucide-react';
 
-/**
- * 关于页正文（独立路由与弹窗共用）
- */
 export function AboutPageContent() {
   return (
     <article className="rounded-lg border border-border bg-card p-4 shadow-sm sm:p-8">

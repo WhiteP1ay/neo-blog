@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ topic?: string; post?: string; sheet?: string }>;
+  searchParams: Promise<{ topic?: string; post?: string }>;
 }) {
   const sp = await searchParams;
   const session = await getSession();
@@ -48,7 +48,7 @@ export default async function Home({
   if (postId !== null) {
     const pr = await getPostById(postId, false);
     if (!pr.success || !pr.data) {
-      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery, sheet: sp.sheet })}`);
+      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery })}`);
     }
     postDetail = pr.data;
   }

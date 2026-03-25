@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { useSitePageModal } from '@/components/SitePageModals';
+import { openSiteModal } from '@/lib/site-modals-store';
 import { navItems } from '@/app/nav';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +19,6 @@ function shouldOpenModalInstead(e: MouseEvent<HTMLAnchorElement>) {
 
 export function Nav() {
   const pathname = usePathname();
-  const { openModal } = useSitePageModal();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isActive = (href: string) => {
     return pathname?.startsWith(href);
@@ -51,7 +50,7 @@ export function Nav() {
                     onClick={(e) => {
                       if (!shouldOpenModalInstead(e)) return;
                       e.preventDefault();
-                      openModal(modalId);
+                      openSiteModal(modalId);
                     }}
                   >
                     {item.label}
@@ -87,7 +86,7 @@ export function Nav() {
                         const modal = item.modal;
                         if (modal && shouldOpenModalInstead(e)) {
                           e.preventDefault();
-                          openModal(modal);
+                          openSiteModal(modal);
                         }
                         setIsMobileMenuOpen(false);
                       }}

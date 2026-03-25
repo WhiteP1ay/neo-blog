@@ -8,7 +8,7 @@ import {
   sheetModalCloseButtonClass,
   sheetModalRedDotClass,
 } from '@/components/SheetModalHeader';
-import { useSitePageModal } from '@/components/SitePageModals';
+import { openSiteModal } from '@/lib/site-modals-store';
 import { HomeSettingsAnalytics } from '@/components/Home/HomeSettingsAnalytics';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -75,13 +75,11 @@ interface HomeWindowSettingsProps {
 }
 
 /**
- * 首页应用窗口内设置层：主题、占位登录注册、关于与隐私（打开全局 sheet 弹窗）
+ * 首页应用窗口内设置层：主题、占位登录注册、关于与隐私（打开站点模态框）
  */
 export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWindowSettingsProps) {
-  const { openModal } = useSitePageModal();
-
   const openSheetAndClose = (id: SiteModalId) => {
-    openModal(id);
+    openSiteModal(id);
     onClose();
   };
 

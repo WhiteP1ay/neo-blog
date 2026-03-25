@@ -1,16 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { HomeExplorerPostDndList, HomeExplorerTopicDndGroup } from '@/components/Home/HomeExplorerSortables';
 import type { HomeExplorerCategoryPayload, HomeExplorerPostDetailPayload } from '@/components/Home/home-explorer-types';
 import { FilePlus, MoreHorizontal, PanelLeftClose, PanelRight, Plus, Settings, Upload } from 'lucide-react';
-import { PostHeader } from '@/app/(site)/blog/[id]/components/PostHeader';
-import { CodeBlockCopyButtons } from '@/components/CodeBlockCopyButtons';
+import { BlogPostReadView } from '@/components/blog/BlogPostReadView';
 import { HomePostRichEditor } from '@/components/Home/HomePostRichEditor';
 import { HomeWindowSettings } from '@/components/Home/HomeWindowSettings';
-import { PostPageClient } from '@/app/(site)/blog/[id]/components/PostPageClient';
 import { useToast } from '@/components/Toast';
 import {
   AlertDialog,
@@ -54,10 +52,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSitePageModal } from '@/components/SitePageModals';
+import { openSiteModal } from '@/lib/site-modals-store';
 import { createPost, deletePost, updatePost, uploadMarkdownFromForm } from '@/server/actions/posts';
 import { addPostToTopic, createTopic, deleteTopic, movePostToTopicTarget, updateTopic } from '@/server/actions/topics';
-import { SITE_SHEET_QUERY_KEY, isSiteSheetModalId } from '@/app/nav';
 import { formatDateShort } from '@/app/utils/date';
 import { cn } from '@/lib/utils';
 
@@ -144,8 +141,6 @@ export function HomeExplorer({
   isAdminLoggedIn,
 }: HomeExplorerProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { openModal } = useSitePageModal();
   const { showToast } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(false);
@@ -289,32 +284,17 @@ export function HomeExplorer({
   const clearPostFromUrl = useCallback(() => {
     const p = new URLSearchParams();
     p.set('topic', activeTopicQuery);
-    const sheet = searchParams.get(SITE_SHEET_QUERY_KEY);
-    if (sheet != null && isSiteSheetModalId(sheet)) {
-      p.set(SITE_SHEET_QUERY_KEY, sheet);
-    }
     router.replace(`/?${p.toString()}`);
-  }, [activeTopicQuery, router, searchParams]);
-
-  const appendSheetToHomeQuery = useCallback(
-    (p: URLSearchParams) => {
-      const sheet = searchParams.get(SITE_SHEET_QUERY_KEY);
-      if (sheet != null && isSiteSheetModalId(sheet)) {
-        p.set(SITE_SHEET_QUERY_KEY, sheet);
-      }
-    },
-    [searchParams],
-  );
+  }, [activeTopicQuery, router]);
 
   const navigateTopic = useCallback(
     (topicKey: 'uncategorized' | number) => {
       const t = topicToQueryValue(topicKey);
       const p = new URLSearchParams();
       p.set('topic', t);
-      appendSheetToHomeQuery(p);
       router.replace(`/?${p.toString()}`);
     },
-    [appendSheetToHomeQuery, router],
+    [router],
   );
 
   const navigatePost = useCallback(
@@ -323,10 +303,9 @@ export function HomeExplorer({
       const p = new URLSearchParams();
       p.set('topic', t);
       p.set('post', String(postId));
-      appendSheetToHomeQuery(p);
       router.replace(`/?${p.toString()}`);
     },
-    [appendSheetToHomeQuery, router],
+    [router],
   );
 
   const beginResizeSidebar = useCallback(
@@ -632,8 +611,6 @@ export function HomeExplorer({
     ),
     [activeCategory.topicKey, categories, handleMovePost, handleTogglePostPin, openPostEditor],
   );
-
-  const publishedTime = postDetail?.createdAt ?? undefined;
 
   return (
     <div ref={shellRef} className="bg-card relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
@@ -1274,23 +1251,7 @@ export function HomeExplorer({
               onCancel={() => setEditingPost(false)}
             />
           ) : (
-            <div key={postDetail.id} className="p-4 sm:p-8">
-              <article className="mx-auto max-w-3xl">
-                <PostHeader
-                  title={postDetail.title}
-                  createdAt={postDetail.createdAt ? new Date(postDetail.createdAt) : null}
-                  publishedTime={publishedTime}
-                />
-                <div
-                  className="prose prose-neutral dark:prose-invert prose-sm sm:prose-lg max-w-none"
-                  dangerouslySetInnerHTML={{ __html: postDetail.content }}
-                />
-              </article>
-              <CodeBlockCopyButtons contentKey={`${postDetail.id}-${postDetail.contentSource.length}`} />
-              <div className="mx-auto mt-8 max-w-3xl border-t border-border pt-6">
-                <PostPageClient postId={postDetail.id} />
-              </div>
-            </div>
+            <BlogPostReadView post={postDetail} />
           )}
         </section>
       </div>
@@ -1300,7 +1261,7 @@ export function HomeExplorer({
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <button
               type="button"
-              onClick={() => openModal('tools')}
+              onClick={() => openSiteModal('tools')}
               className="hover:text-primary font-medium transition-colors"
             >
               工具
