@@ -10,6 +10,15 @@ const SESSION_KEY = 'admin_session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7天
 
 /**
+ * 当前登录用户及权限（来自 users 表）
+ */
+export type AuthSession = {
+  userId: number;
+  isAdmin: boolean;
+  isVip: boolean;
+};
+
+/**
  * 创建session
  */
 export async function createSession(userId: number) {
@@ -24,9 +33,9 @@ export async function createSession(userId: number) {
 }
 
 /**
- * 获取当前登录用户ID
+ * 获取当前登录用户及权限；cookie 无效或用户不存在时返回 null
  */
-export async function getSession(): Promise<number | null> {
+export async function getSession(): Promise<AuthSession | null> {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_KEY);
   if (!session) {
@@ -38,12 +47,34 @@ export async function getSession(): Promise<number | null> {
     return null;
   }
 
-  // 验证用户是否存在
   const user = await db.query.usersTable.findFirst({
     where: (users, { eq }) => eq(users.id, userId),
   });
 
-  return user ? userId : null;
+  if (!user) {
+    return null;
+  }
+
+  return {
+    userId: user.id,
+    isAdmin: user.isAdmin,
+    isVip: user.isVip,
+  };
+}
+
+/** 管理类操作：已登录且 isAdmin */
+export type RequireAdminResult =
+  | { ok: true; session: AuthSession }
+  | { ok: false; error: string };
+
+export function requireAdminSession(session: AuthSession | null): RequireAdminResult {
+  if (!session) {
+    return { ok: false, error: '未登录' };
+  }
+  if (!session.isAdmin) {
+    return { ok: false, error: '无权限' };
+  }
+  return { ok: true, session };
 }
 
 /**

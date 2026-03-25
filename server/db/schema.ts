@@ -8,6 +8,8 @@ export const usersTable = pgTable('users', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar({ length: 255 }).notNull(),
   password: varchar({ length: 255 }).notNull(),
+  isAdmin: boolean().notNull().default(false),
+  isVip: boolean().notNull().default(false),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp().notNull().defaultNow(),
 });

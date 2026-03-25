@@ -3,7 +3,7 @@
 import { db } from '@/server/db/db';
 import { toolsTable } from '@/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { getSession } from '@/server/utils/auth';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
 
 /**
  * 工具类型定义
@@ -46,9 +46,9 @@ export async function createTool(data: {
   url: string;
   isHidden?: boolean;
 }) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -83,9 +83,9 @@ export async function updateTool(
     isHidden?: boolean;
   },
 ) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -122,9 +122,9 @@ export async function updateTool(
  * Server Action: 删除工具
  */
 export async function deleteTool(id: number) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {

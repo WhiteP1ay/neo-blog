@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ToolsPageContent } from '@/components/tools/ToolsPageContent';
+import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
 
 export const metadata: Metadata = {
   title: '工具与资源',

@@ -4,7 +4,9 @@
 import { db } from '@/server/db/db';
 import { commentsTable } from '@/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { getSession } from '@/server/utils/auth';
+import { headers } from 'next/headers';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
+import { getClientIP } from '@/server/utils/get-client-ip';
 
 /**
  * 评论类型定义
@@ -81,8 +83,15 @@ export async function createComment(data: {
   author: string;
   email?: string;
   content: string;
-  ip?: string;
+  /** 不传则从请求头解析；显式 `null` 表示不落库 IP */
+  ip?: string | null;
 }) {
+  if (!data.postId || !data.author || !data.content) {
+    return { success: false, error: '缺少必要参数' };
+  }
+
+  const ip = data.ip !== undefined ? data.ip : getClientIP(await headers());
+
   try {
     const result = await db
       .insert(commentsTable)
@@ -92,7 +101,7 @@ export async function createComment(data: {
         author: data.author,
         email: data.email || null,
         content: data.content,
-        ip: data.ip || null,
+        ip,
       })
       .returning();
 
@@ -107,10 +116,9 @@ export async function createComment(data: {
  * Server Action: 删除评论
  */
 export async function deleteComment(id: number) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { ingestAnalyticsEvent } from '@/server/actions/analytics';
 
 /**
  * 埋点事件类型
@@ -17,18 +18,13 @@ export type AnalyticsEvent = {
  */
 async function trackEvent(event: AnalyticsEvent) {
   try {
-    // 发送到埋点API
-    await fetch('/api/analytics', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...event,
-        timestamp: new Date().toISOString(),
-        url: window.location.pathname,
-        userAgent: navigator.userAgent,
-      }),
+    if (typeof window === 'undefined') {
+      return;
+    }
+    await ingestAnalyticsEvent({
+      ...event,
+      url: window.location.pathname,
+      userAgent: navigator.userAgent,
     });
   } catch (error) {
     // 静默失败，不影响用户体验

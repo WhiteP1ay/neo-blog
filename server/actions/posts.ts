@@ -3,8 +3,9 @@
 import { db } from '@/server/db/db';
 import { postsTable, topicsTable, topicPostsTable } from '@/server/db/schema';
 import { asc, desc, eq } from 'drizzle-orm';
-import { getSession } from '@/server/utils/auth';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
+import { markdownToHTML } from '@/server/utils/markdown';
 import type { Topic } from './topics';
 
 /**
@@ -293,10 +294,9 @@ export async function getPostById(id: number, highlightCode = false) {
  * Server Action: 创建文章
  */
 export async function createPost(data: { title: string; content: string; markdownContent?: string | null }) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -330,10 +330,9 @@ export async function updatePost(
     updatedAt?: Date | null;
   },
 ) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -381,10 +380,9 @@ export async function updatePost(
  * Server Action: 删除文章
  */
 export async function deletePost(id: number) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -398,5 +396,100 @@ export async function deletePost(id: number) {
   } catch (error) {
     console.error('删除文章失败:', error);
     return { success: false, error: '删除文章失败' };
+  }
+}
+
+/**
+ * Server Action: 管理员上传 Markdown 文件，创建新文章或覆盖指定文章的正文与标题
+ */
+export async function uploadMarkdownFromForm(formData: FormData) {
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false as const, error: gate.error };
+  }
+
+  try {
+    const file = formData.get('file') as File | null;
+    const postIdRaw = formData.get('postId') as string | null;
+
+    if (!file) {
+      return { success: false as const, error: '未找到文件' };
+    }
+
+    const text = await file.text();
+
+    let title = file.name.replace(/\.md$/i, '');
+    const lines = text.split('\n');
+    if (lines[0]?.startsWith('# ')) {
+      title = lines[0].substring(2).trim();
+    }
+
+    const htmlContent = markdownToHTML(text);
+
+    if (postIdRaw) {
+      const result = await updatePost(Number.parseInt(postIdRaw, 10), {
+        title,
+        content: htmlContent,
+        markdownContent: text,
+      });
+
+      if (!result.success) {
+        return { success: false as const, error: result.error };
+      }
+
+      return { success: true as const, data: result.data };
+    }
+
+    const result = await createPost({
+      title,
+      content: htmlContent,
+      markdownContent: text,
+    });
+
+    if (!result.success) {
+      return { success: false as const, error: result.error };
+    }
+
+    return { success: true as const, data: result.data };
+  } catch (error) {
+    console.error('文件上传失败:', error);
+    return { success: false as const, error: '文件上传失败' };
+  }
+}
+
+/**
+ * Server Action: 管理员上传图片（专题封面等，实际上传逻辑待接 OSS）
+ */
+export async function uploadAdminImageFromForm(formData: FormData) {
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false as const, error: gate.error };
+  }
+
+  try {
+    const file = formData.get('file') as File | null;
+
+    if (!file) {
+      return { success: false as const, error: '未找到文件' };
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return {
+        success: false as const,
+        error: '不支持的图片格式，请上传 JPG、PNG、GIF 或 WebP 格式',
+      };
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return { success: false as const, error: '图片大小不能超过 5MB' };
+    }
+
+    // @todo 阿里云 OSS
+    return { success: true as const, data: { url: 'todo' } };
+  } catch (error) {
+    console.error('图片上传失败:', error);
+    return { success: false as const, error: '图片上传失败' };
   }
 }

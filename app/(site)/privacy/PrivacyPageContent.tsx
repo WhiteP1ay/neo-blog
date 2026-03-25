@@ -33,7 +33,7 @@ export function PrivacyPageContent() {
       <p>我们的网站可能使用以下第三方服务：</p>
       <ul>
         <li>
-          Google AdSense：我们使用Google
+          Google AdSense：我们(可能)使用Google
           AdSense来展示广告。Google可能会使用Cookie来根据您的访问记录展示个性化广告。您可以访问Google广告设置来管理您的广告偏好。
         </li>
         <li>分析服务：我们使用网站分析工具来了解访问者如何使用我们的网站。</li>

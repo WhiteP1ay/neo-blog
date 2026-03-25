@@ -1,15 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getPostById } from '@/server/actions/posts';
-import { getSession } from '@/server/utils/auth';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
 
 /**
  * 下载文章为Markdown文件
  */
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return NextResponse.json({ success: false, error: '未登录' }, { status: 401 });
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return NextResponse.json(
+      { success: false, error: gate.error },
+      { status: gate.error === '未登录' ? 401 : 403 },
+    );
   }
 
   try {

@@ -8,17 +8,17 @@ export interface Feature {
 }
 
 export const features: Feature[] = [
+  // {
+  //   id: 'blog',
+  //   title: '技术博客',
+  //   description: '浏览精选技术文章和编程分享',
+  //   href: '/blog',
+  // },
   {
-    id: 'blog',
-    title: '技术博客',
-    description: '浏览精选技术文章和编程分享',
-    href: '/blog',
-  },
-  {
-    id: 'resume',
-    title: '简历编辑器',
-    description: '创建专业的技术简历',
-    href: '/resume',
+    id: "resume",
+    title: "简历编辑器",
+    description: "创建专业的技术简历",
+    href: "/resume",
   },
   // {
   //   id: "interview",
@@ -32,11 +32,11 @@ export const features: Feature[] = [
   //   description: "导出和分享动画效果",
   //   href: "/animation-exporter",
   // },
-  {
-    id: 'consult',
-    title: '付费咨询',
-    description: '技术咨询、模拟面试',
-    href: '#',
-    isPopup: true,
-  },
+  // {
+  //   id: 'consult',
+  //   title: '付费咨询',
+  //   description: '技术咨询、模拟面试',
+  //   href: '#',
+  //   isPopup: true,
+  // },
 ];

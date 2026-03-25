@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getCommentsByPostId, type CommentWithReplies } from '@/server/actions/comments';
+import { createComment, getCommentsByPostId, type CommentWithReplies } from '@/server/actions/comments';
 import { useChinaIPDetector } from '@/components/ChinaIPDetector';
 import { useAnalytics } from '@/components/Analytics';
 import { useToast } from '@/components/Toast';
@@ -71,21 +71,14 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     });
 
     try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          postId,
-          parentId: replyingTo || null,
-          author: formData.author,
-          email: formData.email || undefined,
-          content: formData.content,
-        }),
+      const result = await createComment({
+        postId,
+        parentId: replyingTo || null,
+        author: formData.author,
+        email: formData.email || undefined,
+        content: formData.content,
       });
 
-      const result = await response.json();
       if (result.success) {
         // 埋点：评论提交成功
         track({

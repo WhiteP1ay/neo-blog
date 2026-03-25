@@ -3,7 +3,7 @@
 import { db } from '@/server/db/db';
 import { topicsTable, topicPostsTable } from '@/server/db/schema';
 import { and, asc, desc, eq, max, ne } from 'drizzle-orm';
-import { getSession } from '@/server/utils/auth';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
 
 /**
  * 专题类型定义
@@ -108,9 +108,9 @@ export async function createTopic(data: {
   isPinned?: boolean;
   isHidden?: boolean;
 }) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -154,9 +154,9 @@ export async function updateTopic(
     isHidden?: boolean;
   },
 ) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -216,9 +216,9 @@ export async function updateTopic(
  * Server Action: 删除专题
  */
 export async function deleteTopic(id: number) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -239,9 +239,9 @@ export async function deleteTopic(id: number) {
  * Server Action: 为专题添加文章
  */
 export async function addPostToTopic(topicId: number, postId: number, sortOrder?: number) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -287,9 +287,9 @@ export async function addPostToTopic(topicId: number, postId: number, sortOrder?
  * Server Action: 从专题中移除文章
  */
 export async function removePostFromTopic(topicId: number, postId: number) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -316,9 +316,9 @@ export async function updateTopicPostSortOrder(
   topicId: number,
   postOrders: Array<{ postId: number; sortOrder: number }>,
 ) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {
@@ -343,9 +343,9 @@ export async function updateTopicPostSortOrder(
  * Server Action: 更新专题在侧边栏的排序（仅调整 sortOrder，不改变 isPinned）
  */
 export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number; sortOrder: number }>) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false as const, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false as const, error: gate.error };
   }
 
   try {
@@ -369,9 +369,9 @@ export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number
  * Server Action: 将文章移动到目标专题（备忘录式「单一归属」：先清空所有专题关联，未分类则仅清空）
  */
 export async function movePostToTopicTarget(postId: number, targetTopicKey: 'uncategorized' | number) {
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false as const, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false as const, error: gate.error };
   }
 
   try {

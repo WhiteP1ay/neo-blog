@@ -3,7 +3,10 @@
 import { db } from '@/server/db/db';
 import { analyticsTable } from '@/server/db/schema';
 import { desc, gte } from 'drizzle-orm';
-import { getSession } from '@/server/utils/auth';
+import { headers } from 'next/headers';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
+import { getClientIP } from '@/server/utils/get-client-ip';
+import { parseUserAgent } from '@/server/utils/userAgent';
 
 /**
  * 埋点数据类型定义
@@ -54,13 +57,61 @@ export async function createAnalytics(data: {
 }
 
 /**
+ * 客户端埋点入口：解析 IP / UA、合并 metadata 后写入库；失败时静默成功，不打断用户操作。
+ */
+export async function ingestAnalyticsEvent(input: {
+  type: string;
+  action?: string;
+  target?: string;
+  url?: string;
+  userAgent?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const h = await headers();
+    const clientIP = getClientIP(h);
+    const rawUserAgent = input.userAgent || h.get('user-agent') || '';
+    const parsedUA = parseUserAgent(rawUserAgent);
+
+    const metadata = {
+      ...input.metadata,
+      userAgentRaw: rawUserAgent,
+      userAgentParsed: {
+        device: parsedUA.device,
+        browser: parsedUA.browser,
+        os: parsedUA.os,
+        isWeChat: parsedUA.isWeChat,
+      },
+    };
+
+    const result = await createAnalytics({
+      type: input.type,
+      action: input.action,
+      target: input.target,
+      url: input.url,
+      ip: clientIP,
+      userAgent: parsedUA.readable,
+      metadata,
+    });
+
+    if (!result.success) {
+      console.error('埋点存储失败:', result.error);
+    }
+
+    return { success: true as const };
+  } catch (error) {
+    console.error('Analytics error:', error);
+    return { success: true as const };
+  }
+}
+
+/**
  * Server Action: 获取埋点统计数据（用于admin管理）
  */
 export async function getAnalyticsStats(days: number = 7) {
-  // 检查登录状态
-  const userId = await getSession();
-  if (!userId) {
-    return { success: false, error: '未登录' };
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) {
+    return { success: false, error: gate.error };
   }
 
   try {

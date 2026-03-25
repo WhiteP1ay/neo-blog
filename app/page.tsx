@@ -1,17 +1,13 @@
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
-import {
-  getHomeExplorerData,
-  getLatestPostsForHome,
-  getPostById,
-  type Post,
-} from '@/server/actions/posts';
+import { Suspense } from 'react';
+import { getHomeExplorerData, getLatestPostsForHome, getPostById, type Post } from '@/server/actions/posts';
 import { HomeExplorer } from '@/components/Home/HomeExplorer';
 import { HomeMobileFallback } from '@/components/Home/HomeMobileFallback';
-import { SITE_SHEET_QUERY_KEY, isSiteSheetModalId } from '@/app/nav';
+import { buildHomeSearchString, resolveHomePageSearchParams } from '@/app/home-search-params';
 import { getSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
+
 export const revalidate = 60;
 
 export const metadata: Metadata = {
@@ -25,32 +21,14 @@ export const metadata: Metadata = {
   },
 };
 
-function topicToSearchValue(key: 'uncategorized' | number): string {
-  return key === 'uncategorized' ? 'uncategorized' : String(key);
-}
-
-/** 首页 redirect 时保留合法的 sheet 查询（与弹窗同步） */
-function buildHomeSearchString(opts: { topic: string; post?: number; sheet?: string }) {
-  const q = new URLSearchParams();
-  q.set('topic', opts.topic);
-  if (opts.post != null) {
-    q.set('post', String(opts.post));
-  }
-  if (opts.sheet != null && isSiteSheetModalId(opts.sheet)) {
-    q.set(SITE_SHEET_QUERY_KEY, opts.sheet);
-  }
-  return q.toString();
-}
-
 export default async function Home({
   searchParams,
 }: {
   searchParams: Promise<{ topic?: string; post?: string; sheet?: string }>;
 }) {
   const sp = await searchParams;
-  const sheetPreserve = sp.sheet;
-  const adminSession = await getSession();
-  const isAdminLoggedIn = adminSession != null;
+  const session = await getSession();
+  const isAdminLoggedIn = session?.isAdmin === true;
   const explorerResult = await getHomeExplorerData();
 
   if (!explorerResult.success) {
@@ -64,47 +42,13 @@ export default async function Home({
   }
 
   const categories = explorerResult.data;
-
-  if (sp.topic && sp.topic !== 'uncategorized') {
-    const n = parseInt(sp.topic, 10);
-    if (Number.isNaN(n)) {
-      redirect(`/?${buildHomeSearchString({ topic: 'uncategorized', sheet: sheetPreserve })}`);
-    }
-    const found = categories.find((c) => c.topicKey === n);
-    if (!found) {
-      redirect(`/?${buildHomeSearchString({ topic: 'uncategorized', sheet: sheetPreserve })}`);
-    }
-  }
-
-  let topicKey: 'uncategorized' | number = 'uncategorized';
-  if (sp.topic && sp.topic !== 'uncategorized') {
-    const n = parseInt(sp.topic, 10);
-    const found = categories.find((c) => c.topicKey === n);
-    if (found) {
-      topicKey = n;
-    }
-  }
-
-  const activeTopicQuery = topicToSearchValue(topicKey);
-  const currentCat = categories.find((c) => c.topicKey === topicKey) ?? categories[0];
-
-  let postId: number | null = null;
-  if (sp.post) {
-    const p = parseInt(sp.post, 10);
-    if (Number.isNaN(p)) {
-      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery, sheet: sheetPreserve })}`);
-    }
-    if (!currentCat.posts.some((x) => x.id === p)) {
-      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery, sheet: sheetPreserve })}`);
-    }
-    postId = p;
-  }
+  const { activeTopicQuery, postId } = resolveHomePageSearchParams(sp, categories);
 
   let postDetail: Post | null = null;
   if (postId !== null) {
     const pr = await getPostById(postId, false);
     if (!pr.success || !pr.data) {
-      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery, sheet: sheetPreserve })}`);
+      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery, sheet: sp.sheet })}`);
     }
     postDetail = pr.data;
   }

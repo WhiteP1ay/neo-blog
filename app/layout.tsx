@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import './global.css';
-import { AboutPageContent } from '@/components/about/AboutPageContent';
-import { PrivacyPageContent } from '@/components/privacy/PrivacyPageContent';
+import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
+import { PrivacyPageContent } from '@/app/(site)/privacy/PrivacyPageContent';
 import { SitePageModalsProvider } from '@/components/SitePageModals';
 import { ToastProvider } from '@/components/Toast';
-import { ToolsPageContent } from '@/components/tools/ToolsPageContent';
+import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import Script from 'next/script';
 

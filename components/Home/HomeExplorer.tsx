@@ -46,20 +46,17 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSitePageModal } from '@/components/SitePageModals';
-import { createPost, deletePost, updatePost } from '@/server/actions/posts';
-import {
-  addPostToTopic,
-  createTopic,
-  deleteTopic,
-  movePostToTopicTarget,
-  updateTopic,
-} from '@/server/actions/topics';
+import { createPost, deletePost, updatePost, uploadMarkdownFromForm } from '@/server/actions/posts';
+import { addPostToTopic, createTopic, deleteTopic, movePostToTopicTarget, updateTopic } from '@/server/actions/topics';
 import { SITE_SHEET_QUERY_KEY, isSiteSheetModalId } from '@/app/nav';
 import { formatDateShort } from '@/app/utils/date';
 import { cn } from '@/lib/utils';
@@ -101,13 +98,7 @@ type ResizeColumn = 'sidebar' | 'list';
 /**
  * 竖向分隔条：拖拽调整左邻列宽度（macOS 备忘录式）
  */
-function ColumnResizeHandle({
-  label,
-  onResizeStart,
-}: {
-  label: string;
-  onResizeStart: (clientX: number) => void;
-}) {
+function ColumnResizeHandle({ label, onResizeStart }: { label: string; onResizeStart: (clientX: number) => void }) {
   return (
     <button
       type="button"
@@ -388,18 +379,13 @@ export function HomeExplorer({
       }
       const formData = new FormData();
       formData.append('file', file);
-      let response: Response;
+      let result: Awaited<ReturnType<typeof uploadMarkdownFromForm>>;
       try {
-        response = await fetch('/api/upload', { method: 'POST', body: formData });
+        result = await uploadMarkdownFromForm(formData);
       } catch {
         showToast('上传失败', 'error');
         return;
       }
-      const result = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        data?: { id: number };
-      };
       if (!result.success || result.data?.id == null) {
         showToast(result.error ?? '上传失败', 'error');
         return;
@@ -573,891 +559,920 @@ export function HomeExplorer({
     [refreshExplorer, showToast],
   );
 
+  const openPostEditor = useCallback(
+    (topicKey: 'uncategorized' | number, postId: number) => {
+      navigatePost(topicKey, postId);
+      setEditingPost(true);
+    },
+    [navigatePost],
+  );
+
+  const renderPostContextMenuActions = useCallback(
+    (post: HomeExplorerCategoryPayload['posts'][number]) => (
+      <>
+        <ContextMenuItem onSelect={() => openPostEditor(activeCategory.topicKey, post.id)}>编辑</ContextMenuItem>
+        <ContextMenuItem onSelect={() => void handleTogglePostPin(post.id, !post.isPinned)}>
+          {post.isPinned ? '取消置顶' : '置顶'}
+        </ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>移动到…</ContextMenuSubTrigger>
+          <ContextMenuSubContent className="max-h-64 overflow-y-auto">
+            {categories.map((cat) => (
+              <ContextMenuItem
+                key={topicToQueryValue(cat.topicKey)}
+                disabled={cat.topicKey === activeCategory.topicKey}
+                onSelect={() => void handleMovePost(post.id, cat.topicKey)}
+              >
+                {cat.name}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+        <ContextMenuItem onSelect={() => setRenamePostState({ id: post.id, title: post.title })}>
+          重命名
+        </ContextMenuItem>
+        <ContextMenuSeparator />
+        <ContextMenuItem variant="destructive" onSelect={() => setDeletePostId(post.id)}>
+          删除
+        </ContextMenuItem>
+      </>
+    ),
+    [activeCategory.topicKey, categories, handleMovePost, handleTogglePostPin, openPostEditor],
+  );
+
+  const renderPostDropdownActions = useCallback(
+    (post: HomeExplorerCategoryPayload['posts'][number]) => (
+      <>
+        <DropdownMenuItem onClick={() => openPostEditor(activeCategory.topicKey, post.id)}>编辑</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => void handleTogglePostPin(post.id, !post.isPinned)}>
+          {post.isPinned ? '取消置顶' : '置顶'}
+        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>移动到…</DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
+            {categories.map((cat) => (
+              <DropdownMenuItem
+                key={topicToQueryValue(cat.topicKey)}
+                disabled={cat.topicKey === activeCategory.topicKey}
+                onClick={() => void handleMovePost(post.id, cat.topicKey)}
+              >
+                {cat.name}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuItem onClick={() => setRenamePostState({ id: post.id, title: post.title })}>
+          重命名
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeletePostId(post.id)}>
+          删除
+        </DropdownMenuItem>
+      </>
+    ),
+    [activeCategory.topicKey, categories, handleMovePost, handleTogglePostPin, openPostEditor],
+  );
+
   const publishedTime = postDetail?.createdAt ?? undefined;
 
   return (
-    <div
-      ref={shellRef}
-      className="bg-card relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden"
-    >
+    <div ref={shellRef} className="bg-card relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
       <header className="border-border bg-muted/40 shrink-0 border-b">
         <div className="flex h-10 items-center gap-2 px-3 sm:gap-3 sm:px-4">
           <Link href="/" className="truncate text-sm font-bold text-foreground sm:text-base">
             White Meta
           </Link>
-              <Link
-                href="/blog"
-                className="text-muted-foreground hover:text-primary hidden text-xs font-medium transition-colors sm:inline"
-              >
-                博客
-              </Link>
-              <span className="min-w-2 flex-1" />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground size-9 shrink-0"
-                onClick={() => setSettingsOpen(true)}
-                aria-label="打开设置"
-                title="设置"
-              >
-                <Settings className="size-4" />
-              </Button>
-            </div>
-          </header>
+          <Link
+            href="/blog"
+            className="text-muted-foreground hover:text-primary hidden text-xs font-medium transition-colors sm:inline"
+          >
+            博客
+          </Link>
+          <span className="min-w-2 flex-1" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground size-9 shrink-0"
+            onClick={() => setSettingsOpen(true)}
+            aria-label="打开设置"
+            title="设置"
+          >
+            <Settings className="size-4" />
+          </Button>
+        </div>
+      </header>
 
-          <div className="bg-muted/25 flex min-h-0 flex-1 gap-2.5 p-2.5 dark:bg-muted/20">
-            {showSidebar ? (
-              <>
-                <div
-                  className="flex min-h-0 shrink-0 flex-col self-stretch transition-[width] duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
-                  style={{ width: topicPanelExpanded ? sidebarPx : TOPIC_RAIL_PX }}
-                >
-                  <aside
-                    className="home-topic-glass-host flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-                    aria-label="分类"
+      <div className="bg-muted/25 flex min-h-0 flex-1 gap-2.5 p-2.5 dark:bg-muted/20">
+        {showSidebar ? (
+          <>
+            <div
+              className="flex min-h-0 shrink-0 flex-col self-stretch transition-[width] duration-[380ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+              style={{ width: topicPanelExpanded ? sidebarPx : TOPIC_RAIL_PX }}
+            >
+              <aside
+                className="home-topic-glass-host flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+                aria-label="分类"
+              >
+                <div className="home-topic-glass-backdrop" aria-hidden />
+                <div className="home-topic-glass-edge" aria-hidden />
+                <div className="home-topic-glass-content flex min-h-0 flex-1 flex-col">
+                  <div
+                    className={cn(
+                      'flex shrink-0 items-center gap-1 border-b border-white/20 px-2 py-2 dark:border-white/10',
+                      topicPanelExpanded ? 'justify-between' : 'justify-center',
+                    )}
                   >
-                    <div className="home-topic-glass-backdrop" aria-hidden />
-                    <div className="home-topic-glass-edge" aria-hidden />
-                    <div className="home-topic-glass-content flex min-h-0 flex-1 flex-col">
-                    <div
-                      className={cn(
-                        'flex shrink-0 items-center gap-1 border-b border-white/20 px-2 py-2 dark:border-white/10',
-                        topicPanelExpanded ? 'justify-between' : 'justify-center',
-                      )}
-                    >
-                      {topicPanelExpanded ? (
-                        <>
-                          <div className="flex min-w-0 items-center gap-0.5">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:text-foreground size-8 shrink-0"
-                              onClick={() => setTopicPanelExpanded(false)}
-                              aria-label="收起专题栏"
-                              title="收起专题栏"
-                            >
-                              <PanelLeftClose className="size-4" />
-                            </Button>
-                            <span className="text-muted-foreground truncate text-xs font-semibold uppercase tracking-wide">
-                              专题
-                            </span>
-                          </div>
-                          {isAdminLoggedIn ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 shrink-0"
-                              aria-label="新建专题"
-                              title="新建专题"
-                              onClick={() => {
-                                setNewTopicName('');
-                                setNewTopicOpen(true);
-                              }}
-                            >
-                              <Plus className="size-4" />
-                            </Button>
-                          ) : null}
-                        </>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="text-muted-foreground hover:text-foreground size-9 shrink-0"
-                          onClick={() => setTopicPanelExpanded(true)}
-                          aria-label="展开专题栏"
-                          title="展开专题栏"
-                        >
-                          <PanelRight className="size-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div
-                      className={cn(
-                        'grid min-h-0 flex-1 transition-[grid-template-rows] duration-[340ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
-                        topicPanelExpanded ? '[grid-template-rows:1fr]' : '[grid-template-rows:0fr]',
-                      )}
-                    >
-                      <div className="min-h-0 overflow-hidden">
-                        <nav
-                          className="h-full min-h-0 overflow-x-hidden overflow-y-auto p-1.5"
-                          aria-hidden={!topicPanelExpanded}
-                        >
-                    <ul className="flex flex-col gap-0.5">
-                      {!isAdminLoggedIn
-                        ? categories.map((cat) => {
-                            const q = topicToQueryValue(cat.topicKey);
-                            const isActive = q === activeTopicQuery;
-                            return (
-                              <li key={q}>
-                                <div
-                                  className={cn(
-                                    'group/topic flex w-full items-center gap-0.5 rounded-md',
-                                    isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
-                                  )}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => navigateTopic(cat.topicKey)}
-                                    className={cn(
-                                      'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-                                      isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
-                                    )}
-                                    aria-current={isActive ? 'true' : undefined}
-                                  >
-                                    <span className="min-w-0 flex-1 truncate">{cat.name}</span>
-                                    {cat.isPinned ? (
-                                      <Badge
-                                        variant="outline"
-                                        className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
+                    {topicPanelExpanded ? (
+                      <>
+                        <div className="flex min-w-0 items-center gap-0.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground size-8 shrink-0"
+                            onClick={() => setTopicPanelExpanded(false)}
+                            aria-label="收起专题栏"
+                            title="收起专题栏"
+                          >
+                            <PanelLeftClose className="size-4" />
+                          </Button>
+                          <span className="text-muted-foreground truncate text-xs font-semibold uppercase tracking-wide">
+                            专题
+                          </span>
+                        </div>
+                        {isAdminLoggedIn ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 shrink-0"
+                            aria-label="新建专题"
+                            title="新建专题"
+                            onClick={() => {
+                              setNewTopicName('');
+                              setNewTopicOpen(true);
+                            }}
+                          >
+                            <Plus className="size-4" />
+                          </Button>
+                        ) : null}
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground size-9 shrink-0"
+                        onClick={() => setTopicPanelExpanded(true)}
+                        aria-label="展开专题栏"
+                        title="展开专题栏"
+                      >
+                        <PanelRight className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div
+                    className={cn(
+                      'grid min-h-0 flex-1 transition-[grid-template-rows] duration-[340ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
+                      topicPanelExpanded ? '[grid-template-rows:1fr]' : '[grid-template-rows:0fr]',
+                    )}
+                  >
+                    <div className="min-h-0 overflow-hidden">
+                      <nav
+                        className="h-full min-h-0 overflow-x-hidden overflow-y-auto p-1.5"
+                        aria-hidden={!topicPanelExpanded}
+                      >
+                        <ul className="flex flex-col gap-0.5">
+                          {!isAdminLoggedIn
+                            ? categories.map((cat) => {
+                                const q = topicToQueryValue(cat.topicKey);
+                                const isActive = q === activeTopicQuery;
+                                return (
+                                  <li key={q}>
+                                    <div
+                                      className={cn(
+                                        'group/topic flex w-full items-center gap-0.5 rounded-md',
+                                        isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
+                                      )}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => navigateTopic(cat.topicKey)}
+                                        className={cn(
+                                          'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
+                                          isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
+                                        )}
+                                        aria-current={isActive ? 'true' : undefined}
                                       >
-                                        置顶
-                                      </Badge>
-                                    ) : null}
-                                  </button>
-                                </div>
-                              </li>
-                            );
-                          })
-                        : null}
-                      {isAdminLoggedIn && uncategorizedCategory ? (
-                        <li key="uncategorized">
+                                        <span className="min-w-0 flex-1 truncate">{cat.name}</span>
+                                        {cat.isPinned ? (
+                                          <Badge
+                                            variant="outline"
+                                            className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
+                                          >
+                                            置顶
+                                          </Badge>
+                                        ) : null}
+                                      </button>
+                                    </div>
+                                  </li>
+                                );
+                              })
+                            : null}
+                          {isAdminLoggedIn && uncategorizedCategory ? (
+                            <li key="uncategorized">
+                              <div
+                                className={cn(
+                                  'group/topic flex w-full items-center gap-0.5 rounded-md',
+                                  topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
+                                    ? 'bg-accent/80'
+                                    : 'hover:bg-accent/40',
+                                )}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => navigateTopic(uncategorizedCategory.topicKey)}
+                                  className={cn(
+                                    'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
+                                    topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
+                                      ? 'text-accent-foreground font-medium'
+                                      : 'text-foreground/90',
+                                  )}
+                                  aria-current={
+                                    topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
+                                      ? 'true'
+                                      : undefined
+                                  }
+                                >
+                                  <span className="min-w-0 flex-1 truncate">{uncategorizedCategory.name}</span>
+                                </button>
+                              </div>
+                            </li>
+                          ) : null}
+                          {isAdminLoggedIn ? (
+                            <>
+                              <HomeExplorerTopicDndGroup
+                                dndContextId="home-explorer-topics-pinned"
+                                topics={pinnedTopicCategories}
+                                activeTopicQuery={activeTopicQuery}
+                                onOrderSaved={refreshExplorer}
+                                showToast={showToast}
+                                renderTopicRow={({ cat, isActive, dragHandle }) => (
+                                  <div
+                                    className={cn(
+                                      'group/topic flex w-full items-center gap-0.5 rounded-md',
+                                      isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
+                                    )}
+                                  >
+                                    {dragHandle}
+                                    <button
+                                      type="button"
+                                      onClick={() => navigateTopic(cat.topicKey)}
+                                      className={cn(
+                                        'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
+                                        isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
+                                      )}
+                                      aria-current={isActive ? 'true' : undefined}
+                                    >
+                                      <span className="min-w-0 flex-1 truncate">{cat.name}</span>
+                                      {cat.isPinned ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
+                                        >
+                                          置顶
+                                        </Badge>
+                                      ) : null}
+                                    </button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="text-muted-foreground hover:text-foreground size-8 shrink-0 opacity-0 transition-opacity group-hover/topic:opacity-100"
+                                          aria-label={`「${cat.name}」更多`}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MoreHorizontal className="size-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-44">
+                                        <DropdownMenuItem onClick={() => void handleToggleTopicPin(cat)}>
+                                          {cat.isPinned ? '取消置顶' : '置顶'}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            setRenameTopicState({ id: cat.topicKey as number, name: cat.name })
+                                          }
+                                        >
+                                          重命名
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          className="text-destructive focus:text-destructive"
+                                          onClick={() => setDeleteTopicId(cat.topicKey as number)}
+                                        >
+                                          删除
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                )}
+                              />
+                              <HomeExplorerTopicDndGroup
+                                dndContextId="home-explorer-topics-unpinned"
+                                topics={unpinnedTopicCategories}
+                                activeTopicQuery={activeTopicQuery}
+                                onOrderSaved={refreshExplorer}
+                                showToast={showToast}
+                                renderTopicRow={({ cat, isActive, dragHandle }) => (
+                                  <div
+                                    className={cn(
+                                      'group/topic flex w-full items-center gap-0.5 rounded-md',
+                                      isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
+                                    )}
+                                  >
+                                    {dragHandle}
+                                    <button
+                                      type="button"
+                                      onClick={() => navigateTopic(cat.topicKey)}
+                                      className={cn(
+                                        'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
+                                        isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
+                                      )}
+                                      aria-current={isActive ? 'true' : undefined}
+                                    >
+                                      <span className="min-w-0 flex-1 truncate">{cat.name}</span>
+                                      {cat.isPinned ? (
+                                        <Badge
+                                          variant="outline"
+                                          className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
+                                        >
+                                          置顶
+                                        </Badge>
+                                      ) : null}
+                                    </button>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          size="icon"
+                                          className="text-muted-foreground hover:text-foreground size-8 shrink-0 opacity-0 transition-opacity group-hover/topic:opacity-100"
+                                          aria-label={`「${cat.name}」更多`}
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <MoreHorizontal className="size-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-44">
+                                        <DropdownMenuItem onClick={() => void handleToggleTopicPin(cat)}>
+                                          {cat.isPinned ? '取消置顶' : '置顶'}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          onClick={() =>
+                                            setRenameTopicState({ id: cat.topicKey as number, name: cat.name })
+                                          }
+                                        >
+                                          重命名
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          className="text-destructive focus:text-destructive"
+                                          onClick={() => setDeleteTopicId(cat.topicKey as number)}
+                                        >
+                                          删除
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </div>
+                                )}
+                              />
+                            </>
+                          ) : null}
+                        </ul>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+            {topicPanelExpanded ? (
+              <ColumnResizeHandle label="拖拽调整专题栏宽度" onResizeStart={beginResizeSidebar} />
+            ) : null}
+          </>
+        ) : null}
+
+        <section
+          className="relative flex min-w-0 shrink-0 flex-col bg-muted/15"
+          style={{ width: listPx }}
+          aria-label="文章列表"
+          onDragEnter={(e) => {
+            if (!isAdminLoggedIn) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            if (![...e.dataTransfer.types].includes('Files')) {
+              return;
+            }
+            setListDropActive(true);
+          }}
+          onDragLeave={(e) => {
+            if (!isAdminLoggedIn) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            const next = e.relatedTarget as Node | null;
+            if (next && e.currentTarget.contains(next)) {
+              return;
+            }
+            setListDropActive(false);
+          }}
+          onDragOver={(e) => {
+            if (!isAdminLoggedIn) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+          }}
+          onDrop={(e) => {
+            if (!isAdminLoggedIn) {
+              return;
+            }
+            e.preventDefault();
+            e.stopPropagation();
+            setListDropActive(false);
+            const file = e.dataTransfer.files[0];
+            if (!file) {
+              return;
+            }
+            if (!file.name.toLowerCase().endsWith('.md')) {
+              showToast('请拖拽 .md 文件', 'warning');
+              return;
+            }
+            void uploadMarkdownFile(file);
+          }}
+        >
+          {isAdminLoggedIn && listDropActive ? (
+            <div
+              className="pointer-events-none absolute inset-1 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10"
+              aria-hidden
+            >
+              <span className="text-primary px-2 text-center text-sm font-medium">释放以上传 Markdown</span>
+            </div>
+          ) : null}
+          <div className="border-border flex flex-col gap-2 border-b px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              {!showSidebar ? (
+                <label className="text-muted-foreground flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold uppercase tracking-wide">
+                  <span className="sr-only">选择专题</span>
+                  <span className="text-[10px] opacity-80">专题</span>
+                  <select
+                    value={activeTopicQuery}
+                    onChange={(e) => navigateTopic(parseTopicQueryValue(e.target.value))}
+                    className="border-input bg-background text-foreground max-w-full rounded-md border px-2 py-1.5 text-sm font-medium"
+                  >
+                    {categories.map((cat) => (
+                      <option key={topicToQueryValue(cat.topicKey)} value={topicToQueryValue(cat.topicKey)}>
+                        {cat.name}
+                        {cat.isPinned ? '（置顶）' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                  {activeCategory?.name ?? '文章'}
+                </span>
+              )}
+            </div>
+            {isAdminLoggedIn ? (
+              <div className="flex shrink-0 items-center gap-1">
+                <input
+                  ref={uploadFileInputRef}
+                  type="file"
+                  accept=".md,text/markdown"
+                  className="hidden"
+                  aria-hidden
+                  onChange={handleUploadMarkdownInput}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label="新建文章"
+                  title="新建文章"
+                  onClick={() => void handleCreatePost()}
+                >
+                  <FilePlus className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="size-8 shrink-0"
+                  aria-label="上传 Markdown 文章"
+                  title="上传 Markdown（可拖入本栏）"
+                  onClick={() => uploadFileInputRef.current?.click()}
+                >
+                  <Upload className="size-4" />
+                </Button>
+              </div>
+            ) : null}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
+            {posts.length === 0 ? (
+              <p className="px-2 py-6 text-center text-sm text-muted-foreground">此分类下暂无文章</p>
+            ) : isAdminLoggedIn && activeCategory.topicKey !== 'uncategorized' ? (
+              <div
+                role="listbox"
+                aria-label={`${activeCategory?.name ?? '文章'}下的条目`}
+                className="flex flex-col gap-0.5"
+              >
+                <HomeExplorerPostDndList
+                  topicId={activeCategory.topicKey}
+                  posts={posts}
+                  activePostId={activePostId}
+                  onOrderSaved={refreshExplorer}
+                  showToast={showToast}
+                  renderPostRow={({ post, selected, dragHandle }) => {
+                    const rowBody = (
+                      <>
+                        <span className="line-clamp-2 leading-snug">{post.title}</span>
+                        <span className="text-muted-foreground flex items-center gap-2 text-xs">
+                          {post.createdAt ? (
+                            <time dateTime={post.createdAt}>{formatDateShort(post.createdAt)}</time>
+                          ) : null}
+                          {post.isPinned ? (
+                            <Badge variant="outline" className="h-5 border-amber-500/40 px-1 text-[10px]">
+                              置顶
+                            </Badge>
+                          ) : null}
+                        </span>
+                      </>
+                    );
+                    return (
+                      <ContextMenu>
+                        <ContextMenuTrigger asChild>
                           <div
                             className={cn(
-                              'group/topic flex w-full items-center gap-0.5 rounded-md',
-                              topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
-                                ? 'bg-accent/80'
-                                : 'hover:bg-accent/40',
+                              'group/post flex w-full items-stretch gap-0.5 rounded-md transition-colors',
+                              selected
+                                ? 'bg-primary/15 text-foreground ring-1 ring-primary/20'
+                                : 'hover:bg-accent/50 text-foreground/90',
                             )}
                           >
-                            <button
-                              type="button"
-                              onClick={() => navigateTopic(uncategorizedCategory.topicKey)}
-                              className={cn(
-                                'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors',
-                                topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
-                                  ? 'text-accent-foreground font-medium'
-                                  : 'text-foreground/90',
-                              )}
-                              aria-current={
-                                topicToQueryValue(uncategorizedCategory.topicKey) === activeTopicQuery
-                                  ? 'true'
-                                  : undefined
-                              }
-                            >
-                              <span className="min-w-0 flex-1 truncate">{uncategorizedCategory.name}</span>
-                            </button>
-                          </div>
-                        </li>
-                      ) : null}
-                      {isAdminLoggedIn ? (
-                        <>
-                          <HomeExplorerTopicDndGroup
-                            dndContextId="home-explorer-topics-pinned"
-                            topics={pinnedTopicCategories}
-                            activeTopicQuery={activeTopicQuery}
-                            onOrderSaved={refreshExplorer}
-                            showToast={showToast}
-                            renderTopicRow={({ cat, isActive, dragHandle }) => (
-                              <div
-                                className={cn(
-                                  'group/topic flex w-full items-center gap-0.5 rounded-md',
-                                  isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
-                                )}
-                              >
-                                {dragHandle}
-                                <button
-                                  type="button"
-                                  onClick={() => navigateTopic(cat.topicKey)}
-                                  className={cn(
-                                    'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
-                                    isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
-                                  )}
-                                  aria-current={isActive ? 'true' : undefined}
-                                >
-                                  <span className="min-w-0 flex-1 truncate">{cat.name}</span>
-                                  {cat.isPinned ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
-                                    >
-                                      置顶
-                                    </Badge>
-                                  ) : null}
-                                </button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="text-muted-foreground hover:text-foreground size-8 shrink-0 opacity-0 transition-opacity group-hover/topic:opacity-100"
-                                      aria-label={`「${cat.name}」更多`}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <MoreHorizontal className="size-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-44">
-                                    <DropdownMenuItem onClick={() => void handleToggleTopicPin(cat)}>
-                                      {cat.isPinned ? '取消置顶' : '置顶'}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setRenameTopicState({ id: cat.topicKey as number, name: cat.name })
-                                      }
-                                    >
-                                      重命名
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      className="text-destructive focus:text-destructive"
-                                      onClick={() => setDeleteTopicId(cat.topicKey as number)}
-                                    >
-                                      删除
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            )}
-                          />
-                          <HomeExplorerTopicDndGroup
-                            dndContextId="home-explorer-topics-unpinned"
-                            topics={unpinnedTopicCategories}
-                            activeTopicQuery={activeTopicQuery}
-                            onOrderSaved={refreshExplorer}
-                            showToast={showToast}
-                            renderTopicRow={({ cat, isActive, dragHandle }) => (
-                              <div
-                                className={cn(
-                                  'group/topic flex w-full items-center gap-0.5 rounded-md',
-                                  isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
-                                )}
-                              >
-                                {dragHandle}
-                                <button
-                                  type="button"
-                                  onClick={() => navigateTopic(cat.topicKey)}
-                                  className={cn(
-                                    'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
-                                    isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
-                                  )}
-                                  aria-current={isActive ? 'true' : undefined}
-                                >
-                                  <span className="min-w-0 flex-1 truncate">{cat.name}</span>
-                                  {cat.isPinned ? (
-                                    <Badge
-                                      variant="outline"
-                                      className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
-                                    >
-                                      置顶
-                                    </Badge>
-                                  ) : null}
-                                </button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="text-muted-foreground hover:text-foreground size-8 shrink-0 opacity-0 transition-opacity group-hover/topic:opacity-100"
-                                      aria-label={`「${cat.name}」更多`}
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <MoreHorizontal className="size-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-44">
-                                    <DropdownMenuItem onClick={() => void handleToggleTopicPin(cat)}>
-                                      {cat.isPinned ? '取消置顶' : '置顶'}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        setRenameTopicState({ id: cat.topicKey as number, name: cat.name })
-                                      }
-                                    >
-                                      重命名
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem
-                                      className="text-destructive focus:text-destructive"
-                                      onClick={() => setDeleteTopicId(cat.topicKey as number)}
-                                    >
-                                      删除
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            )}
-                          />
-                        </>
-                      ) : null}
-                    </ul>
-                        </nav>
-                      </div>
-                    </div>
-                    </div>
-                  </aside>
-                </div>
-                {topicPanelExpanded ? (
-                  <ColumnResizeHandle label="拖拽调整专题栏宽度" onResizeStart={beginResizeSidebar} />
-                ) : null}
-              </>
-            ) : null}
-
-            <section
-              className="relative flex min-w-0 shrink-0 flex-col bg-muted/15"
-              style={{ width: listPx }}
-              aria-label="文章列表"
-              onDragEnter={(e) => {
-                if (!isAdminLoggedIn) {
-                  return;
-                }
-                e.preventDefault();
-                e.stopPropagation();
-                if (![...e.dataTransfer.types].includes('Files')) {
-                  return;
-                }
-                setListDropActive(true);
-              }}
-              onDragLeave={(e) => {
-                if (!isAdminLoggedIn) {
-                  return;
-                }
-                e.preventDefault();
-                e.stopPropagation();
-                const next = e.relatedTarget as Node | null;
-                if (next && e.currentTarget.contains(next)) {
-                  return;
-                }
-                setListDropActive(false);
-              }}
-              onDragOver={(e) => {
-                if (!isAdminLoggedIn) {
-                  return;
-                }
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = 'copy';
-              }}
-              onDrop={(e) => {
-                if (!isAdminLoggedIn) {
-                  return;
-                }
-                e.preventDefault();
-                e.stopPropagation();
-                setListDropActive(false);
-                const file = e.dataTransfer.files[0];
-                if (!file) {
-                  return;
-                }
-                if (!file.name.toLowerCase().endsWith('.md')) {
-                  showToast('请拖拽 .md 文件', 'warning');
-                  return;
-                }
-                void uploadMarkdownFile(file);
-              }}
-            >
-              {isAdminLoggedIn && listDropActive ? (
-                <div
-                  className="pointer-events-none absolute inset-1 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/10"
-                  aria-hidden
-                >
-                  <span className="text-primary px-2 text-center text-sm font-medium">释放以上传 Markdown</span>
-                </div>
-              ) : null}
-              <div className="border-border flex flex-col gap-2 border-b px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                  {!showSidebar ? (
-                    <label className="text-muted-foreground flex min-w-0 flex-1 flex-col gap-1 text-xs font-semibold uppercase tracking-wide">
-                      <span className="sr-only">选择专题</span>
-                      <span className="text-[10px] opacity-80">专题</span>
-                      <select
-                        value={activeTopicQuery}
-                        onChange={(e) => navigateTopic(parseTopicQueryValue(e.target.value))}
-                        className="border-input bg-background text-foreground max-w-full rounded-md border px-2 py-1.5 text-sm font-medium"
-                      >
-                        {categories.map((cat) => (
-                          <option key={topicToQueryValue(cat.topicKey)} value={topicToQueryValue(cat.topicKey)}>
-                            {cat.name}
-                            {cat.isPinned ? '（置顶）' : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : (
-                    <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-                      {activeCategory?.name ?? '文章'}
-                    </span>
-                  )}
-                </div>
-                {isAdminLoggedIn ? (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <input
-                      ref={uploadFileInputRef}
-                      type="file"
-                      accept=".md,text/markdown"
-                      className="hidden"
-                      aria-hidden
-                      onChange={handleUploadMarkdownInput}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      aria-label="新建文章"
-                      title="新建文章"
-                      onClick={() => void handleCreatePost()}
-                    >
-                      <FilePlus className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="size-8 shrink-0"
-                      aria-label="上传 Markdown 文章"
-                      title="上传 Markdown（可拖入本栏）"
-                      onClick={() => uploadFileInputRef.current?.click()}
-                    >
-                      <Upload className="size-4" />
-                    </Button>
-                  </div>
-                ) : null}
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
-                {posts.length === 0 ? (
-                  <p className="px-2 py-6 text-center text-sm text-muted-foreground">此分类下暂无文章</p>
-                ) : isAdminLoggedIn && activeCategory.topicKey !== 'uncategorized' ? (
-                  <div
-                    role="listbox"
-                    aria-label={`${activeCategory?.name ?? '文章'}下的条目`}
-                    className="flex flex-col gap-0.5"
-                  >
-                    <HomeExplorerPostDndList
-                      topicId={activeCategory.topicKey}
-                      posts={posts}
-                      activePostId={activePostId}
-                      onOrderSaved={refreshExplorer}
-                      showToast={showToast}
-                      renderPostRow={({ post, selected, dragHandle }) => {
-                        const rowBody = (
-                          <>
-                            <span className="line-clamp-2 leading-snug">{post.title}</span>
-                            <span className="text-muted-foreground flex items-center gap-2 text-xs">
-                              {post.createdAt ? (
-                                <time dateTime={post.createdAt}>{formatDateShort(post.createdAt)}</time>
-                              ) : null}
-                              {post.isPinned ? (
-                                <Badge variant="outline" className="h-5 border-amber-500/40 px-1 text-[10px]">
-                                  置顶
-                                </Badge>
-                              ) : null}
-                            </span>
-                          </>
-                        );
-                        return (
-                          <ContextMenu>
-                            <ContextMenuTrigger asChild>
-                              <div
-                                className={cn(
-                                  'flex w-full items-stretch gap-0.5 rounded-md transition-colors',
-                                  selected
-                                    ? 'bg-primary/15 text-foreground ring-1 ring-primary/20'
-                                    : 'hover:bg-accent/50 text-foreground/90',
-                                )}
-                              >
-                                {dragHandle}
-                                <button
-                                  type="button"
-                                  role="option"
-                                  className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-2 py-2.5 text-left text-sm"
-                                  onClick={() => navigatePost(activeCategory.topicKey, post.id)}
-                                  aria-selected={selected}
-                                >
-                                  {rowBody}
-                                </button>
-                              </div>
-                            </ContextMenuTrigger>
-                            <ContextMenuContent className="w-52">
-                              <ContextMenuItem
-                                onSelect={() => {
-                                  navigatePost(activeCategory.topicKey, post.id);
-                                  setEditingPost(true);
-                                }}
-                              >
-                                编辑
-                              </ContextMenuItem>
-                              <ContextMenuItem
-                                onSelect={() => void handleTogglePostPin(post.id, !post.isPinned)}
-                              >
-                                {post.isPinned ? '取消置顶' : '置顶'}
-                              </ContextMenuItem>
-                              <ContextMenuSub>
-                                <ContextMenuSubTrigger>移动到…</ContextMenuSubTrigger>
-                                <ContextMenuSubContent className="max-h-64 overflow-y-auto">
-                                  {categories.map((cat) => (
-                                    <ContextMenuItem
-                                      key={topicToQueryValue(cat.topicKey)}
-                                      disabled={cat.topicKey === activeCategory.topicKey}
-                                      onSelect={() => void handleMovePost(post.id, cat.topicKey)}
-                                    >
-                                      {cat.name}
-                                    </ContextMenuItem>
-                                  ))}
-                                </ContextMenuSubContent>
-                              </ContextMenuSub>
-                              <ContextMenuItem
-                                onSelect={() => setRenamePostState({ id: post.id, title: post.title })}
-                              >
-                                重命名
-                              </ContextMenuItem>
-                              <ContextMenuSeparator />
-                              <ContextMenuItem variant="destructive" onSelect={() => setDeletePostId(post.id)}>
-                                删除
-                              </ContextMenuItem>
-                            </ContextMenuContent>
-                          </ContextMenu>
-                        );
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div
-                    className="flex flex-col gap-0.5"
-                    role="listbox"
-                    aria-label={`${activeCategory?.name ?? '文章'}下的条目`}
-                  >
-                    {posts.map((post) => {
-                      const selected = activePostId === post.id;
-                      const rowClass = cn(
-                        'flex w-full flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors',
-                        selected
-                          ? 'bg-primary/15 text-foreground font-medium ring-1 ring-primary/20'
-                          : 'hover:bg-accent/50 text-foreground/90',
-                      );
-                      const rowBody = (
-                        <>
-                          <span className="line-clamp-2 leading-snug">{post.title}</span>
-                          <span className="text-muted-foreground flex items-center gap-2 text-xs">
-                            {post.createdAt ? (
-                              <time dateTime={post.createdAt}>{formatDateShort(post.createdAt)}</time>
-                            ) : null}
-                            {post.isPinned ? (
-                              <Badge variant="outline" className="h-5 border-amber-500/40 px-1 text-[10px]">
-                                置顶
-                              </Badge>
-                            ) : null}
-                          </span>
-                        </>
-                      );
-                      if (!isAdminLoggedIn) {
-                        return (
-                          <button
-                            key={post.id}
-                            type="button"
-                            role="option"
-                            onClick={() => navigatePost(activeCategory.topicKey, post.id)}
-                            className={rowClass}
-                            aria-selected={selected}
-                          >
-                            {rowBody}
-                          </button>
-                        );
-                      }
-                      return (
-                        <ContextMenu key={post.id}>
-                          <ContextMenuTrigger asChild>
+                            {dragHandle}
                             <button
                               type="button"
                               role="option"
+                              className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-2 py-2.5 text-left text-sm"
                               onClick={() => navigatePost(activeCategory.topicKey, post.id)}
-                              className={rowClass}
                               aria-selected={selected}
                             >
                               {rowBody}
                             </button>
-                          </ContextMenuTrigger>
-                          <ContextMenuContent className="w-52">
-                            <ContextMenuItem
-                              onSelect={() => {
-                                navigatePost(activeCategory.topicKey, post.id);
-                                setEditingPost(true);
-                              }}
-                            >
-                              编辑
-                            </ContextMenuItem>
-                            <ContextMenuItem
-                              onSelect={() => void handleTogglePostPin(post.id, !post.isPinned)}
-                            >
-                              {post.isPinned ? '取消置顶' : '置顶'}
-                            </ContextMenuItem>
-                            <ContextMenuSub>
-                              <ContextMenuSubTrigger>移动到…</ContextMenuSubTrigger>
-                              <ContextMenuSubContent className="max-h-64 overflow-y-auto">
-                                {categories.map((cat) => (
-                                  <ContextMenuItem
-                                    key={topicToQueryValue(cat.topicKey)}
-                                    disabled={cat.topicKey === activeCategory.topicKey}
-                                    onSelect={() => void handleMovePost(post.id, cat.topicKey)}
-                                  >
-                                    {cat.name}
-                                  </ContextMenuItem>
-                                ))}
-                              </ContextMenuSubContent>
-                            </ContextMenuSub>
-                            <ContextMenuItem
-                              onSelect={() => setRenamePostState({ id: post.id, title: post.title })}
-                            >
-                              重命名
-                            </ContextMenuItem>
-                            <ContextMenuSeparator />
-                            <ContextMenuItem variant="destructive" onSelect={() => setDeletePostId(post.id)}>
-                              删除
-                            </ContextMenuItem>
-                          </ContextMenuContent>
-                        </ContextMenu>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <ColumnResizeHandle label="拖拽调整文章列表宽度" onResizeStart={beginResizeList} />
-
-            <section className="min-w-0 flex-1 overflow-y-auto bg-background" aria-label="文章正文">
-              {!postDetail ? (
-                <div className="text-muted-foreground flex h-full min-h-48 items-center justify-center p-8 text-center text-sm">
-                  选择左侧列表中的一篇文章以阅读全文
-                </div>
-              ) : isAdminLoggedIn && editingPost ? (
-                <HomePostRichEditor
-                  key={postDetail.id}
-                  post={{
-                    id: postDetail.id,
-                    title: postDetail.title,
-                    content: postDetail.contentSource,
-                    createdAt: postDetail.createdAt,
-                    updatedAt: postDetail.updatedAt,
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-muted-foreground hover:text-foreground size-8 shrink-0 self-center opacity-0 transition-opacity group-hover/post:opacity-100"
+                                  aria-label={`「${post.title}」更多`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreHorizontal className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52">
+                                {renderPostDropdownActions(post)}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent className="w-52">{renderPostContextMenuActions(post)}</ContextMenuContent>
+                      </ContextMenu>
+                    );
                   }}
-                  onSaved={() => {
-                    setEditingPost(false);
-                    refreshExplorer();
-                  }}
-                  onCancel={() => setEditingPost(false)}
                 />
-              ) : (
-                <div key={postDetail.id} className="p-4 sm:p-8">
-                  <article className="mx-auto max-w-3xl">
-                    <PostHeader
-                      title={postDetail.title}
-                      createdAt={postDetail.createdAt ? new Date(postDetail.createdAt) : null}
-                      publishedTime={publishedTime}
-                    />
-                    <div
-                      className="prose prose-neutral dark:prose-invert prose-sm sm:prose-lg max-w-none"
-                      dangerouslySetInnerHTML={{ __html: postDetail.content }}
-                    />
-                  </article>
-                  <CodeBlockCopyButtons contentKey={`${postDetail.id}-${postDetail.contentSource.length}`} />
-                  <div className="mx-auto mt-8 max-w-3xl border-t border-border pt-6">
-                    <PostPageClient postId={postDetail.id} />
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-
-          <footer className="border-border bg-muted/30 shrink-0 border-t">
-            <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 px-4 py-2 text-xs sm:flex-row sm:flex-wrap sm:gap-x-4">
-              <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                <button
-                  type="button"
-                  onClick={() => openModal('tools')}
-                  className="hover:text-primary font-medium transition-colors"
-                >
-                  工具
-                </button>
-                <span className="select-none opacity-30" aria-hidden>
-                  ·
-                </span>
-                <Link href="/blog" className="hover:text-primary font-medium transition-colors">
-                  博客
-                </Link>
               </div>
-              <span className="text-center opacity-80 sm:text-left">© 2026 White Meta. 保留所有权利。</span>
+            ) : (
+              <div
+                className="flex flex-col gap-0.5"
+                role="listbox"
+                aria-label={`${activeCategory?.name ?? '文章'}下的条目`}
+              >
+                {posts.map((post) => {
+                  const selected = activePostId === post.id;
+                  const rowToneClass = cn(
+                    selected
+                      ? 'bg-primary/15 text-foreground font-medium ring-1 ring-primary/20'
+                      : 'hover:bg-accent/50 text-foreground/90',
+                  );
+                  const rowClass = cn(
+                    'flex w-full flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors',
+                    rowToneClass,
+                  );
+                  const rowBody = (
+                    <>
+                      <span className="line-clamp-2 leading-snug">{post.title}</span>
+                      <span className="text-muted-foreground flex items-center gap-2 text-xs">
+                        {post.createdAt ? (
+                          <time dateTime={post.createdAt}>{formatDateShort(post.createdAt)}</time>
+                        ) : null}
+                        {post.isPinned ? (
+                          <Badge variant="outline" className="h-5 border-amber-500/40 px-1 text-[10px]">
+                            置顶
+                          </Badge>
+                        ) : null}
+                      </span>
+                    </>
+                  );
+                  if (!isAdminLoggedIn) {
+                    return (
+                      <button
+                        key={post.id}
+                        type="button"
+                        role="option"
+                        onClick={() => navigatePost(activeCategory.topicKey, post.id)}
+                        className={rowClass}
+                        aria-selected={selected}
+                      >
+                        {rowBody}
+                      </button>
+                    );
+                  }
+                  return (
+                    <ContextMenu key={post.id}>
+                      <ContextMenuTrigger asChild>
+                        <div className={cn('group/post flex items-stretch gap-0.5 rounded-md', rowToneClass)}>
+                          <button
+                            type="button"
+                            role="option"
+                            onClick={() => navigatePost(activeCategory.topicKey, post.id)}
+                            className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors"
+                            aria-selected={selected}
+                          >
+                            {rowBody}
+                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-foreground size-8 shrink-0 self-center opacity-0 transition-opacity group-hover/post:opacity-100"
+                                aria-label={`「${post.title}」更多`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-52">
+                              {renderPostDropdownActions(post)}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-52">{renderPostContextMenuActions(post)}</ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <ColumnResizeHandle label="拖拽调整文章列表宽度" onResizeStart={beginResizeList} />
+
+        <section className="min-w-0 flex-1 overflow-y-auto bg-background" aria-label="文章正文">
+          {!postDetail ? (
+            <div className="text-muted-foreground flex h-full min-h-48 items-center justify-center p-8 text-center text-sm">
+              选择左侧列表中的一篇文章以阅读全文
             </div>
-          </footer>
-
-        <Dialog open={newTopicOpen} onOpenChange={setNewTopicOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>新建专题</DialogTitle>
-              <DialogDescription>在当前窗口中新增一个专题文件夹。</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2 py-2">
-              <Label htmlFor="home-new-topic-name">名称</Label>
-              <Input
-                id="home-new-topic-name"
-                value={newTopicName}
-                onChange={(e) => setNewTopicName(e.target.value)}
-                placeholder="例如：随笔"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void submitNewTopic();
-                }}
-              />
+          ) : isAdminLoggedIn && editingPost ? (
+            <HomePostRichEditor
+              key={postDetail.id}
+              post={{
+                id: postDetail.id,
+                title: postDetail.title,
+                content: postDetail.contentSource,
+                createdAt: postDetail.createdAt,
+                updatedAt: postDetail.updatedAt,
+              }}
+              onSaved={() => {
+                setEditingPost(false);
+                refreshExplorer();
+              }}
+              onCancel={() => setEditingPost(false)}
+            />
+          ) : (
+            <div key={postDetail.id} className="p-4 sm:p-8">
+              <article className="mx-auto max-w-3xl">
+                <PostHeader
+                  title={postDetail.title}
+                  createdAt={postDetail.createdAt ? new Date(postDetail.createdAt) : null}
+                  publishedTime={publishedTime}
+                />
+                <div
+                  className="prose prose-neutral dark:prose-invert prose-sm sm:prose-lg max-w-none"
+                  dangerouslySetInnerHTML={{ __html: postDetail.content }}
+                />
+              </article>
+              <CodeBlockCopyButtons contentKey={`${postDetail.id}-${postDetail.contentSource.length}`} />
+              <div className="mx-auto mt-8 max-w-3xl border-t border-border pt-6">
+                <PostPageClient postId={postDetail.id} />
+              </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setNewTopicOpen(false)}>
-                取消
-              </Button>
-              <Button type="button" onClick={() => void submitNewTopic()}>
-                创建
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          )}
+        </section>
+      </div>
 
-        <Dialog
-          open={renameTopicState !== null}
-          onOpenChange={(open) => {
-            if (!open) setRenameTopicState(null);
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>重命名专题</DialogTitle>
-            </DialogHeader>
-            {renameTopicState ? (
-              <>
-                <div className="space-y-2 py-2">
-                  <Label htmlFor="home-rename-topic">名称</Label>
-                  <Input
-                    id="home-rename-topic"
-                    value={renameTopicState.name}
-                    onChange={(e) =>
-                      setRenameTopicState((prev) => (prev ? { ...prev, name: e.target.value } : prev))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') void submitRenameTopic();
-                    }}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setRenameTopicState(null)}>
-                    取消
-                  </Button>
-                  <Button type="button" onClick={() => void submitRenameTopic()}>
-                    保存
-                  </Button>
-                </DialogFooter>
-              </>
-            ) : null}
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog
-          open={deleteTopicId !== null}
-          onOpenChange={(open) => {
-            if (!open) setDeleteTopicId(null);
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>删除专题？</AlertDialogTitle>
-              <AlertDialogDescription>
-                专题与文章的关联会解除，文章不会删除，将出现在「未分类」中。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void submitDeleteTopic()}>删除</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <Dialog
-          open={renamePostState !== null}
-          onOpenChange={(open) => {
-            if (!open) setRenamePostState(null);
-          }}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>重命名文章</DialogTitle>
-            </DialogHeader>
-            {renamePostState ? (
-              <>
-                <div className="space-y-2 py-2">
-                  <Label htmlFor="home-rename-post">标题</Label>
-                  <Input
-                    id="home-rename-post"
-                    value={renamePostState.title}
-                    onChange={(e) =>
-                      setRenamePostState((prev) => (prev ? { ...prev, title: e.target.value } : prev))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') void submitRenamePost();
-                    }}
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setRenamePostState(null)}>
-                    取消
-                  </Button>
-                  <Button type="button" onClick={() => void submitRenamePost()}>
-                    保存
-                  </Button>
-                </DialogFooter>
-              </>
-            ) : null}
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog
-          open={deletePostId !== null}
-          onOpenChange={(open) => {
-            if (!open) setDeletePostId(null);
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>删除文章？</AlertDialogTitle>
-              <AlertDialogDescription>将永久删除该文章及其评论，且不可恢复。</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void submitDeletePost()}>删除</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {settingsOpen ? (
-          <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+      <footer className="border-border bg-muted/30 shrink-0 border-t">
+        <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 px-4 py-2 text-xs sm:flex-row sm:flex-wrap sm:gap-x-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <button
               type="button"
-              className="absolute inset-0 border-0 bg-black/45 backdrop-blur-[2px]"
-              aria-label="关闭设置"
-              onClick={() => setSettingsOpen(false)}
-            />
-            <div
-              className="border-border bg-card relative z-10 flex max-h-[min(90dvh,720px)] w-full max-w-md flex-col overflow-hidden rounded-xl border shadow-2xl"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="home-settings-title"
+              onClick={() => openModal('tools')}
+              className="hover:text-primary font-medium transition-colors"
             >
-              <HomeWindowSettings
-                onClose={() => setSettingsOpen(false)}
-                isAdminLoggedIn={isAdminLoggedIn}
-              />
-            </div>
+              工具
+            </button>
+            <span className="select-none opacity-30" aria-hidden>
+              ·
+            </span>
+            <Link href="/blog" className="hover:text-primary font-medium transition-colors">
+              博客
+            </Link>
           </div>
-        ) : null}
+          <span className="text-center opacity-80 sm:text-left">© 2026 White Meta. 保留所有权利。</span>
+        </div>
+      </footer>
+
+      <Dialog open={newTopicOpen} onOpenChange={setNewTopicOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>新建专题</DialogTitle>
+            <DialogDescription>在当前窗口中新增一个专题文件夹。</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="home-new-topic-name">名称</Label>
+            <Input
+              id="home-new-topic-name"
+              value={newTopicName}
+              onChange={(e) => setNewTopicName(e.target.value)}
+              placeholder="例如：随笔"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void submitNewTopic();
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setNewTopicOpen(false)}>
+              取消
+            </Button>
+            <Button type="button" onClick={() => void submitNewTopic()}>
+              创建
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={renameTopicState !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTopicState(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>重命名专题</DialogTitle>
+          </DialogHeader>
+          {renameTopicState ? (
+            <>
+              <div className="space-y-2 py-2">
+                <Label htmlFor="home-rename-topic">名称</Label>
+                <Input
+                  id="home-rename-topic"
+                  value={renameTopicState.name}
+                  onChange={(e) => setRenameTopicState((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void submitRenameTopic();
+                  }}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setRenameTopicState(null)}>
+                  取消
+                </Button>
+                <Button type="button" onClick={() => void submitRenameTopic()}>
+                  保存
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={deleteTopicId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTopicId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除专题？</AlertDialogTitle>
+            <AlertDialogDescription>
+              专题与文章的关联会解除，文章不会删除，将出现在「未分类」中。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void submitDeleteTopic()}>删除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog
+        open={renamePostState !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenamePostState(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>重命名文章</DialogTitle>
+          </DialogHeader>
+          {renamePostState ? (
+            <>
+              <div className="space-y-2 py-2">
+                <Label htmlFor="home-rename-post">标题</Label>
+                <Input
+                  id="home-rename-post"
+                  value={renamePostState.title}
+                  onChange={(e) => setRenamePostState((prev) => (prev ? { ...prev, title: e.target.value } : prev))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void submitRenamePost();
+                  }}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setRenamePostState(null)}>
+                  取消
+                </Button>
+                <Button type="button" onClick={() => void submitRenamePost()}>
+                  保存
+                </Button>
+              </DialogFooter>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={deletePostId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletePostId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除文章？</AlertDialogTitle>
+            <AlertDialogDescription>将永久删除该文章及其评论，且不可恢复。</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void submitDeletePost()}>删除</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {settingsOpen ? (
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+          <button
+            type="button"
+            className="absolute inset-0 border-0 bg-black/45 backdrop-blur-[2px]"
+            aria-label="关闭设置"
+            onClick={() => setSettingsOpen(false)}
+          />
+          <div
+            className="border-border bg-card relative z-10 flex max-h-[min(90dvh,720px)] w-full max-w-md flex-col overflow-hidden rounded-xl border shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="home-settings-title"
+          >
+            <HomeWindowSettings onClose={() => setSettingsOpen(false)} isAdminLoggedIn={isAdminLoggedIn} />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
