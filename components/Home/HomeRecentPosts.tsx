@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { HomePostPreview } from '@/server/actions/posts';
+import type { HomePostPreview } from '@/server/types/explorer';
 import { formatDateShort } from '@/app/utils/date';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

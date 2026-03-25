@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import type { Topic } from '@/server/actions/topics';
+import type { Topic } from '@/server/types/models';
 import { Breadcrumb } from './Breadcrumb';
 import { formatDate } from '@/app/utils/date';
 

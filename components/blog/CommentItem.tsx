@@ -1,6 +1,6 @@
 'use client';
 
-import type { CommentWithReplies } from '@/server/actions/comments';
+import type { CommentWithReplies } from '@/server/types/comments-thread';
 import { formatDateShort } from '@/app/utils/date';
 import { Button } from '@/components/ui/button';
 

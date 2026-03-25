@@ -4,63 +4,24 @@ import { db } from '@/server/db/db';
 import { topicsTable, topicPostsTable } from '@/server/db/schema';
 import { and, asc, desc, eq, max, ne } from 'drizzle-orm';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
-
-/**
- * 专题类型定义
- */
-export type Topic = {
-  id: number;
-  name: string;
-  description: string | null;
-  coverImage: string | null;
-  isPinned: boolean;
-  isHidden: boolean;
-  sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-/**
- * 专题与文章关联类型
- */
-export type TopicPost = {
-  id: number;
-  topicId: number;
-  postId: number;
-  sortOrder: number;
-  createdAt: Date;
-};
-
-/**
- * 带文章列表的专题类型
- */
-export type TopicWithPosts = Topic & {
-  posts: Array<{
-    id: number;
-    postId: number;
-    sortOrder: number;
-    post: {
-      id: number;
-      title: string;
-      createdAt: Date | null;
-    };
-  }>;
-};
+import { actionErr, actionOk, actionOkVoid } from '@/server/types/action-result';
+import type { ActionResult, ActionVoidResult } from '@/server/types/action-result';
+import type { Topic, TopicPost } from '@/server/types/models';
 
 /**
  * Server Action: 获取所有专题列表（置顶优先，然后按创建时间倒序）
  */
-export async function getTopics(includeHidden = false) {
+export async function getTopics(includeHidden = false): Promise<ActionResult<Topic[]>> {
   try {
     const topics = await db
       .select()
       .from(topicsTable)
       .where(includeHidden ? undefined : eq(topicsTable.isHidden, false))
       .orderBy(desc(topicsTable.isPinned), asc(topicsTable.sortOrder), desc(topicsTable.createdAt));
-    return { success: true, data: topics };
+    return actionOk(topics);
   } catch (error) {
     console.error('获取专题列表失败:', error);
-    return { success: false, error: '获取专题列表失败' };
+    return actionErr('获取专题列表失败');
   }
 }
 
@@ -88,13 +49,13 @@ export async function getTopicById(id: number) {
     });
 
     if (!topic) {
-      return { success: false, error: '专题不存在' };
+      return actionErr('专题不存在');
     }
 
-    return { success: true, data: topic };
+    return actionOk(topic);
   } catch (error) {
     console.error('获取专题失败:', error);
-    return { success: false, error: '获取专题失败' };
+    return actionErr('获取专题失败');
   }
 }
 
@@ -107,10 +68,10 @@ export async function createTopic(data: {
   coverImage?: string | null;
   isPinned?: boolean;
   isHidden?: boolean;
-}) {
+}): Promise<ActionResult<Topic>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -134,10 +95,10 @@ export async function createTopic(data: {
       })
       .returning();
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('创建专题失败:', error);
-    return { success: false, error: '创建专题失败' };
+    return actionErr('创建专题失败');
   }
 }
 
@@ -153,10 +114,10 @@ export async function updateTopic(
     isPinned?: boolean;
     isHidden?: boolean;
   },
-) {
+): Promise<ActionResult<Topic>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -164,7 +125,7 @@ export async function updateTopic(
       where: (t, { eq: eqFn }) => eqFn(t.id, id),
     });
     if (!existing) {
-      return { success: false, error: '专题不存在' };
+      return actionErr('专题不存在');
     }
 
     const updateData: {
@@ -202,59 +163,57 @@ export async function updateTopic(
     const result = await db.update(topicsTable).set(updateData).where(eq(topicsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: '专题不存在' };
+      return actionErr('专题不存在');
     }
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('更新专题失败:', error);
-    return { success: false, error: '更新专题失败' };
+    return actionErr('更新专题失败');
   }
 }
 
 /**
  * Server Action: 删除专题
  */
-export async function deleteTopic(id: number) {
+export async function deleteTopic(id: number): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
     const result = await db.delete(topicsTable).where(eq(topicsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: '专题不存在' };
+      return actionErr('专题不存在');
     }
 
-    return { success: true };
+    return actionOkVoid();
   } catch (error) {
     console.error('删除专题失败:', error);
-    return { success: false, error: '删除专题失败' };
+    return actionErr('删除专题失败');
   }
 }
 
 /**
  * Server Action: 为专题添加文章
  */
-export async function addPostToTopic(topicId: number, postId: number, sortOrder?: number) {
+export async function addPostToTopic(topicId: number, postId: number, sortOrder?: number): Promise<ActionResult<TopicPost>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
-    // 检查是否已存在
     const existing = await db.query.topicPostsTable.findFirst({
       where: (topicPosts, { and, eq }) => and(eq(topicPosts.topicId, topicId), eq(topicPosts.postId, postId)),
     });
 
     if (existing) {
-      return { success: false, error: '文章已在该专题中' };
+      return actionErr('文章已在该专题中');
     }
 
-    // 如果没有指定排序，获取当前最大排序值
     let finalSortOrder = sortOrder;
     if (finalSortOrder === undefined) {
       const maxSort = await db
@@ -276,20 +235,20 @@ export async function addPostToTopic(topicId: number, postId: number, sortOrder?
       })
       .returning();
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('添加文章到专题失败:', error);
-    return { success: false, error: '添加文章到专题失败' };
+    return actionErr('添加文章到专题失败');
   }
 }
 
 /**
  * Server Action: 从专题中移除文章
  */
-export async function removePostFromTopic(topicId: number, postId: number) {
+export async function removePostFromTopic(topicId: number, postId: number): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -299,13 +258,13 @@ export async function removePostFromTopic(topicId: number, postId: number) {
       .returning();
 
     if (result.length === 0) {
-      return { success: false, error: '文章不在该专题中' };
+      return actionErr('文章不在该专题中');
     }
 
-    return { success: true };
+    return actionOkVoid();
   } catch (error) {
     console.error('从专题中移除文章失败:', error);
-    return { success: false, error: '从专题中移除文章失败' };
+    return actionErr('从专题中移除文章失败');
   }
 }
 
@@ -315,14 +274,13 @@ export async function removePostFromTopic(topicId: number, postId: number) {
 export async function updateTopicPostSortOrder(
   topicId: number,
   postOrders: Array<{ postId: number; sortOrder: number }>,
-) {
+): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
-    // 使用事务批量更新
     await db.transaction(async (tx) => {
       for (const { postId, sortOrder } of postOrders) {
         await tx
@@ -332,20 +290,20 @@ export async function updateTopicPostSortOrder(
       }
     });
 
-    return { success: true };
+    return actionOkVoid();
   } catch (error) {
     console.error('更新专题文章排序失败:', error);
-    return { success: false, error: '更新专题文章排序失败' };
+    return actionErr('更新专题文章排序失败');
   }
 }
 
 /**
  * Server Action: 更新专题在侧边栏的排序（仅调整 sortOrder，不改变 isPinned）
  */
-export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number; sortOrder: number }>) {
+export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number; sortOrder: number }>): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false as const, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -358,20 +316,20 @@ export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number
       }
     });
 
-    return { success: true as const };
+    return actionOkVoid();
   } catch (error) {
     console.error('更新专题排序失败:', error);
-    return { success: false as const, error: '更新专题排序失败' };
+    return actionErr('更新专题排序失败');
   }
 }
 
 /**
  * Server Action: 将文章移动到目标专题（备忘录式「单一归属」：先清空所有专题关联，未分类则仅清空）
  */
-export async function movePostToTopicTarget(postId: number, targetTopicKey: 'uncategorized' | number) {
+export async function movePostToTopicTarget(postId: number, targetTopicKey: 'uncategorized' | number): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false as const, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -406,12 +364,12 @@ export async function movePostToTopicTarget(postId: number, targetTopicKey: 'unc
       });
     });
 
-    return { success: true as const };
+    return actionOkVoid();
   } catch (error) {
     if (error instanceof Error && error.message === 'TOPIC_NOT_FOUND') {
-      return { success: false as const, error: '专题不存在' };
+      return actionErr('专题不存在');
     }
     console.error('移动文章到专题失败:', error);
-    return { success: false as const, error: '移动文章失败' };
+    return actionErr('移动文章失败');
   }
 }

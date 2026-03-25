@@ -7,21 +7,10 @@ import { headers } from 'next/headers';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { getClientIP } from '@/server/utils/get-client-ip';
 import { parseUserAgent } from '@/server/utils/userAgent';
-
-/**
- * 埋点数据类型定义
- */
-export type Analytics = {
-  id: number;
-  type: string;
-  action: string | null;
-  target: string | null;
-  url: string | null;
-  ip: string | null;
-  userAgent: string | null;
-  metadata: string | null;
-  createdAt: Date;
-};
+import { actionErr, actionOk, actionOkVoid } from '@/server/types/action-result';
+import type { ActionResult, ActionVoidResult } from '@/server/types/action-result';
+import type { AnalyticsStatsPayload } from '@/server/types/analytics-payload';
+import type { Analytics } from '@/server/types/models';
 
 /**
  * Server Action: 创建埋点记录
@@ -34,7 +23,7 @@ export async function createAnalytics(data: {
   ip?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
-}) {
+}): Promise<ActionResult<Analytics>> {
   try {
     const result = await db
       .insert(analyticsTable)
@@ -49,10 +38,10 @@ export async function createAnalytics(data: {
       })
       .returning();
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('创建埋点记录失败:', error);
-    return { success: false, error: '创建埋点记录失败' };
+    return actionErr('创建埋点记录失败');
   }
 }
 
@@ -66,7 +55,7 @@ export async function ingestAnalyticsEvent(input: {
   url?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
-}) {
+}): Promise<ActionVoidResult> {
   try {
     const h = await headers();
     const clientIP = getClientIP(h);
@@ -98,40 +87,38 @@ export async function ingestAnalyticsEvent(input: {
       console.error('埋点存储失败:', result.error);
     }
 
-    return { success: true as const };
+    return actionOkVoid();
   } catch (error) {
     console.error('Analytics error:', error);
-    return { success: true as const };
+    return actionOkVoid();
   }
 }
 
 /**
  * Server Action: 获取埋点统计数据（用于admin管理）
  */
-export async function getAnalyticsStats(days: number = 7) {
+export async function getAnalyticsStats(days: number = 7): Promise<ActionResult<AnalyticsStatsPayload>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // 获取指定时间范围内的所有埋点数据
     const analytics = await db
       .select()
       .from(analyticsTable)
       .where(gte(analyticsTable.createdAt, startDate))
       .orderBy(desc(analyticsTable.createdAt));
 
-    // 按日期分组统计（包含PV和UV）
     const dailyStats: Record<
       string,
       {
         date: string;
         pageViews: number;
-        uniqueVisitors: Set<string>; // 使用Set存储唯一访客标识（IP+UserAgent）
+        uniqueVisitors: Set<string>;
         comments: number;
         clicks: number;
       }
@@ -151,7 +138,6 @@ export async function getAnalyticsStats(days: number = 7) {
 
       if (item.type === 'page_view') {
         dailyStats[date].pageViews++;
-        // 计算UV：使用IP+UserAgent作为唯一访客标识
         if (item.ip && item.userAgent) {
           const visitorKey = `${item.ip}_${item.userAgent}`;
           dailyStats[date].uniqueVisitors.add(visitorKey);
@@ -163,22 +149,19 @@ export async function getAnalyticsStats(days: number = 7) {
       }
     });
 
-    // 转换Set为数字，便于返回
     const dailyStatsArray = Object.values(dailyStats).map((stat) => ({
       date: stat.date,
       pageViews: stat.pageViews,
-      uniqueVisitors: stat.uniqueVisitors.size, // UV数量
+      uniqueVisitors: stat.uniqueVisitors.size,
       comments: stat.comments,
       clicks: stat.clicks,
     }));
 
-    // 按类型统计
     const typeStats: Record<string, number> = {};
     analytics.forEach((item) => {
       typeStats[item.type] = (typeStats[item.type] || 0) + 1;
     });
 
-    // 按操作统计
     const actionStats: Record<string, number> = {};
     analytics.forEach((item) => {
       if (item.action) {
@@ -186,7 +169,6 @@ export async function getAnalyticsStats(days: number = 7) {
       }
     });
 
-    // 最受欢迎的文章（按page_view统计）
     const postViews: Record<string, number> = {};
     analytics.forEach((item) => {
       if (item.type === 'page_view' && item.target) {
@@ -199,7 +181,6 @@ export async function getAnalyticsStats(days: number = 7) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // 计算总PV和总UV
     const totalPV = dailyStatsArray.reduce((sum, stat) => sum + stat.pageViews, 0);
     const allUniqueVisitors = new Set<string>();
     analytics.forEach((item) => {
@@ -210,21 +191,18 @@ export async function getAnalyticsStats(days: number = 7) {
     });
     const totalUV = allUniqueVisitors.size;
 
-    return {
-      success: true,
-      data: {
-        total: analytics.length,
-        totalPV, // 总页面浏览量
-        totalUV, // 总独立访客数
-        dailyStats: dailyStatsArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
-        typeStats,
-        actionStats,
-        topPosts,
-        recent: analytics.slice(0, 100), // 最近100条记录
-      },
-    };
+    return actionOk({
+      total: analytics.length,
+      totalPV,
+      totalUV,
+      dailyStats: dailyStatsArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+      typeStats,
+      actionStats,
+      topPosts,
+      recent: analytics.slice(0, 100),
+    });
   } catch (error) {
     console.error('获取埋点统计失败:', error);
-    return { success: false, error: '获取埋点统计失败' };
+    return actionErr('获取埋点统计失败');
   }
 }

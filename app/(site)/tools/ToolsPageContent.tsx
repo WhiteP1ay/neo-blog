@@ -1,7 +1,7 @@
 'use client';
 
-import { features } from '@/app/(site)/tools/features';
-import { FeatureCard } from '@/components/Home/FeatureCard';
+import { features } from './features';
+import { FeatureCard } from './FeatureCard';
 
 interface ToolsPageContentProps {
   variant?: 'page' | 'modal';

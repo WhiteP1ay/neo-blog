@@ -334,8 +334,8 @@ export function HomeExplorer({
       return;
     }
     const r = await createPost({ title: '无标题', content: '<p></p>' });
-    if (!r.success || !r.data) {
-      showToast(r.error ?? '创建失败', 'error');
+    if (!r.success) {
+      showToast(r.error, 'error');
       return;
     }
     const id = r.data.id;
@@ -365,8 +365,8 @@ export function HomeExplorer({
         showToast('上传失败', 'error');
         return;
       }
-      if (!result.success || result.data?.id == null) {
-        showToast(result.error ?? '上传失败', 'error');
+      if (!result.success) {
+        showToast(result.error, 'error');
         return;
       }
       const id = result.data.id;

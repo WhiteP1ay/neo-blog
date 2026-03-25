@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import type { HomeExplorerCategory } from "@/server/actions/posts";
+import type { HomeExplorerCategory } from '@/server/types/explorer';
 
 export type HomePageSearchParamsInput = {
   topic?: string;

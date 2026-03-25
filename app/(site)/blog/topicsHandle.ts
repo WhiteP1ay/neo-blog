@@ -1,4 +1,4 @@
-import type { HomeExplorerCategory, HomeExplorerPostPreview } from '@/server/actions/posts';
+import type { HomeExplorerCategory, HomeExplorerPostPreview } from '@/server/types/explorer';
 
 export type BlogCategoryTab = {
   key: string;

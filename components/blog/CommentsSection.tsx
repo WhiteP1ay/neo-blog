@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createComment, getCommentsByPostId, type CommentWithReplies } from '@/server/actions/comments';
+import { createComment, getCommentsByPostId } from '@/server/actions/comments';
+import type { CommentWithReplies } from '@/server/types/comments-thread';
 import { useChinaIPDetector } from '@/components/ChinaIPDetector';
 import { useAnalytics } from '@/components/Analytics';
 import { useToast } from '@/components/Toast';

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import type { HomePostPreview } from '@/server/actions/posts';
+import type { HomePostPreview } from '@/server/types/explorer';
 import { HomeMobileSiteBar } from '@/components/Home/HomeMobileSiteBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

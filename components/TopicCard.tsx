@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import type { Topic } from '@/server/actions/topics';
+import type { Topic } from '@/server/types/models';
 import { formatDate } from '@/app/utils/date';
 
 interface TopicCardProps {

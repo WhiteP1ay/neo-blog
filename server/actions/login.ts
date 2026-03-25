@@ -1,38 +1,30 @@
-"use server";
+'use server';
 
-import {
-  verifyPassword,
-  createSession,
-  clearSession,
-  getSession,
-} from "@/server/utils/auth";
-import { redirect } from "next/navigation";
+import { verifyPassword, createSession, clearSession, getSession } from '@/server/utils/auth';
+import { redirect } from 'next/navigation';
+import { actionErr, actionOkVoid } from '@/server/types/action-result';
+import type { ActionVoidResult } from '@/server/types/action-result';
 
 /**
  * Server Action: 用户登录
- *
- * @param username - 用户名
- * @param password - 密码
- * @returns 登录结果
  */
-export async function login(username: string, password: string) {
+export async function login(username: string, password: string): Promise<ActionVoidResult> {
   try {
     if (!username || !password) {
-      return { success: false, error: "请填写用户名和密码" };
+      return actionErr('请填写用户名和密码');
     }
 
     const userId = await verifyPassword(username, password);
     if (!userId) {
-      return { success: false, error: "用户名或密码错误" };
+      return actionErr('用户名或密码错误');
     }
 
-    // 创建session
     await createSession(userId);
 
-    return { success: true };
+    return actionOkVoid();
   } catch (error) {
-    console.error("登录失败:", error);
-    return { success: false, error: "登录失败" };
+    console.error('登录失败:', error);
+    return actionErr('登录失败');
   }
 }
 
@@ -41,7 +33,7 @@ export async function login(username: string, password: string) {
  */
 export async function logout() {
   await clearSession();
-  redirect("/login");
+  redirect('/login');
 }
 
 /**
@@ -60,13 +52,13 @@ export async function checkAuth() {
 /**
  * Server Action: 检查是否为管理员
  */
-export async function checkAdminAuth() {
+export async function checkAdminAuth(): Promise<ActionVoidResult> {
   const session = await getSession();
   if (!session) {
-    return { success: false as const, error: "未登录" };
+    return actionErr('未登录');
   }
   if (!session.isAdmin) {
-    return { success: false as const, error: "无权限" };
+    return actionErr('无权限');
   }
-  return { success: true as const };
+  return actionOkVoid();
 }

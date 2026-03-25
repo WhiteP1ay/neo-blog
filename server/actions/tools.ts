@@ -4,35 +4,24 @@ import { db } from '@/server/db/db';
 import { toolsTable } from '@/server/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
-
-/**
- * 工具类型定义
- */
-export type Tool = {
-  id: number;
-  name: string;
-  description: string | null;
-  coverImage: string | null;
-  url: string;
-  isHidden: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import { actionErr, actionOk, actionOkVoid } from '@/server/types/action-result';
+import type { ActionResult, ActionVoidResult } from '@/server/types/action-result';
+import type { Tool } from '@/server/types/models';
 
 /**
  * Server Action: 获取所有工具列表（按创建时间倒序）
  */
-export async function getTools(includeHidden = false) {
+export async function getTools(includeHidden = false): Promise<ActionResult<Tool[]>> {
   try {
     const tools = await db
       .select()
       .from(toolsTable)
       .where(includeHidden ? undefined : eq(toolsTable.isHidden, false))
       .orderBy(desc(toolsTable.createdAt));
-    return { success: true, data: tools };
+    return actionOk(tools);
   } catch (error) {
     console.error('获取工具列表失败:', error);
-    return { success: false, error: '获取工具列表失败' };
+    return actionErr('获取工具列表失败');
   }
 }
 
@@ -45,10 +34,10 @@ export async function createTool(data: {
   coverImage?: string | null;
   url: string;
   isHidden?: boolean;
-}) {
+}): Promise<ActionResult<Tool>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -63,10 +52,10 @@ export async function createTool(data: {
       })
       .returning();
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('创建工具失败:', error);
-    return { success: false, error: '创建工具失败' };
+    return actionErr('创建工具失败');
   }
 }
 
@@ -82,10 +71,10 @@ export async function updateTool(
     url?: string;
     isHidden?: boolean;
   },
-) {
+): Promise<ActionResult<Tool>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
@@ -108,35 +97,35 @@ export async function updateTool(
     const result = await db.update(toolsTable).set(updateData).where(eq(toolsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: '工具不存在' };
+      return actionErr('工具不存在');
     }
 
-    return { success: true, data: result[0] };
+    return actionOk(result[0]);
   } catch (error) {
     console.error('更新工具失败:', error);
-    return { success: false, error: '更新工具失败' };
+    return actionErr('更新工具失败');
   }
 }
 
 /**
  * Server Action: 删除工具
  */
-export async function deleteTool(id: number) {
+export async function deleteTool(id: number): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return { success: false, error: gate.error };
+    return actionErr(gate.error);
   }
 
   try {
     const result = await db.delete(toolsTable).where(eq(toolsTable.id, id)).returning();
 
     if (result.length === 0) {
-      return { success: false, error: '工具不存在' };
+      return actionErr('工具不存在');
     }
 
-    return { success: true };
+    return actionOkVoid();
   } catch (error) {
     console.error('删除工具失败:', error);
-    return { success: false, error: '删除工具失败' };
+    return actionErr('删除工具失败');
   }
 }

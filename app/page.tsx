@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { getHomeExplorerData, getLatestPostsForHome, getPostById, type Post } from '@/server/actions/posts';
+import { getHomeExplorerData, getLatestPostsForHome, getPostById } from '@/server/actions/posts';
+import type { Post } from '@/server/types/models';
 import { HomeExplorer } from '@/components/Home/HomeExplorer';
 import { HomeMobileFallback } from '@/components/Home/HomeMobileFallback';
 import { buildHomeSearchString, resolveHomePageSearchParams } from '@/app/home-search-params';

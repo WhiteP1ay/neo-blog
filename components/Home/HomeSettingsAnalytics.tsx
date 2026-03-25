@@ -2,43 +2,21 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getAnalyticsStats } from '@/server/actions/analytics';
-interface DailyStat {
-  date: string;
-  pageViews: number;
-  uniqueVisitors: number;
-  comments: number;
-  clicks: number;
-}
-
-interface TopPost {
-  target: string;
-  count: number;
-}
-
-interface AnalyticsData {
-  total: number;
-  totalPV: number;
-  totalUV: number;
-  dailyStats: DailyStat[];
-  typeStats: Record<string, number>;
-  actionStats: Record<string, number>;
-  topPosts: TopPost[];
-  recent: unknown[];
-}
+import type { AnalyticsStatsPayload } from '@/server/types/analytics-payload';
 
 /**
  * 设置弹窗内：埋点统计（仅管理员 session 下可见，数据由 getAnalyticsStats 校验登录）
  */
 export function HomeSettingsAnalytics() {
   const [days, setDays] = useState(7);
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData] = useState<AnalyticsStatsPayload | null>(null);
   const [loading, setLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     const result = await getAnalyticsStats(days);
-    if (result.success && result.data) {
-      setData(result.data as AnalyticsData);
+    if (result.success) {
+      setData(result.data);
     } else {
       setData(null);
     }
