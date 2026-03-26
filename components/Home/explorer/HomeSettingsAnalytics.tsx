@@ -1,12 +1,13 @@
 'use client';
 
+/**
+ * 设置弹窗内：埋点统计（仅管理员 session 下可见，数据由 getAnalyticsStats 校验登录）。
+ */
+
 import { useCallback, useEffect, useState } from 'react';
 import { getAnalyticsStats } from '@/server/actions/analytics';
 import type { AnalyticsStatsPayload } from '@/server/types/analytics-payload';
 
-/**
- * 设置弹窗内：埋点统计（仅管理员 session 下可见，数据由 getAnalyticsStats 校验登录）
- */
 export function HomeSettingsAnalytics() {
   const [days, setDays] = useState(7);
   const [data, setData] = useState<AnalyticsStatsPayload | null>(null);
@@ -65,9 +66,7 @@ export function HomeSettingsAnalytics() {
               <div className="text-muted-foreground text-[11px]">UV</div>
             </div>
             <div className="text-center">
-              <div className="text-foreground text-lg font-semibold">
-                {data.dailyStats.reduce((sum, d) => sum + d.comments, 0)}
-              </div>
+              <div className="text-foreground text-lg font-semibold">{data.dailyStats.reduce((sum, d) => sum + d.comments, 0)}</div>
               <div className="text-muted-foreground text-[11px]">评论</div>
             </div>
           </div>
@@ -117,3 +116,4 @@ export function HomeSettingsAnalytics() {
     </section>
   );
 }
+

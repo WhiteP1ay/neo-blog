@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { SiteRedDotModal } from '@/components/SiteRedDotModal';
 import type { SiteModalId } from '@/app/nav';
-import { closeSiteModal, useSiteModalsStore } from '@/lib/site-modals-store';
+import { closeSiteModal, useSiteModalsStore } from '@/components/Home';
 
 const TITLES: Record<SiteModalId, string> = {
   tools: '工具与资源',

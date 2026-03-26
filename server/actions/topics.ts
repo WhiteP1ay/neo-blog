@@ -326,7 +326,7 @@ export async function updateTopicsSortOrder(topicOrders: Array<{ topicId: number
 /**
  * Server Action: 将文章移动到目标专题（备忘录式「单一归属」：先清空所有专题关联，未分类则仅清空）
  */
-export async function movePostToTopicTarget(postId: number, targetTopicKey: 'uncategorized' | number): Promise<ActionVoidResult> {
+export async function movePostToTopicTarget(postId: number, targetTopicKey: number): Promise<ActionVoidResult> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
     return actionErr(gate.error);
@@ -336,7 +336,7 @@ export async function movePostToTopicTarget(postId: number, targetTopicKey: 'unc
     await db.transaction(async (tx) => {
       await tx.delete(topicPostsTable).where(eq(topicPostsTable.postId, postId));
 
-      if (targetTopicKey === 'uncategorized') {
+      if (targetTopicKey === 0) {
         return;
       }
 

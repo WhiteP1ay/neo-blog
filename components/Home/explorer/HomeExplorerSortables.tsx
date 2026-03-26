@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Home Explorer DnD 组件集合（专题排序、文章排序）。
+ *
+ * 说明：
+ * - 仅封装 @dnd-kit 的交互与排序保存逻辑
+ * - 具体行渲染由 render props 提供，保持 UI 复用
+ */
+
 import { useCallback } from 'react';
 import {
   DndContext,
@@ -22,7 +30,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { updateTopicPostSortOrder, updateTopicsSortOrder } from '@/server/actions/topics';
 import { cn } from '@/lib/utils';
-import type { HomeExplorerCategoryPayload } from '@/components/Home/home-explorer-types';
+import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
+import { topicToQueryValue } from '../utils/home-explorer';
 
 const POINTER_ACTIVATION_PX = 8;
 
@@ -73,10 +82,6 @@ export type HomeExplorerTopicDndGroupProps = {
   }) => React.ReactNode;
 };
 
-function topicToQueryValue(topicKey: 'uncategorized' | number): string {
-  return topicKey === 'uncategorized' ? 'uncategorized' : String(topicKey);
-}
-
 /**
  * 一组同 isPinned 的专题：内部可拖拽改 sortOrder
  */
@@ -89,7 +94,7 @@ export function HomeExplorerTopicDndGroup({
   renderTopicRow,
 }: HomeExplorerTopicDndGroupProps) {
   const sensors = useExplorerDndSensors();
-  const ids = topics.map((t) => t.topicKey as number);
+  const ids = topics.map((t) => t.topicKey);
 
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
@@ -104,7 +109,7 @@ export function HomeExplorerTopicDndGroup({
       }
       const reordered = arrayMove(topics, oldIndex, newIndex);
       const topicOrders = reordered.map((c, i) => ({
-        topicId: c.topicKey as number,
+        topicId: c.topicKey,
         sortOrder: i,
       }));
       const r = await updateTopicsSortOrder(topicOrders);
@@ -132,7 +137,7 @@ export function HomeExplorerTopicDndGroup({
         {topics.map((cat) => {
           const q = topicToQueryValue(cat.topicKey);
           const isActive = q === activeTopicQuery;
-          const tid = cat.topicKey as number;
+          const tid = cat.topicKey;
           return (
             <SortableTopicShell key={tid} id={tid}>
               {({ setActivatorNodeRef, attributes, listeners }) => (
@@ -285,3 +290,4 @@ export function HomeExplorerPostDndList({
     </DndContext>
   );
 }
+

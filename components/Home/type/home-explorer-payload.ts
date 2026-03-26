@@ -1,6 +1,6 @@
-/** 与 RSC 传入的 JSON 一致：日期已序列化为 ISO 字符串 */
+/** 专题 + 其下文章列表（用于左侧专题栏与中间文章列表） */
 export type HomeExplorerCategoryPayload = {
-  topicKey: 'uncategorized' | number;
+  topicKey: number;
   name: string;
   isPinned: boolean;
   sortOrder: number;
@@ -13,13 +13,15 @@ export type HomeExplorerCategoryPayload = {
   }>;
 };
 
+/** 文章详情（用于右侧阅读/编辑面板） */
 export type HomeExplorerPostDetailPayload = {
   id: number;
   title: string;
-  /** 服务端 Shiki 高亮后的 HTML，只读展示 */
+  /** 服务端高亮后的 HTML，只读展示 */
   content: string;
   /** 数据库原始 HTML，仅 TipTap 编辑使用（勿与 content 混用） */
   contentSource: string;
   createdAt: string | null;
   updatedAt: string | null;
 };
+

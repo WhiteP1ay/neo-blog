@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { openSiteModal } from '@/lib/site-modals-store';
+import { openSiteModal } from '@/components/Home';
 import { navItems } from '@/app/nav';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';

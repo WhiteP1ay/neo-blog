@@ -68,7 +68,7 @@ export async function getHomeExplorerData(): Promise<ActionResult<HomeExplorerCa
 
     const categories: HomeExplorerCategory[] = [
       {
-        topicKey: 'uncategorized',
+        topicKey: 0,
         name: '未分类',
         isPinned: false,
         sortOrder: 0,

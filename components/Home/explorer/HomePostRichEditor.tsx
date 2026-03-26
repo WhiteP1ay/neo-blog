@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * 首页右侧富文本编辑：TipTap StarterKit + 标题，保存写入 posts.content（HTML）。
+ */
+
 import { useCallback, useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -26,9 +30,6 @@ export interface HomePostRichEditorProps {
   onCancel: () => void;
 }
 
-/**
- * 首页右侧富文本编辑：TipTap StarterKit + 标题，保存写入 posts.content（HTML）
- */
 export function HomePostRichEditor({ post, onSaved, onCancel }: HomePostRichEditorProps) {
   const { showToast } = useToast();
   const [title, setTitle] = useState(post.title);
@@ -148,14 +149,10 @@ export function HomePostRichEditor({ post, onSaved, onCancel }: HomePostRichEdit
         />
       </div>
 
-      <div
-        className={cn(
-          'border-input bg-background rounded-lg border shadow-sm',
-          'focus-within:ring-ring focus-within:ring-1',
-        )}
-      >
+      <div className={cn('border-input bg-background rounded-lg border shadow-sm', 'focus-within:ring-ring focus-within:ring-1')}>
         <EditorContent editor={editor} />
       </div>
     </div>
   );
 }
+

@@ -6,17 +6,18 @@ export type BlogCategoryTab = {
   href: string;
 };
 
-export type TopicSelectionResolved = 'uncategorized' | string | 'invalid';
+/** 解析结果：'0' 未分类；合法专题为十进制 id 字符串；非法为 invalid */
+export type TopicSelectionResolved = '0' | string | 'invalid';
 
 /**
- * 解析地址栏 topic：无参或空串视为未分类；合法正整数 id 为专题
+ * 解析地址栏 topic：无参或空串视为未分类（'0'）；合法十进制整数为专题 id
  */
 export function resolveTopicSelection(raw: string | undefined): TopicSelectionResolved {
   if (raw === undefined || raw === '') {
-    return 'uncategorized';
+    return '0';
   }
-  if (raw === 'uncategorized' || raw === 'all') {
-    return 'uncategorized';
+  if (raw === 'all') {
+    return '0';
   }
   const n = Number.parseInt(raw, 10);
   if (!Number.isNaN(n) && String(n) === raw) {
@@ -25,16 +26,16 @@ export function resolveTopicSelection(raw: string | undefined): TopicSelectionRe
   return 'invalid';
 }
 
-/** ?topic=uncategorized|all 应收敛到 /blog */
+/** ?topic=all 收敛到 /blog（无 query） */
 export function needsBlogCanonicalTopicRedirect(raw: string | undefined): boolean {
-  return raw === 'uncategorized' || raw === 'all';
+  return raw === 'all';
 }
 
 function buildBlogCategoryTabs(categories: HomeExplorerCategory[]): BlogCategoryTab[] {
   return categories.map((c) => ({
-    key: c.topicKey === 'uncategorized' ? 'uncategorized' : String(c.topicKey),
+    key: String(c.topicKey),
     label: c.name,
-    href: c.topicKey === 'uncategorized' ? '/blog' : `/blog?topic=${c.topicKey}`,
+    href: c.topicKey === 0 ? '/blog' : `/blog?topic=${c.topicKey}`,
   }));
 }
 
@@ -59,17 +60,17 @@ export function buildBlogTopicUiState(
   }
 
   const topicIds = new Set(
-    categories.filter((c) => c.topicKey !== 'uncategorized').map((c) => String(c.topicKey)),
+    categories.filter((c) => c.topicKey !== 0).map((c) => String(c.topicKey)),
   );
 
   const tabs = buildBlogCategoryTabs(categories);
 
-  if (selection === 'uncategorized') {
-    const cat = categories.find((c) => c.topicKey === 'uncategorized');
+  if (selection === '0') {
+    const cat = categories.find((c) => c.topicKey === 0);
     return {
       ok: true,
       listPosts: cat?.posts ?? [],
-      activeKey: 'uncategorized',
+      activeKey: '0',
       tabs,
     };
   }

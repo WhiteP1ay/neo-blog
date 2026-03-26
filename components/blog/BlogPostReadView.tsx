@@ -2,7 +2,7 @@
 
 import { PostHeader } from '@/components/blog/PostHeader';
 import { PostPageClient } from '@/components/blog/PostPageClient';
-import type { HomeExplorerPostDetailPayload } from '@/components/Home/home-explorer-types';
+import type { HomeExplorerPostDetailPayload } from '@/components/Home';
 import { CodeBlockCopyButtons } from '@/components/CodeBlockCopyButtons';
 
 type BlogPostReadViewProps = {

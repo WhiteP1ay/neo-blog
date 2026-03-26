@@ -1,15 +1,15 @@
 'use client';
 
+/**
+ * 首页应用窗口内设置层：主题、占位登录注册、关于与隐私（打开站点模态框）。
+ */
+
 import { useEffect, useState } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import {
-  SheetModalHeader,
-  sheetModalCloseButtonClass,
-  sheetModalRedDotClass,
-} from '@/components/SheetModalHeader';
-import { openSiteModal } from '@/lib/site-modals-store';
-import { HomeSettingsAnalytics } from '@/components/Home/HomeSettingsAnalytics';
+import { SheetModalHeader, sheetModalCloseButtonClass, sheetModalRedDotClass } from '@/components/SheetModalHeader';
+import { openSiteModal } from '../store/home-explorer-modals-store';
+import { HomeSettingsAnalytics } from './HomeSettingsAnalytics';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { SiteModalId } from '@/app/nav';
@@ -32,39 +32,36 @@ function ThemeModeButtonGroup() {
   const active = theme ?? 'system';
 
   if (!mounted) {
-    return (
-      <div className="bg-muted/50 h-9 w-full max-w-sm animate-pulse rounded-lg" aria-hidden />
-    );
+    return <div className="bg-muted/50 h-9 w-full max-w-sm animate-pulse rounded-lg" aria-hidden />;
   }
 
   return (
-    <div
-      className="bg-muted/50 inline-flex rounded-lg border border-border p-0.5"
-      role="radiogroup"
-      aria-label="主题模式"
-    >
+    <fieldset className="bg-muted/50 inline-flex rounded-lg border border-border p-0.5">
+      <legend className="sr-only">主题模式</legend>
       {THEME_OPTIONS.map(({ value, label, Icon }) => {
         const selected = active === value;
         return (
-          <button
+          <label
             key={value}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => setTheme(value)}
             className={cn(
               'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm',
-              selected
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
+              selected ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             )}
           >
+            <input
+              type="radio"
+              name="home-theme-mode"
+              value={value}
+              checked={selected}
+              onChange={() => setTheme(value)}
+              className="sr-only"
+            />
             <Icon className="size-3.5 shrink-0 sm:size-4" aria-hidden />
             <span>{label}</span>
-          </button>
+          </label>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
 
@@ -74,9 +71,6 @@ interface HomeWindowSettingsProps {
   isAdminLoggedIn?: boolean;
 }
 
-/**
- * 首页应用窗口内设置层：主题、占位登录注册、关于与隐私（打开站点模态框）
- */
 export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWindowSettingsProps) {
   const openSheetAndClose = (id: SiteModalId) => {
     openSiteModal(id);
@@ -87,12 +81,7 @@ export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWin
     <div className="flex min-h-0 flex-1 flex-col">
       <SheetModalHeader
         closeControl={
-          <button
-            type="button"
-            onClick={onClose}
-            className={sheetModalCloseButtonClass}
-            aria-label="关闭设置"
-          >
+          <button type="button" onClick={onClose} className={sheetModalCloseButtonClass} aria-label="关闭设置">
             <span className={sheetModalRedDotClass} />
           </button>
         }
@@ -154,3 +143,4 @@ export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWin
     </div>
   );
 }
+

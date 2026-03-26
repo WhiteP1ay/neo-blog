@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
+import type { Post } from '@/server/types/models';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { getHomeExplorerData, getLatestPostsForHome, getPostById } from '@/server/actions/posts';
-import type { Post } from '@/server/types/models';
-import { HomeExplorer } from '@/components/Home/HomeExplorer';
-import { HomeMobileFallback } from '@/components/Home/HomeMobileFallback';
+import { getHomeExplorerData, getPostById } from '@/server/actions/posts';
+import { HomeExplorer } from '@/components/Home';
 import { buildHomeSearchString, resolveHomePageSearchParams } from '@/app/home-search-params';
 import { getSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
@@ -54,9 +53,6 @@ export default async function Home({
     postDetail = pr.data;
   }
 
-  const recentResult = await getLatestPostsForHome(5);
-  const recentPosts = recentResult.success ? recentResult.data : [];
-
   const serializedCategories = categories.map((c) => ({
     topicKey: c.topicKey,
     name: c.name,
@@ -73,19 +69,19 @@ export default async function Home({
 
   const serializedPost = postDetail
     ? {
-        id: postDetail.id,
-        title: postDetail.title,
-        content: await highlightCodeBlocksInHtml(postDetail.content),
-        contentSource: postDetail.content,
-        createdAt: postDetail.createdAt?.toISOString() ?? null,
-        updatedAt: postDetail.updatedAt?.toISOString() ?? null,
-      }
+      id: postDetail.id,
+      title: postDetail.title,
+      content: await highlightCodeBlocksInHtml(postDetail.content),
+      contentSource: postDetail.content,
+      createdAt: postDetail.createdAt?.toISOString() ?? null,
+      updatedAt: postDetail.updatedAt?.toISOString() ?? null,
+    }
     : null;
 
   return (
     <div className="bg-muted/40 flex min-h-screen flex-col">
       <main className="flex min-h-0 flex-1 flex-col">
-        <div className="hidden h-dvh min-h-[420px] w-full min-w-0 lg:block">
+        <div className="h-dvh min-h-[420px] w-full min-w-0">
           <Suspense fallback={null}>
             <HomeExplorer
               categories={serializedCategories}
@@ -95,9 +91,6 @@ export default async function Home({
               isAdminLoggedIn={isAdminLoggedIn}
             />
           </Suspense>
-        </div>
-        <div className="px-4 py-6 lg:hidden">
-          <HomeMobileFallback posts={recentPosts} />
         </div>
       </main>
     </div>

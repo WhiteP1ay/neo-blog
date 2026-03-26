@@ -6,8 +6,9 @@ export type HomePageSearchParamsInput = {
   post?: string;
 };
 
-export function topicToSearchValue(key: "uncategorized" | number): string {
-  return key === "uncategorized" ? "uncategorized" : String(key);
+/** 首页 topic 查询串：0 为未分类，正整数为专题 id */
+export function topicToSearchValue(key: number): string {
+  return String(key);
 }
 
 /** 首页 redirect 时构造 topic / post 查询串 */
@@ -27,15 +28,15 @@ export function resolveHomePageSearchParams(
   sp: HomePageSearchParamsInput,
   categories: HomeExplorerCategory[],
 ): { activeTopicQuery: string; postId: number | null } {
-  let topicKey: "uncategorized" | number = "uncategorized";
-  if (sp.topic && sp.topic !== "uncategorized") {
+  let topicKey = 0;
+  if (sp.topic != null && sp.topic !== "") {
     const n = Number.parseInt(sp.topic, 10);
     if (Number.isNaN(n)) {
-      redirect(`/?${buildHomeSearchString({ topic: "uncategorized" })}`);
+      redirect(`/?${buildHomeSearchString({ topic: "0" })}`);
     }
     const found = categories.find((c) => c.topicKey === n);
     if (!found) {
-      redirect(`/?${buildHomeSearchString({ topic: "uncategorized" })}`);
+      redirect(`/?${buildHomeSearchString({ topic: "0" })}`);
     }
     topicKey = n;
   }

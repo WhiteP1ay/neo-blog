@@ -15,10 +15,10 @@ export type HomeExplorerPostPreview = {
 };
 
 /**
- * 首页三栏：左侧分类；topicKey 为未分类或真实专题 id
+ * 首页三栏：左侧分类；topicKey 为 0（虚拟未分类）或真实专题 id
  */
 export type HomeExplorerCategory = {
-  topicKey: 'uncategorized' | number;
+  topicKey: number;
   name: string;
   isPinned: boolean;
   /** 未分类为 0；真实专题为库内 sortOrder */
