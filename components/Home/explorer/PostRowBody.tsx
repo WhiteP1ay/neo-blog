@@ -9,15 +9,15 @@
 
 import { formatDateShort } from '@/app/utils/date';
 import { Badge } from '@/components/ui/badge';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
 
 type PostPreview = HomeExplorerCategoryPayload['posts'][number];
 
-type HomeExplorerPostRowBodyProps = {
+export type PostRowBodyProps = {
   post: PostPreview;
 };
 
-export function HomeExplorerPostRowBody({ post }: HomeExplorerPostRowBodyProps) {
+export function PostRowBody({ post }: PostRowBodyProps) {
   return (
     <>
       <span className="line-clamp-2 leading-snug">{post.title}</span>

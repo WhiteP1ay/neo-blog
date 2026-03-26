@@ -1,9 +1,5 @@
 /**
- * Home Explorer 管理端 UI 状态 store（zustand）。
- *
- * 说明：
- * - 这里仅承载“管理端 UI 状态”，不直接做服务端请求
- * - 由 hooks/ 与 explorer/ 组件组合使用
+ * 管理端 UI 状态 store（zustand）。
  */
 
 import { create } from 'zustand';
@@ -11,7 +7,7 @@ import { create } from 'zustand';
 type RenameTopicState = { id: number; name: string } | null;
 type RenamePostState = { id: number; title: string } | null;
 
-type HomeExplorerAdminUiState = {
+type AdminUiState = {
   editingPost: boolean;
 
   // 新建专题
@@ -47,7 +43,7 @@ type HomeExplorerAdminUiState = {
   setListDropActive: (active: boolean) => void;
 };
 
-export const useHomeExplorerAdminUiStore = create<HomeExplorerAdminUiState>((set) => ({
+export const useAdminUiStore = create<AdminUiState>((set) => ({
   editingPost: false,
 
   newTopicOpen: false,

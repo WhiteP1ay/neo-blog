@@ -1,11 +1,3 @@
-/**
- * Home Explorer（首页三栏）布局常量。
- *
- * 说明：
- * - 这里仅放“常量”，不放工具函数与类型
- * - 保持与 store/hook 使用方式一致，避免出现多个来源的默认值
- */
-
 /** localStorage 持久化 key（布局相关） */
 export const HOME_EXPLORER_LAYOUT_STORAGE_KEY = 'neo-blog-home-explorer-layout';
 

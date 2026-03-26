@@ -18,12 +18,12 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
-import { topicToQueryValue } from '../utils/home-explorer';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
+import { topicToQueryValue } from '../utils/explorer';
 
 type PostPreview = HomeExplorerCategoryPayload['posts'][number];
 
-type HomeExplorerPostAdminMenuItemsProps = {
+export type PostAdminMenuItemsProps = {
   variant: 'context' | 'dropdown';
   post: PostPreview;
   categories: HomeExplorerCategoryPayload[];
@@ -35,7 +35,7 @@ type HomeExplorerPostAdminMenuItemsProps = {
   onMoveTo: (topicKey: number) => void;
 };
 
-export function HomeExplorerPostAdminMenuItems({
+export function PostAdminMenuItems({
   variant,
   post,
   categories,
@@ -45,7 +45,7 @@ export function HomeExplorerPostAdminMenuItems({
   onRename,
   onDelete,
   onMoveTo,
-}: HomeExplorerPostAdminMenuItemsProps) {
+}: PostAdminMenuItemsProps) {
   if (variant === 'context') {
     return (
       <>

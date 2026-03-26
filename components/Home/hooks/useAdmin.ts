@@ -1,23 +1,19 @@
 'use client';
 
 /**
- * Home Explorer 管理端能力（专题/文章 CRUD、拖拽上传、置顶、移动等）。
- *
- * 约束：
- * - 这里聚合服务端 actions 与 UI store，避免组件层堆满 useCallback
- * - 对外返回“可直接传给组件”的 props/handler，减少编排层负担
+ * 管理端能力（专题/文章 CRUD、拖拽上传、置顶、移动等）。
  */
 
 import type { ChangeEvent, DragEvent, DragEventHandler, Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useToast } from '@/components/Toast';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
-import { topicToQueryValue } from '../utils/home-explorer';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
+import { topicToQueryValue } from '../utils/explorer';
 import { createPost, deletePost, updatePost, uploadMarkdownFromForm } from '@/server/actions/posts';
 import { addPostToTopic, createTopic, deleteTopic, movePostToTopicTarget, updateTopic } from '@/server/actions/topics';
-import { useHomeExplorerAdminUiStore } from '../store/home-explorer-admin-ui-store';
+import { useAdminUiStore } from '../store/admin-ui';
 
-type UseHomeExplorerAdminArgs = {
+type UseAdminArgs = {
   categories: HomeExplorerCategoryPayload[];
   activeCategory: HomeExplorerCategoryPayload | undefined;
   activePostId: number | null;
@@ -29,7 +25,7 @@ type UseHomeExplorerAdminArgs = {
   clearPostFromUrl: () => void;
 };
 
-export function useHomeExplorerAdmin({
+export function useAdmin({
   categories,
   activeCategory,
   activePostId,
@@ -39,63 +35,57 @@ export function useHomeExplorerAdmin({
   navigateTopic,
   navigatePost,
   clearPostFromUrl,
-}: UseHomeExplorerAdminArgs) {
+}: UseAdminArgs) {
   const { showToast } = useToast();
 
-  // 管理端 UI 状态（跨组件共享）
-  const editingPost = useHomeExplorerAdminUiStore((s) => s.editingPost);
-  const setEditingPost = useHomeExplorerAdminUiStore((s) => s.setEditingPost);
+  const editingPost = useAdminUiStore((s) => s.editingPost);
+  const setEditingPost = useAdminUiStore((s) => s.setEditingPost);
 
-  const newTopicOpen = useHomeExplorerAdminUiStore((s) => s.newTopicOpen);
-  const setNewTopicOpen = useHomeExplorerAdminUiStore((s) => s.setNewTopicOpen);
-  const newTopicName = useHomeExplorerAdminUiStore((s) => s.newTopicName);
-  const setNewTopicName = useHomeExplorerAdminUiStore((s) => s.setNewTopicName);
+  const newTopicOpen = useAdminUiStore((s) => s.newTopicOpen);
+  const setNewTopicOpen = useAdminUiStore((s) => s.setNewTopicOpen);
+  const newTopicName = useAdminUiStore((s) => s.newTopicName);
+  const setNewTopicName = useAdminUiStore((s) => s.setNewTopicName);
 
-  const renameTopicState = useHomeExplorerAdminUiStore((s) => s.renameTopicState);
-  const setRenameTopicState = useHomeExplorerAdminUiStore((s) => s.setRenameTopicState);
-  const deleteTopicId = useHomeExplorerAdminUiStore((s) => s.deleteTopicId);
-  const setDeleteTopicId = useHomeExplorerAdminUiStore((s) => s.setDeleteTopicId);
+  const renameTopicState = useAdminUiStore((s) => s.renameTopicState);
+  const setRenameTopicState = useAdminUiStore((s) => s.setRenameTopicState);
+  const deleteTopicId = useAdminUiStore((s) => s.deleteTopicId);
+  const setDeleteTopicId = useAdminUiStore((s) => s.setDeleteTopicId);
 
-  const renamePostState = useHomeExplorerAdminUiStore((s) => s.renamePostState);
-  const setRenamePostState = useHomeExplorerAdminUiStore((s) => s.setRenamePostState);
-  const deletePostId = useHomeExplorerAdminUiStore((s) => s.deletePostId);
-  const setDeletePostId = useHomeExplorerAdminUiStore((s) => s.setDeletePostId);
+  const renamePostState = useAdminUiStore((s) => s.renamePostState);
+  const setRenamePostState = useAdminUiStore((s) => s.setRenamePostState);
+  const deletePostId = useAdminUiStore((s) => s.deletePostId);
+  const setDeletePostId = useAdminUiStore((s) => s.setDeletePostId);
 
-  const listDropActive = useHomeExplorerAdminUiStore((s) => s.listDropActive);
-  const setListDropActive = useHomeExplorerAdminUiStore((s) => s.setListDropActive);
+  const listDropActive = useAdminUiStore((s) => s.listDropActive);
+  const setListDropActive = useAdminUiStore((s) => s.setListDropActive);
 
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
 
-  /**
-   * 为了保持现有组件 props 类型（Dispatch<SetStateAction<...>>）的兼容，
-   * 为 zustand store action 做一个 “value/function updater” 兼容包装。
-   */
   const setRenameTopicStateCompat: Dispatch<SetStateAction<{ id: number; name: string } | null>> = (next) => {
-    const prev = useHomeExplorerAdminUiStore.getState().renameTopicState;
+    const prev = useAdminUiStore.getState().renameTopicState;
     const resolved = typeof next === 'function' ? next(prev) : next;
     setRenameTopicState(resolved);
   };
 
   const setDeleteTopicIdCompat: Dispatch<SetStateAction<number | null>> = (next) => {
-    const prev = useHomeExplorerAdminUiStore.getState().deleteTopicId;
+    const prev = useAdminUiStore.getState().deleteTopicId;
     const resolved = typeof next === 'function' ? next(prev) : next;
     setDeleteTopicId(resolved);
   };
 
   const setRenamePostStateCompat: Dispatch<SetStateAction<{ id: number; title: string } | null>> = (next) => {
-    const prev = useHomeExplorerAdminUiStore.getState().renamePostState;
+    const prev = useAdminUiStore.getState().renamePostState;
     const resolved = typeof next === 'function' ? next(prev) : next;
     setRenamePostState(resolved);
   };
 
   const setDeletePostIdCompat: Dispatch<SetStateAction<number | null>> = (next) => {
-    const prev = useHomeExplorerAdminUiStore.getState().deletePostId;
+    const prev = useAdminUiStore.getState().deletePostId;
     const resolved = typeof next === 'function' ? next(prev) : next;
     setDeletePostId(resolved);
   };
 
   useEffect(() => {
-    // 当 URL 切换文章时，自动退出编辑态（避免错编辑）
     void activePostId;
     setEditingPost(false);
   }, [activePostId, setEditingPost]);

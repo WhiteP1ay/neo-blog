@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Home Explorer 弹层集合（新建/重命名/删除：专题与文章）。
+ * Explorer 弹层集合（新建/重命名/删除：专题与文章）。
  *
  * 说明：
  * - “开关与输入状态”来自 admin ui store
@@ -19,19 +19,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useHomeExplorerAdminUiStore } from '../store/home-explorer-admin-ui-store';
+import { useAdminUiStore } from '../store/admin-ui';
 
-type HomeExplorerModalsProps = {
+export type ExplorerModalsProps = {
   submitNewTopic: () => void | Promise<void>;
   submitRenameTopic: () => void | Promise<void>;
   submitDeleteTopic: () => void | Promise<void>;
@@ -39,27 +32,27 @@ type HomeExplorerModalsProps = {
   submitDeletePost: () => void | Promise<void>;
 };
 
-export function HomeExplorerModals({
+export function ExplorerModals({
   submitNewTopic,
   submitRenameTopic,
   submitDeleteTopic,
   submitRenamePost,
   submitDeletePost,
-}: HomeExplorerModalsProps) {
-  const newTopicOpen = useHomeExplorerAdminUiStore((s) => s.newTopicOpen);
-  const setNewTopicOpen = useHomeExplorerAdminUiStore((s) => s.setNewTopicOpen);
-  const newTopicName = useHomeExplorerAdminUiStore((s) => s.newTopicName);
-  const setNewTopicName = useHomeExplorerAdminUiStore((s) => s.setNewTopicName);
+}: ExplorerModalsProps) {
+  const newTopicOpen = useAdminUiStore((s) => s.newTopicOpen);
+  const setNewTopicOpen = useAdminUiStore((s) => s.setNewTopicOpen);
+  const newTopicName = useAdminUiStore((s) => s.newTopicName);
+  const setNewTopicName = useAdminUiStore((s) => s.setNewTopicName);
 
-  const renameTopicState = useHomeExplorerAdminUiStore((s) => s.renameTopicState);
-  const setRenameTopicState = useHomeExplorerAdminUiStore((s) => s.setRenameTopicState);
-  const deleteTopicId = useHomeExplorerAdminUiStore((s) => s.deleteTopicId);
-  const setDeleteTopicId = useHomeExplorerAdminUiStore((s) => s.setDeleteTopicId);
+  const renameTopicState = useAdminUiStore((s) => s.renameTopicState);
+  const setRenameTopicState = useAdminUiStore((s) => s.setRenameTopicState);
+  const deleteTopicId = useAdminUiStore((s) => s.deleteTopicId);
+  const setDeleteTopicId = useAdminUiStore((s) => s.setDeleteTopicId);
 
-  const renamePostState = useHomeExplorerAdminUiStore((s) => s.renamePostState);
-  const setRenamePostState = useHomeExplorerAdminUiStore((s) => s.setRenamePostState);
-  const deletePostId = useHomeExplorerAdminUiStore((s) => s.deletePostId);
-  const setDeletePostId = useHomeExplorerAdminUiStore((s) => s.setDeletePostId);
+  const renamePostState = useAdminUiStore((s) => s.renamePostState);
+  const setRenamePostState = useAdminUiStore((s) => s.setRenamePostState);
+  const deletePostId = useAdminUiStore((s) => s.deletePostId);
+  const setDeletePostId = useAdminUiStore((s) => s.setDeletePostId);
 
   return (
     <>

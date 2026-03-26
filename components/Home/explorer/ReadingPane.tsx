@@ -5,24 +5,19 @@
  */
 
 import { BlogPostReadView } from '@/components/blog/BlogPostReadView';
-import { HomePostRichEditor } from './HomePostRichEditor';
-import type { HomeExplorerPostDetailPayload } from '../type/home-explorer-payload';
-import { useHomeExplorerAdminUiStore } from '../store/home-explorer-admin-ui-store';
+import { PostRichEditor } from './PostRichEditor';
+import type { HomeExplorerPostDetailPayload } from '../type/payload';
+import { useAdminUiStore } from '../store/admin-ui';
 
-type HomeExplorerReadingPaneProps = {
+export type ReadingPaneProps = {
   postDetail: HomeExplorerPostDetailPayload | null;
   isAdminLoggedIn: boolean;
   onSavedEdit: () => void;
   onCancelEdit: () => void;
 };
 
-export function HomeExplorerReadingPane({
-  postDetail,
-  isAdminLoggedIn,
-  onSavedEdit,
-  onCancelEdit,
-}: HomeExplorerReadingPaneProps) {
-  const editingPost = useHomeExplorerAdminUiStore((s) => s.editingPost);
+export function ReadingPane({ postDetail, isAdminLoggedIn, onSavedEdit, onCancelEdit }: ReadingPaneProps) {
+  const editingPost = useAdminUiStore((s) => s.editingPost);
 
   return (
     <section className="min-w-0 flex-1 overflow-y-auto bg-background" aria-label="文章正文">
@@ -31,7 +26,7 @@ export function HomeExplorerReadingPane({
           选择左侧列表中的一篇文章以阅读全文
         </div>
       ) : isAdminLoggedIn && editingPost ? (
-        <HomePostRichEditor
+        <PostRichEditor
           key={postDetail.id}
           post={{
             id: postDetail.id,

@@ -4,16 +4,16 @@
  * 设置层遮罩 + 容器：根据 layout store 的 settingsOpen 控制显示。
  */
 
-import { HomeWindowSettings } from './HomeWindowSettings';
-import { useHomeExplorerLayoutStore } from '../store/home-explorer-layout-store';
+import { WindowSettings } from './WindowSettings';
+import { useLayoutStore } from '../store/layout';
 
-type HomeExplorerSettingsLayerProps = {
+export type ExplorerSettingsLayerProps = {
   isAdminLoggedIn: boolean;
 };
 
-export function HomeExplorerSettingsLayer({ isAdminLoggedIn }: HomeExplorerSettingsLayerProps) {
-  const open = useHomeExplorerLayoutStore((s) => s.settingsOpen);
-  const close = useHomeExplorerLayoutStore((s) => s.closeSettings);
+export function ExplorerSettingsLayer({ isAdminLoggedIn }: ExplorerSettingsLayerProps) {
+  const open = useLayoutStore((s) => s.settingsOpen);
+  const close = useLayoutStore((s) => s.closeSettings);
 
   if (!open) {
     return null;
@@ -32,7 +32,7 @@ export function HomeExplorerSettingsLayer({ isAdminLoggedIn }: HomeExplorerSetti
         aria-modal="true"
         aria-labelledby="home-settings-title"
       >
-        <HomeWindowSettings onClose={close} isAdminLoggedIn={isAdminLoggedIn} />
+        <WindowSettings onClose={close} isAdminLoggedIn={isAdminLoggedIn} />
       </div>
     </div>
   );

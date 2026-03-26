@@ -1,21 +1,21 @@
 'use client';
 
 /**
- * Home Explorer 顶部栏（标题/导航/设置入口）。
+ * 顶部栏（标题/导航/设置入口）。
  */
 
 import Link from 'next/link';
 import { LogOut, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { logout } from '@/server/actions/login';
-import { useHomeExplorerLayoutStore } from '../store/home-explorer-layout-store';
+import { useLayoutStore } from '../store/layout';
 
-interface HomeExplorerHeaderProps {
+export type HeaderProps = {
   isAdminLoggedIn: boolean;
-}
+};
 
-export function HomeExplorerHeader({ isAdminLoggedIn }: HomeExplorerHeaderProps) {
-  const openSettings = useHomeExplorerLayoutStore((s) => s.openSettings);
+export function Header({ isAdminLoggedIn }: HeaderProps) {
+  const openSettings = useLayoutStore((s) => s.openSettings);
 
   return (
     <header className="border-border bg-muted/40 shrink-0 border-b">
@@ -27,11 +27,6 @@ export function HomeExplorerHeader({ isAdminLoggedIn }: HomeExplorerHeaderProps)
         <Link href="/blog" className="text-muted-foreground hover:text-primary text-xs font-medium transition-colors">
           旧版博客
         </Link>
-        {isAdminLoggedIn ? null : (
-          <Link href="/login" className="text-muted-foreground hover:text-primary text-xs font-medium transition-colors">
-            登录
-          </Link>
-        )}
 
         <span className="min-w-2 flex-1" />
         {isAdminLoggedIn ? (
@@ -46,7 +41,11 @@ export function HomeExplorerHeader({ isAdminLoggedIn }: HomeExplorerHeaderProps)
           >
             <LogOut className="size-4" />
           </Button>
-        ) : null}
+        ) : (
+          <Link href="/login" className="text-muted-foreground hover:text-primary text-xs font-medium transition-colors">
+            登录
+          </Link>
+        )}
         <Button
           type="button"
           variant="ghost"

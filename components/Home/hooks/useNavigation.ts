@@ -1,19 +1,15 @@
 'use client';
 
 /**
- * Home Explorer 的 URL 导航逻辑（topic/post 写入 search params）。
- *
- * 说明：
- * - 这里不做 UI 状态，仅负责 router.replace/refresh
- * - 以 payload 类型为输入，计算 activeCategory/posts 等派生数据
+ * URL 导航逻辑（topic/post 写入 search params）。
  */
 
 import { useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
-import { topicToQueryValue } from '../utils/home-explorer';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
+import { topicToQueryValue } from '../utils/explorer';
 
-export function useHomeExplorerNavigation(categories: HomeExplorerCategoryPayload[], activeTopicQuery: string) {
+export function useNavigation(categories: HomeExplorerCategoryPayload[], activeTopicQuery: string) {
   const router = useRouter();
 
   const refreshExplorer = useCallback(() => {
@@ -54,13 +50,6 @@ export function useHomeExplorerNavigation(categories: HomeExplorerCategoryPayloa
 
   const posts = activeCategory?.posts ?? [];
 
-  return {
-    refreshExplorer,
-    navigateTopic,
-    navigatePost,
-    clearPostFromUrl,
-    activeCategory,
-    posts,
-  };
+  return { refreshExplorer, navigateTopic, navigatePost, clearPostFromUrl, activeCategory, posts };
 }
 

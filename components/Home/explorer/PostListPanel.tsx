@@ -6,18 +6,18 @@
 
 import type { ChangeEvent, DragEventHandler, RefObject } from 'react';
 import { FilePlus, MoreHorizontal, Upload } from 'lucide-react';
-import { HomeExplorerPostDndList } from './HomeExplorerSortables';
-import { HomeExplorerPostAdminMenuItems } from './HomeExplorerPostAdminMenuItems';
-import { HomeExplorerPostRowBody } from './HomeExplorerPostRowBody';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
+import { PostDndList } from './ExplorerSortables';
+import { PostAdminMenuItems } from './PostAdminMenuItems';
+import { PostRowBody } from './PostRowBody';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
 import { cn } from '@/lib/utils';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useHomeExplorerLayoutStore } from '../store/home-explorer-layout-store';
-import { useHomeExplorerAdminUiStore } from '../store/home-explorer-admin-ui-store';
+import { useLayoutStore } from '../store/layout';
+import { useAdminUiStore } from '../store/admin-ui';
 
-type HomeExplorerPostListPanelProps = {
+export type PostListPanelProps = {
   isAdminLoggedIn: boolean;
   listDropHandlers: {
     onDragEnter?: DragEventHandler<HTMLElement>;
@@ -43,7 +43,7 @@ type HomeExplorerPostListPanelProps = {
   onDeletePost: (id: number) => void;
 };
 
-export function HomeExplorerPostListPanel({
+export function PostListPanel({
   isAdminLoggedIn,
   listDropHandlers,
   activeCategory,
@@ -62,9 +62,9 @@ export function HomeExplorerPostListPanel({
   handleMovePost,
   onRenamePost,
   onDeletePost,
-}: HomeExplorerPostListPanelProps) {
-  const listPx = useHomeExplorerLayoutStore((s) => s.listPx);
-  const listDropActive = useHomeExplorerAdminUiStore((s) => s.listDropActive);
+}: PostListPanelProps) {
+  const listPx = useLayoutStore((s) => s.listPx);
+  const listDropActive = useAdminUiStore((s) => s.listDropActive);
   const topicKey = activeCategory?.topicKey ?? 0;
 
   const postMenuProps = (post: HomeExplorerCategoryPayload['posts'][number]) => ({
@@ -140,7 +140,7 @@ export function HomeExplorerPostListPanel({
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">此分类下暂无文章</p>
         ) : isAdminLoggedIn && activeCategory && activeCategory.topicKey !== 0 ? (
           <div role="listbox" aria-label={`${activeCategory.name}下的条目`} className="flex flex-col gap-0.5">
-            <HomeExplorerPostDndList
+            <PostDndList
               topicId={activeCategory.topicKey}
               posts={posts}
               activePostId={activePostId}
@@ -163,7 +163,7 @@ export function HomeExplorerPostListPanel({
                         onClick={() => navigatePost(activeCategory.topicKey, post.id)}
                         aria-selected={selected}
                       >
-                        <HomeExplorerPostRowBody post={post} />
+                        <PostRowBody post={post} />
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -179,30 +179,29 @@ export function HomeExplorerPostListPanel({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
-                          <HomeExplorerPostAdminMenuItems variant="dropdown" {...postMenuProps(post)} />
+                          <PostAdminMenuItems variant="dropdown" {...postMenuProps(post)} />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </ContextMenuTrigger>
                   <ContextMenuContent className="w-52">
-                    <HomeExplorerPostAdminMenuItems variant="context" {...postMenuProps(post)} />
+                    <PostAdminMenuItems variant="context" {...postMenuProps(post)} />
                   </ContextMenuContent>
                 </ContextMenu>
               )}
             />
           </div>
         ) : (
-          <div
-            className="flex flex-col gap-0.5"
-            role="listbox"
-            aria-label={`${activeCategory?.name ?? '文章'}下的条目`}
-          >
+          <div className="flex flex-col gap-0.5" role="listbox" aria-label={`${activeCategory?.name ?? '文章'}下的条目`}>
             {posts.map((post) => {
               const selected = activePostId === post.id;
               const rowToneClass = cn(
                 selected ? 'bg-primary/15 text-foreground font-medium ring-1 ring-primary/20' : 'hover:bg-accent/50 text-foreground/90',
               );
-              const rowClass = cn('flex w-full flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors', rowToneClass);
+              const rowClass = cn(
+                'flex w-full flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors',
+                rowToneClass,
+              );
               if (!isAdminLoggedIn) {
                 return (
                   <button
@@ -213,7 +212,7 @@ export function HomeExplorerPostListPanel({
                     className={rowClass}
                     aria-selected={selected}
                   >
-                    <HomeExplorerPostRowBody post={post} />
+                    <PostRowBody post={post} />
                   </button>
                 );
               }
@@ -228,7 +227,7 @@ export function HomeExplorerPostListPanel({
                         className="flex min-w-0 flex-1 flex-col gap-1 rounded-md px-2.5 py-2.5 text-left text-sm transition-colors"
                         aria-selected={selected}
                       >
-                        <HomeExplorerPostRowBody post={post} />
+                        <PostRowBody post={post} />
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -244,13 +243,13 @@ export function HomeExplorerPostListPanel({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-52">
-                          <HomeExplorerPostAdminMenuItems variant="dropdown" {...postMenuProps(post)} />
+                          <PostAdminMenuItems variant="dropdown" {...postMenuProps(post)} />
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </ContextMenuTrigger>
                   <ContextMenuContent className="w-52">
-                    <HomeExplorerPostAdminMenuItems variant="context" {...postMenuProps(post)} />
+                    <PostAdminMenuItems variant="context" {...postMenuProps(post)} />
                   </ContextMenuContent>
                 </ContextMenu>
               );

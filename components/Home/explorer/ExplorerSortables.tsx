@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Home Explorer DnD 组件集合（专题排序、文章排序）。
+ * Explorer DnD 组件集合（专题排序、文章排序）。
  *
  * 说明：
  * - 仅封装 @dnd-kit 的交互与排序保存逻辑
@@ -30,8 +30,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { updateTopicPostSortOrder, updateTopicsSortOrder } from '@/server/actions/topics';
 import { cn } from '@/lib/utils';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
-import { topicToQueryValue } from '../utils/home-explorer';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
+import { topicToQueryValue } from '../utils/explorer';
 
 const POINTER_ACTIVATION_PX = 8;
 
@@ -52,8 +52,7 @@ type SortableTopicShellProps = {
 };
 
 function SortableTopicShell({ id, children }: SortableTopicShellProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -68,7 +67,7 @@ function SortableTopicShell({ id, children }: SortableTopicShellProps) {
   );
 }
 
-export type HomeExplorerTopicDndGroupProps = {
+export type TopicDndGroupProps = {
   /** 稳定唯一，避免 @dnd-kit 模块级 id 计数在 SSR/客户端不一致导致水合报错 */
   dndContextId: string;
   topics: HomeExplorerCategoryPayload[];
@@ -85,14 +84,14 @@ export type HomeExplorerTopicDndGroupProps = {
 /**
  * 一组同 isPinned 的专题：内部可拖拽改 sortOrder
  */
-export function HomeExplorerTopicDndGroup({
+export function TopicDndGroup({
   dndContextId,
   topics,
   activeTopicQuery,
   onOrderSaved,
   showToast,
   renderTopicRow,
-}: HomeExplorerTopicDndGroupProps) {
+}: TopicDndGroupProps) {
   const sensors = useExplorerDndSensors();
   const ids = topics.map((t) => t.topicKey);
 
@@ -127,12 +126,7 @@ export function HomeExplorerTopicDndGroup({
   }
 
   return (
-    <DndContext
-      id={dndContextId}
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={(e) => void handleDragEnd(e)}
-    >
+    <DndContext id={dndContextId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => void handleDragEnd(e)}>
       <SortableContext id={`${dndContextId}-sortable`} items={ids} strategy={verticalListSortingStrategy}>
         {topics.map((cat) => {
           const q = topicToQueryValue(cat.topicKey);
@@ -183,8 +177,7 @@ type SortablePostShellProps = {
 };
 
 function SortablePostShell({ id, children }: SortablePostShellProps) {
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -199,7 +192,7 @@ function SortablePostShell({ id, children }: SortablePostShellProps) {
   );
 }
 
-export type HomeExplorerPostDndListProps = {
+export type PostDndListProps = {
   topicId: number;
   posts: PostPreview[];
   activePostId: number | null;
@@ -215,14 +208,7 @@ export type HomeExplorerPostDndListProps = {
 /**
  * 专题内文章列表拖拽排序（依赖 topic_posts.sortOrder）
  */
-export function HomeExplorerPostDndList({
-  topicId,
-  posts,
-  activePostId,
-  onOrderSaved,
-  showToast,
-  renderPostRow,
-}: HomeExplorerPostDndListProps) {
+export function PostDndList({ topicId, posts, activePostId, onOrderSaved, showToast, renderPostRow }: PostDndListProps) {
   const sensors = useExplorerDndSensors();
   const ids = posts.map((p) => p.id);
 
@@ -252,12 +238,7 @@ export function HomeExplorerPostDndList({
   const dndContextId = `home-explorer-posts-${topicId}`;
 
   return (
-    <DndContext
-      id={dndContextId}
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={(e) => void handleDragEnd(e)}
-    >
+    <DndContext id={dndContextId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => void handleDragEnd(e)}>
       <SortableContext id={`${dndContextId}-sortable`} items={ids} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col gap-0.5">
           {posts.map((post) => (

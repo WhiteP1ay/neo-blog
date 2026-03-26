@@ -1,15 +1,15 @@
 'use client';
 
 /**
- * 首页应用窗口内设置层：主题、占位登录注册、关于与隐私（打开站点模态框）。
+ * 窗口内设置层：主题、占位登录注册、关于与隐私（打开站点模态框）。
  */
 
 import { useEffect, useState } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { SheetModalHeader, sheetModalCloseButtonClass, sheetModalRedDotClass } from '@/components/SheetModalHeader';
-import { openSiteModal } from '../store/home-explorer-modals-store';
-import { HomeSettingsAnalytics } from './HomeSettingsAnalytics';
+import { openSiteModal } from '../store/modals';
+import { SettingsAnalytics } from './SettingsAnalytics';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { SiteModalId } from '@/app/nav';
@@ -65,13 +65,13 @@ function ThemeModeButtonGroup() {
   );
 }
 
-interface HomeWindowSettingsProps {
+export interface WindowSettingsProps {
   onClose: () => void;
   /** 管理端 session 存在时展示埋点统计等 */
   isAdminLoggedIn?: boolean;
 }
 
-export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWindowSettingsProps) {
+export function WindowSettings({ onClose, isAdminLoggedIn = false }: WindowSettingsProps) {
   const openSheetAndClose = (id: SiteModalId) => {
     openSiteModal(id);
     onClose();
@@ -116,7 +116,7 @@ export function HomeWindowSettings({ onClose, isAdminLoggedIn = false }: HomeWin
         {isAdminLoggedIn ? (
           <>
             <Separator />
-            <HomeSettingsAnalytics />
+            <SettingsAnalytics />
           </>
         ) : null}
 

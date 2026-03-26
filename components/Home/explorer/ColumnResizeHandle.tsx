@@ -1,21 +1,17 @@
 'use client';
 
 /**
- * Home Explorer 拖拽调整列宽的把手。
- *
- * 说明：
- * - 只负责捕获鼠标按下起点，把 clientX 交给上层 hook/store 处理
- * - 保持无状态，便于复用到 sidebar/list 两处
+ * 拖拽调整列宽的把手。
  */
 
 import { cn } from '@/lib/utils';
 
-type HomeColumnResizeHandleProps = {
+export type ColumnResizeHandleProps = {
   label: string;
   onResizeStart: (clientX: number) => void;
 };
 
-export function HomeColumnResizeHandle({ label, onResizeStart }: HomeColumnResizeHandleProps) {
+export function ColumnResizeHandle({ label, onResizeStart }: ColumnResizeHandleProps) {
   return (
     <button
       type="button"
@@ -31,10 +27,7 @@ export function HomeColumnResizeHandle({ label, onResizeStart }: HomeColumnResiz
       }}
     >
       <span
-        className={cn(
-          'bg-border group-hover:bg-primary/35 absolute inset-y-0 left-1/2 w-px -translate-x-1/2',
-          'group-active:bg-primary/50',
-        )}
+        className={cn('bg-border group-hover:bg-primary/35 absolute inset-y-0 left-1/2 w-px -translate-x-1/2', 'group-active:bg-primary/50')}
         aria-hidden
       />
     </button>

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 管理员专题行：拖拽柄 + 标题 + 置顶标 + 「⋯」菜单（两组 DnD 列表共用）。
+ * 分类 管理员操作（拖拽柄 + 标题 + 置顶 + 菜单）。
  */
 
 import type { ReactNode } from 'react';
@@ -15,10 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { HomeExplorerCategoryPayload } from '../type/home-explorer-payload';
+import type { HomeExplorerCategoryPayload } from '../type/payload';
 import { cn } from '@/lib/utils';
 
-type HomeExplorerAdminTopicRowProps = {
+export type AdminTopicRowProps = {
   cat: HomeExplorerCategoryPayload;
   isActive: boolean;
   dragHandle: ReactNode;
@@ -28,38 +28,22 @@ type HomeExplorerAdminTopicRowProps = {
   onDelete: () => void;
 };
 
-export function HomeExplorerAdminTopicRow({
-  cat,
-  isActive,
-  dragHandle,
-  onNavigate,
-  onTogglePin,
-  onRename,
-  onDelete,
-}: HomeExplorerAdminTopicRowProps) {
+export function AdminTopicRow({ cat, isActive, dragHandle, onNavigate, onTogglePin, onRename, onDelete }: AdminTopicRowProps) {
   return (
-    <div
-      className={cn(
-        'group/topic flex w-full items-center gap-0.5 rounded-md',
-        isActive ? 'bg-accent/80' : 'hover:bg-accent/40',
-      )}
-    >
+    <div className={cn('group/topic flex w-full items-center gap-0.5 rounded-md', isActive ? 'bg-accent/80' : 'hover:bg-accent/40')}>
       {dragHandle}
       <button
         type="button"
         onClick={onNavigate}
         className={cn(
-          'flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
+          'pin-btn flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors',
           isActive ? 'text-accent-foreground font-medium' : 'text-foreground/90',
         )}
         aria-current={isActive ? 'true' : undefined}
       >
         <span className="min-w-0 flex-1 truncate">{cat.name}</span>
         {cat.isPinned ? (
-          <Badge
-            variant="outline"
-            className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200"
-          >
+          <Badge variant="outline" className="shrink-0 border-amber-500/40 px-1 py-0 text-[10px] text-amber-800 dark:text-amber-200">
             置顶
           </Badge>
         ) : null}

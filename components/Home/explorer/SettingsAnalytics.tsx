@@ -8,7 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getAnalyticsStats } from '@/server/actions/analytics';
 import type { AnalyticsStatsPayload } from '@/server/types/analytics-payload';
 
-export function HomeSettingsAnalytics() {
+export function SettingsAnalytics() {
   const [days, setDays] = useState(7);
   const [data, setData] = useState<AnalyticsStatsPayload | null>(null);
   const [loading, setLoading] = useState(false);

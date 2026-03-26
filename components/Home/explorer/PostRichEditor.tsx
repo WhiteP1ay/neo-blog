@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 首页右侧富文本编辑：TipTap StarterKit + 标题，保存写入 posts.content（HTML）。
+ * 右侧富文本编辑：TipTap StarterKit + 标题，保存写入 posts.content（HTML）。
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -16,7 +16,7 @@ import { updatePost } from '@/server/actions/posts';
 import { cn } from '@/lib/utils';
 
 /** 与首页 RSC 序列化后的文章详情字段一致 */
-export interface HomePostRichEditorPostPayload {
+export interface PostRichEditorPostPayload {
   id: number;
   title: string;
   content: string;
@@ -24,13 +24,13 @@ export interface HomePostRichEditorPostPayload {
   updatedAt: string | null;
 }
 
-export interface HomePostRichEditorProps {
-  post: HomePostRichEditorPostPayload;
+export interface PostRichEditorProps {
+  post: PostRichEditorPostPayload;
   onSaved: () => void;
   onCancel: () => void;
 }
 
-export function HomePostRichEditor({ post, onSaved, onCancel }: HomePostRichEditorProps) {
+export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps) {
   const { showToast } = useToast();
   const [title, setTitle] = useState(post.title);
   const [saving, setSaving] = useState(false);

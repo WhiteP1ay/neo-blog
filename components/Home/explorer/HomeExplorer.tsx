@@ -2,39 +2,31 @@
 
 /**
  * Home Explorer：首页三栏主界面（编排层）。
- *
- * 设计要点：
- * - 组件只负责编排布局与传参，业务逻辑下沉到 hooks/
- * - 子组件按区域拆分：header/topic/list/reading/modals/settings
  */
 
-import type { HomeExplorerCategoryPayload, HomeExplorerPostDetailPayload } from '../type/home-explorer-payload';
-import { HomeColumnResizeHandle } from './HomeColumnResizeHandle';
-import { HomeExplorerFooter } from './HomeExplorerFooter';
-import { HomeExplorerHeader } from './HomeExplorerHeader';
-import { HomeExplorerModals } from './HomeExplorerModals';
-import { HomeExplorerPostListPanel } from './HomeExplorerPostListPanel';
-import { HomeExplorerReadingPane } from './HomeExplorerReadingPane';
-import { HomeExplorerSettingsLayer } from './HomeExplorerSettingsLayer';
-import { HomeExplorerTopicPanel } from './HomeExplorerTopicPanel';
-import { useHomeExplorerAdmin } from '../hooks/useHomeExplorerAdmin';
-import { useHomeExplorerLayout } from '../hooks/useHomeExplorerLayout';
-import { useHomeExplorerNavigation } from '../hooks/useHomeExplorerNavigation';
+import type { HomeExplorerCategoryPayload, HomeExplorerPostDetailPayload } from '../type/payload';
+import { ColumnResizeHandle } from './ColumnResizeHandle';
+import { Footer } from './Footer';
+import { Header } from './Header';
+import { ExplorerModals } from './ExplorerModals';
+import { PostListPanel } from './PostListPanel';
+import { ReadingPane } from './ReadingPane';
+import { ExplorerSettingsLayer } from './ExplorerSettingsLayer';
+import { TopicPanel } from './TopicPanel';
+import { useAdmin } from '../hooks/useAdmin';
+import { useLayout } from '../hooks/useLayout';
+import { useNavigation } from '../hooks/useNavigation';
 
-export type { HomeExplorerCategoryPayload, HomeExplorerPostDetailPayload } from '../type/home-explorer-payload';
+export type { HomeExplorerCategoryPayload, HomeExplorerPostDetailPayload } from '../type/payload';
 
 interface HomeExplorerProps {
   categories: HomeExplorerCategoryPayload[];
   activeTopicQuery: string;
   activePostId: number | null;
   postDetail: HomeExplorerPostDetailPayload | null;
-  /** 已登录管理端 session 时在窗口内提供专题/文章 CRUD */
   isAdminLoggedIn: boolean;
 }
 
-/**
- * 首页三栏布局 + URL 与 router.replace 同步（占满浏览器内容区）
- */
 export function HomeExplorer({
   categories,
   activeTopicQuery,
@@ -42,9 +34,10 @@ export function HomeExplorer({
   postDetail,
   isAdminLoggedIn,
 }: HomeExplorerProps) {
-  const layout = useHomeExplorerLayout();
-  const nav = useHomeExplorerNavigation(categories, activeTopicQuery);
-  const admin = useHomeExplorerAdmin({
+
+  const layout = useLayout();
+  const nav = useNavigation(categories, activeTopicQuery);
+  const admin = useAdmin({
     categories,
     activeCategory: nav.activeCategory,
     activePostId,
@@ -58,10 +51,10 @@ export function HomeExplorer({
 
   return (
     <div className="bg-card relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
-      <HomeExplorerHeader isAdminLoggedIn={isAdminLoggedIn} />
+      <Header isAdminLoggedIn={isAdminLoggedIn} />
 
       <div className="bg-muted/25 flex min-h-0 flex-1 gap-2.5 p-2.5 dark:bg-muted/20">
-        <HomeExplorerTopicPanel
+        <TopicPanel
           categories={categories}
           activeTopicQuery={activeTopicQuery}
           isAdminLoggedIn={isAdminLoggedIn}
@@ -78,7 +71,7 @@ export function HomeExplorer({
           onDeleteTopic={(id) => admin.setDeleteTopicId(id)}
         />
 
-        <HomeExplorerPostListPanel
+        <PostListPanel
           isAdminLoggedIn={isAdminLoggedIn}
           listDropHandlers={admin.listDropHandlers}
           activeCategory={nav.activeCategory}
@@ -99,9 +92,9 @@ export function HomeExplorer({
           onDeletePost={(id) => admin.setDeletePostId(id)}
         />
 
-        <HomeColumnResizeHandle label="拖拽调整文章列表宽度" onResizeStart={layout.beginResizeList} />
+        <ColumnResizeHandle label="拖拽调整文章列表宽度" onResizeStart={layout.beginResizeList} />
 
-        <HomeExplorerReadingPane
+        <ReadingPane
           postDetail={postDetail}
           isAdminLoggedIn={isAdminLoggedIn}
           onSavedEdit={() => {
@@ -112,9 +105,9 @@ export function HomeExplorer({
         />
       </div>
 
-      <HomeExplorerFooter />
+      <Footer />
 
-      <HomeExplorerModals
+      <ExplorerModals
         submitNewTopic={admin.submitNewTopic}
         submitRenameTopic={admin.submitRenameTopic}
         submitDeleteTopic={admin.submitDeleteTopic}
@@ -122,7 +115,7 @@ export function HomeExplorer({
         submitDeletePost={admin.submitDeletePost}
       />
 
-      <HomeExplorerSettingsLayer isAdminLoggedIn={isAdminLoggedIn} />
+      <ExplorerSettingsLayer isAdminLoggedIn={isAdminLoggedIn} />
     </div>
   );
 }
