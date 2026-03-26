@@ -42,3 +42,4 @@ export function CommentItem({ comment, onReply }: CommentItemProps) {
     </div>
   );
 }
+

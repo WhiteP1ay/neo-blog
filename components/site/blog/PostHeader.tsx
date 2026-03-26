@@ -18,3 +18,4 @@ export function PostHeader({ title, createdAt, publishedTime }: PostHeaderProps)
     </header>
   );
 }
+

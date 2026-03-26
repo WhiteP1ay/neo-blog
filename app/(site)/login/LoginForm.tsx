@@ -3,12 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/server/actions/login';
-import { BackToHome } from '@/components/BackToHome';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { BackToHome } from '@/components/site/BackToHome';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');
@@ -34,53 +29,60 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 px-4">
-      <Card className="w-full max-w-md shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-center text-3xl">管理员登录</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error ? (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
+    <section aria-label="管理员登录">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">管理员登录</h1>
+      </header>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                autoComplete="username"
-              />
-            </div>
+      <form onSubmit={handleSubmit} className="max-w-md space-y-4">
+        {error ? (
+          <p role="alert" className="border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+            {error}
+          </p>
+        ) : null}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
+        <div className="space-y-1">
+          <label htmlFor="username" className="text-sm font-medium">
+            用户名
+          </label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoComplete="username"
+            className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+          />
+        </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '登录中...' : '登录'}
-            </Button>
-          </form>
+        <div className="space-y-1">
+          <label htmlFor="password" className="text-sm font-medium">
+            密码
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
+          />
+        </div>
 
-          <div className="mt-6 text-center">
-            <BackToHome showIcon={false} className="text-muted-foreground hover:text-foreground text-sm" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="h-9 rounded border border-border bg-background px-3 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+        >
+          {loading ? '登录中...' : '登录'}
+        </button>
+      </form>
+
+      <div className="mt-6">
+        <BackToHome showIcon={false} className="text-sm" />
+      </div>
+    </section>
   );
 }

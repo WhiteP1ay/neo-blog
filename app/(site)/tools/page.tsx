@@ -11,8 +11,10 @@ export const metadata: Metadata = {
  */
 export default function ToolsPage() {
   return (
-    <div className="min-h-screen bg-muted/40">
-      <ToolsPageContent />
-    </div>
+    <main className="site-page">
+      <div className="site-container">
+        <ToolsPageContent />
+      </div>
+    </main>
   );
 }

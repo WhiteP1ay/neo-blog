@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import type { Post } from '@/server/types/models';
-import { redirect } from 'next/navigation';
-import { Suspense } from 'react';
-import { getHomeExplorerData, getPostById } from '@/server/actions/posts';
-import { HomeExplorer } from '@/components/Home';
-import { buildHomeSearchString, resolveHomePageSearchParams } from '@/app/home-search-params';
-import { getSession } from '@/server/utils/auth';
-import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Book, Github, Tv, Youtube } from 'lucide-react';
+import { SOCIAL_LINKS } from '@/app/constants';
 
 export const revalidate = 60;
 
@@ -21,77 +17,44 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<{ topic?: string; post?: string }>;
-}) {
-  const sp = await searchParams;
-  const session = await getSession();
-  const isAdminLoggedIn = session?.isAdmin === true;
-  const explorerResult = await getHomeExplorerData();
-
-  if (!explorerResult.success) {
-    return (
-      <div className="bg-muted/40 flex min-h-screen flex-col">
-        <main className="flex flex-1 items-center justify-center p-8 text-center text-muted-foreground">
-          暂时无法加载内容，请稍后再试。
-        </main>
-      </div>
-    );
-  }
-
-  const categories = explorerResult.data;
-  const { activeTopicQuery, postId } = resolveHomePageSearchParams(sp, categories);
-
-  let postDetail: Post | null = null;
-  if (postId !== null) {
-    const pr = await getPostById(postId, false);
-    if (!pr.success || !pr.data) {
-      redirect(`/?${buildHomeSearchString({ topic: activeTopicQuery })}`);
-    }
-    postDetail = pr.data;
-  }
-
-  const serializedCategories = categories.map((c) => ({
-    topicKey: c.topicKey,
-    name: c.name,
-    isPinned: c.isPinned,
-    sortOrder: c.sortOrder,
-    createdAt: c.createdAt?.toISOString() ?? null,
-    posts: c.posts.map((p) => ({
-      id: p.id,
-      title: p.title,
-      createdAt: p.createdAt?.toISOString() ?? null,
-      isPinned: p.isPinned,
-    })),
-  }));
-
-  const serializedPost = postDetail
-    ? {
-      id: postDetail.id,
-      title: postDetail.title,
-      content: await highlightCodeBlocksInHtml(postDetail.content),
-      contentSource: postDetail.content,
-      createdAt: postDetail.createdAt?.toISOString() ?? null,
-      updatedAt: postDetail.updatedAt?.toISOString() ?? null,
-    }
-    : null;
-
+export default async function Home() {
   return (
-    <div className="bg-muted/40 flex min-h-screen flex-col">
-      <main className="flex min-h-0 flex-1 flex-col">
-        <div className="h-dvh min-h-[420px] w-full min-w-0">
-          <Suspense fallback={null}>
-            <HomeExplorer
-              categories={serializedCategories}
-              activeTopicQuery={activeTopicQuery}
-              activePostId={postId}
-              postDetail={serializedPost}
-              isAdminLoggedIn={isAdminLoggedIn}
-            />
-          </Suspense>
-        </div>
+    <div className="bg-background min-h-dvh">
+      <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-6">
+        <section className="flex flex-col gap-4 flex-1 justify-center items-center">
+          <h1 className="text-4xl font-bold">White Meta</h1>
+          <p className="text-lg text-muted-foreground">白玩dev,一个程序员/佛学爱好者/摩托佬/业余吉他手</p>
+          <div className="flex gap-2">
+            <Button asChild variant="secondary">
+              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
+                <Github className="size-4" />
+                GitHub
+              </a>
+            </Button>
+            <Button asChild variant="secondary">
+              <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer">
+                <Youtube className="size-4" />
+                YouTube
+              </a>
+            </Button>
+            <Button asChild variant="secondary">
+              <a href={SOCIAL_LINKS.bilibili} target="_blank" rel="noopener noreferrer">
+                <Tv className="size-4" />
+                Bilibili
+              </a>
+            </Button>
+            <Button asChild>
+              <Link href="/b">
+                <Book className="size-4" />
+                Blog
+              </Link>
+            </Button>
+          </div>
+
+        </section>
+        <footer className="text-muted-foreground flex h-16 items-center justify-center text-xs">
+          <span>© {new Date().getFullYear()} White Meta</span>
+        </footer>
       </main>
     </div>
   );

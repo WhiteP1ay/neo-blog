@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Breadcrumb } from '@/components/Breadcrumb';
+import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
 
 export const metadata: Metadata = {
@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-muted/40">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
+    <main className="site-page">
+      <div className="site-container">
         <Breadcrumb />
         <AboutPageContent />
       </div>
-    </div>
+    </main>
   );
 }

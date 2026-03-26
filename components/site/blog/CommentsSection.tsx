@@ -4,13 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createComment, getCommentsByPostId } from '@/server/actions/comments';
 import type { CommentWithReplies } from '@/server/types/comments-thread';
 import { useChinaIPDetector } from '@/components/ChinaIPDetector';
-import { useAnalytics } from '@/components/Analytics';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CommentItem } from '@/components/blog/CommentItem';
+import { CommentItem } from '@/components/site/blog/CommentItem';
 
 interface CommentsSectionProps {
   postId: number;
@@ -131,11 +129,10 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
   }
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-xl sm:text-2xl">评论</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <section aria-label="评论">
+      <header className="mb-4">
+        <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">评论</h2>
+      </header>
         {loading ? (
           <div className="text-muted-foreground py-6 text-center text-sm sm:py-8 sm:text-base">加载中...</div>
         ) : comments.length === 0 ? (
@@ -156,18 +153,20 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
           ) : null}
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-            <Input
+            <input
               type="text"
               placeholder="昵称 *"
               value={formData.author}
               onChange={(e) => setFormData((prev) => ({ ...prev, author: e.target.value }))}
               required
+              className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
             />
-            <Input
+            <input
               type="email"
               placeholder="邮箱（可选）"
               value={formData.email}
               onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+              className="h-9 w-full rounded border border-border bg-background px-3 text-sm"
             />
           </div>
 
@@ -201,7 +200,7 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+    </section>
   );
 }
+

@@ -5,7 +5,7 @@ import { formatDate } from '@/app/utils/date';
  */
 export function PrivacyPageContent() {
   return (
-    <div className="prose prose-neutral dark:prose-invert max-w-none">
+    <div className="prose prose-neutral dark:prose-invert site-prose">
       <h1>隐私政策</h1>
       <p>最后更新日期：{formatDate(new Date())}</p>
 

@@ -8,5 +8,11 @@ export default async function LoginPage() {
     redirect('/');
   }
 
-  return <LoginForm />;
+  return (
+    <main className="site-page">
+      <div className="site-container">
+        <LoginForm />
+      </div>
+    </main>
+  );
 }

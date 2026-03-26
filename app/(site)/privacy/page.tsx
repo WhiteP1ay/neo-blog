@@ -8,10 +8,10 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="bg-muted/40 min-h-screen">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+    <main className="site-page">
+      <div className="site-container">
         <PrivacyPageContent />
       </div>
-    </div>
+    </main>
   );
 }

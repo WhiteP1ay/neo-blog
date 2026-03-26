@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Nav } from '@/components/Nav';
-import { Footer } from '@/components/Footer';
+import { Nav } from '@/components/site/Nav';
+import { Footer } from '@/components/site/Footer';
+import './retro.css';
 
 /**
  * 除首页外的站点页：顶栏导航 + 页脚

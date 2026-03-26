@@ -1,7 +1,7 @@
 'use client';
 
-import { PostHeader } from '@/components/blog/PostHeader';
-import { PostPageClient } from '@/components/blog/PostPageClient';
+import { PostHeader } from '@/components/site/blog/PostHeader';
+import { PostPageClient } from '@/components/site/blog/PostPageClient';
 import type { HomeExplorerPostDetailPayload } from '@/components/Home';
 import { CodeBlockCopyButtons } from '@/components/CodeBlockCopyButtons';
 
@@ -32,3 +32,4 @@ export function BlogPostReadView({ post }: BlogPostReadViewProps) {
     </div>
   );
 }
+

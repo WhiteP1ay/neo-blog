@@ -41,3 +41,4 @@ export function BlogCategoryTabBar({ tabs, activeKey }: BlogCategoryTabBarProps)
     </div>
   );
 }
+

@@ -40,3 +40,4 @@ export function BackToHome({ showIcon = true, className, onClick, label = 'è¿”å›
     </Link>
   );
 }
+

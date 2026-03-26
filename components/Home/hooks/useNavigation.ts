@@ -19,7 +19,7 @@ export function useNavigation(categories: HomeExplorerCategoryPayload[], activeT
   const clearPostFromUrl = useCallback(() => {
     const p = new URLSearchParams();
     p.set('topic', activeTopicQuery);
-    router.replace(`/?${p.toString()}`);
+    router.replace(`/b?${p.toString()}`);
   }, [activeTopicQuery, router]);
 
   const navigateTopic = useCallback(
@@ -27,7 +27,7 @@ export function useNavigation(categories: HomeExplorerCategoryPayload[], activeT
       const t = topicToQueryValue(topicKey);
       const p = new URLSearchParams();
       p.set('topic', t);
-      router.replace(`/?${p.toString()}`);
+      router.replace(`/b?${p.toString()}`);
     },
     [router],
   );
@@ -38,7 +38,7 @@ export function useNavigation(categories: HomeExplorerCategoryPayload[], activeT
       const p = new URLSearchParams();
       p.set('topic', t);
       p.set('post', String(postId));
-      router.replace(`/?${p.toString()}`);
+      router.replace(`/b?${p.toString()}`);
     },
     [router],
   );

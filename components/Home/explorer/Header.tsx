@@ -20,12 +20,8 @@ export function Header({ isAdminLoggedIn }: HeaderProps) {
   return (
     <header className="border-border bg-muted/40 shrink-0 border-b">
       <div className="flex h-10 items-center gap-3 px-4">
-        <Link href="/" className="truncate text-base font-bold text-foreground">
+        <Link href="/b" className="truncate text-base font-bold text-foreground">
           White Meta
-        </Link>
-        {/* @todo “文件”下拉框，支持导出当前所选的博客文章为markdown文件 */}
-        <Link href="/blog" className="text-muted-foreground hover:text-primary text-xs font-medium transition-colors">
-          旧版博客
         </Link>
 
         <span className="min-w-2 flex-1" />

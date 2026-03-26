@@ -59,7 +59,7 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
   }
 
   // 处理文章页面（数字ID）
-  if (/^\d+$/.test(segments[0])) {
+  if (/^\\d+$/.test(segments[0])) {
     items.push({ label: '博客', href: '/blog' });
     items.push({ label: '文章', href: `/${segments[0]}` });
     return items;
@@ -102,21 +102,21 @@ export function Breadcrumb({ currentLabel }: BreadcrumbProps) {
   }
 
   return (
-    <nav className="text-sm text-gray-600 dark:text-gray-300 mb-4" aria-label="Breadcrumb">
-      <ol className="flex items-center gap-2 flex-wrap">
+    <nav className="mb-4 text-sm text-foreground/80" aria-label="Breadcrumb">
+      <ol className="m-0 flex flex-wrap items-center gap-x-1 gap-y-1 p-0">
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
           return (
-            <li key={item.href} className="flex items-center">
-              {index > 0 && (
-                <span className="mx-2 text-gray-400 dark:text-gray-600" aria-hidden="true">
-                  /
+            <li key={item.href} className="list-none">
+              {index > 0 ? (
+                <span className="px-1 text-foreground/60" aria-hidden="true">
+                  &gt;
                 </span>
-              )}
+              ) : null}
               {isLast ? (
-                <span className="text-gray-900 dark:text-white font-medium">{item.label}</span>
+                <span className="text-foreground">{item.label}</span>
               ) : (
-                <Link href={item.href} className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <Link href={item.href} className="underline underline-offset-4 hover:opacity-80">
                   {item.label}
                 </Link>
               )}
@@ -127,3 +127,4 @@ export function Breadcrumb({ currentLabel }: BreadcrumbProps) {
     </nav>
   );
 }
+

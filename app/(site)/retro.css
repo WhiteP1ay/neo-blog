@@ -1,0 +1,92 @@
+/* Retro minimal theme for legacy (site) pages.
+   Goal: SKSE-like typography + spacing, while keeping dark mode support.
+*/
+
+/* Layout container */
+.site-container {
+  margin-inline: auto;
+  max-width: 860px;
+  padding-inline: 16px;
+}
+
+@media (min-width: 640px) {
+  .site-container {
+    padding-inline: 24px;
+  }
+}
+
+/* Page rhythm */
+.site-page {
+  padding-block: 24px;
+}
+
+@media (min-width: 640px) {
+  .site-page {
+    padding-block: 40px;
+  }
+}
+
+/* Classic link style */
+.site-page a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* More “document-like” typography */
+.site-page {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (min-width: 640px) {
+  .site-page {
+    font-size: 15px;
+  }
+}
+
+/* Prefer a classic blue in light, brighter in dark */
+.site-page a {
+  color: rgb(0 0 238);
+}
+.dark .site-page a {
+  color: rgb(140 180 255);
+}
+
+.site-page a:hover {
+  opacity: 0.85;
+}
+
+/* Simple separators */
+.site-hr {
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent);
+  margin-block: 16px;
+}
+
+/* Headings: slightly tighter and more “document-like” */
+.site-page h1,
+.site-page h2,
+.site-page h3 {
+  letter-spacing: -0.01em;
+}
+
+.site-page h1 {
+  font-size: 1.6em;
+}
+.site-page h2 {
+  font-size: 1.25em;
+}
+.site-page h3 {
+  font-size: 1.1em;
+}
+
+.site-page p,
+.site-page li {
+  max-width: 72ch;
+}
+
+/* Make prose feel more like docs */
+.site-prose {
+  max-width: none;
+}
+

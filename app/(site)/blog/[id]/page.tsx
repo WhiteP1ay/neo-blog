@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPostById, getPosts } from '@/server/actions/posts';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
-import { BlogPostReadView } from '@/components/blog/BlogPostReadView';
-import { Breadcrumb } from '@/components/Breadcrumb';
-import { StructuredData, createBlogPostingSchema } from '@/components/StructuredData';
+import { BlogPostReadView } from '@/components/site/blog/BlogPostReadView';
+import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { StructuredData, createBlogPostingSchema } from '@/components/site/StructuredData';
 
 export async function generateStaticParams() {
   const result = await getPosts();
@@ -102,14 +102,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <StructuredData data={jsonLd} />
-      <div className="bg-muted/40 min-h-screen">
-        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-12">
+      <main className="site-page">
+        <div className="site-container">
           <div className="mb-4">
             <Breadcrumb currentLabel={row.title} />
           </div>
           <BlogPostReadView post={post} />
         </div>
-      </div>
+      </main>
     </>
   );
 }

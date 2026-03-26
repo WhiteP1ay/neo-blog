@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import type { Topic } from '@/server/types/models';
-import { Breadcrumb } from './Breadcrumb';
+import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { formatDate } from '@/app/utils/date';
 
 interface TopicHeroProps {
@@ -12,7 +12,7 @@ interface TopicHeroProps {
  */
 export function TopicHero({ topic }: TopicHeroProps) {
   return (
-    <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-pink-900/40">
+    <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-linear-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-900/40 dark:via-purple-900/40 dark:to-pink-900/40">
       {topic.coverImage ? (
         <Image src={topic.coverImage} alt={topic.name} fill className="object-cover" priority />
       ) : (
@@ -33,12 +33,12 @@ export function TopicHero({ topic }: TopicHeroProps) {
         </div>
       )}
       {/* 渐变遮罩 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
 
       {/* 内容区域 */}
       <div className="relative z-10 h-full flex flex-col justify-end">
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pb-8 sm:pb-12">
-          <div className="mb-4 [&_*]:text-white/80 [&_a]:hover:text-white">
+          <div className="mb-4 **:text-white/80 [&_a]:hover:text-white">
             <Breadcrumb currentLabel={topic.name} />
           </div>
           <div className="flex items-center gap-3 mb-4">

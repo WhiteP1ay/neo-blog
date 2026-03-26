@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getHomeExplorerData } from '@/server/actions/posts';
 import { formatDate } from '@/app/utils/date';
-import { Breadcrumb } from '@/components/Breadcrumb';
-import { BlogCategoryTabBar } from '@/components/blog/BlogCategoryTabBar';
-import { WeChatSidebar } from '@/components/WeChatSidebar';
+import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { BlogCategoryTabBar } from '@/components/site/blog/BlogCategoryTabBar';
+import { WeChatSidebar } from '@/components/site/WeChatSidebar';
 import {
   buildBlogTopicUiState,
   needsBlogCanonicalTopicRedirect,
@@ -58,44 +58,36 @@ export default async function BlogPage({
   const { listPosts, activeKey, tabs } = topicState;
 
   return (
-    <div className="bg-muted/40 min-h-screen">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12">
-        <div className="flex gap-8">
-          <div className="min-w-0 flex-1">
-            <Breadcrumb />
-            <BlogCategoryTabBar tabs={tabs} activeKey={activeKey} />
+    <main className="site-page">
+      <div className="site-container">
+        <Breadcrumb />
+        <BlogCategoryTabBar tabs={tabs} activeKey={activeKey} />
 
-            {listPosts.length === 0 ? (
-              <div className="text-muted-foreground py-8 text-center sm:py-12">暂无内容</div>
-            ) : (
-              <ul className="m-0 list-none p-0">
-                {listPosts.map((post) => (
-                  <li key={post.id} className="border-border border-b py-3 last:border-b-0">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                      <Link href={`/blog/${post.id}`} className="text-foreground hover:text-primary min-w-0 font-medium">
-                        {post.isPinned ? (
-                          <span className="text-muted-foreground mr-2 shrink-0 text-xs font-normal">置顶</span>
-                        ) : null}
-                        {post.title}
-                      </Link>
-                      {post.createdAt ? (
-                        <time
-                          dateTime={post.createdAt.toISOString()}
-                          className="text-muted-foreground shrink-0 text-xs tabular-nums"
-                        >
-                          {formatDate(post.createdAt)}
-                        </time>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        {listPosts.length === 0 ? (
+          <p className="text-foreground/80">暂无内容</p>
+        ) : (
+          <ul className="m-0 list-none p-0">
+            {listPosts.map((post) => (
+              <li key={post.id} className="py-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <Link href={`/blog/${post.id}`} className="min-w-0 font-medium">
+                    {post.isPinned ? <span className="mr-2 text-xs font-normal">[置顶]</span> : null}
+                    {post.title}
+                  </Link>
+                  {post.createdAt ? (
+                    <time dateTime={post.createdAt.toISOString()} className="shrink-0 text-xs tabular-nums text-foreground/70">
+                      {formatDate(post.createdAt)}
+                    </time>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
 
-          <WeChatSidebar />
-        </div>
+        <hr className="site-hr" />
+        <WeChatSidebar />
       </div>
-    </div>
+    </main>
   );
 }
