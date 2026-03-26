@@ -27,12 +27,7 @@ export function BlogCategoryTabBar({ tabs, activeKey }: BlogCategoryTabBarProps)
             href={tab.href}
             role="tab"
             aria-selected={selected}
-            className={cn(
-              'inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:text-sm',
-              selected
-                ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                : 'border-border bg-background text-foreground hover:bg-muted',
-            )}
+            className={cn(selected ? 'text-purple-500! no-underline!' : '')}
           >
             {tab.label}
           </Link>

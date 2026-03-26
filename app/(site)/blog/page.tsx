@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getHomeExplorerData } from '@/server/actions/posts';
-import { BlogCategoryTabBar } from '@/components/site/blog/BlogCategoryTabBar';
+import { BlogCategoryTabBar } from './BlogCategoryTabBar';
 import { WeChatAD } from '@/components/site/WeChatAD';
 import {
   buildBlogTopicUiState,
