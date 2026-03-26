@@ -9,9 +9,6 @@ export type BlogCategoryTab = {
 /** 解析结果：'0' 未分类；合法专题为十进制 id 字符串；非法为 invalid */
 export type TopicSelectionResolved = '0' | string | 'invalid';
 
-/**
- * 解析地址栏 topic：无参或空串视为未分类（'0'）；合法十进制整数为专题 id
- */
 export function resolveTopicSelection(raw: string | undefined): TopicSelectionResolved {
   if (raw === undefined || raw === '') {
     return '0';
@@ -24,11 +21,6 @@ export function resolveTopicSelection(raw: string | undefined): TopicSelectionRe
     return String(n);
   }
   return 'invalid';
-}
-
-/** ?topic=all 收敛到 /blog（无 query） */
-export function needsBlogCanonicalTopicRedirect(raw: string | undefined): boolean {
-  return raw === 'all';
 }
 
 function buildBlogCategoryTabs(categories: HomeExplorerCategory[]): BlogCategoryTab[] {

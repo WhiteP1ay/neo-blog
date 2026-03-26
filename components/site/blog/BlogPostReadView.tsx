@@ -1,9 +1,7 @@
-'use client';
-
 import { PostHeader } from '@/components/site/blog/PostHeader';
-import { PostPageClient } from '@/components/site/blog/PostPageClient';
 import type { HomeExplorerPostDetailPayload } from '@/components/Home';
 import { CodeBlockCopyButtons } from '@/components/CodeBlockCopyButtons';
+import { CommentsSection } from './CommentsSection';
 
 type BlogPostReadViewProps = {
   post: HomeExplorerPostDetailPayload;
@@ -27,7 +25,7 @@ export function BlogPostReadView({ post }: BlogPostReadViewProps) {
       </article>
       <CodeBlockCopyButtons contentKey={`${post.id}-${post.contentSource.length}`} />
       <div className="mx-auto mt-8 max-w-3xl border-t border-border pt-6">
-        <PostPageClient postId={post.id} />
+        <CommentsSection postId={post.id} />
       </div>
     </div>
   );

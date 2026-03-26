@@ -1,29 +1,7 @@
-/* Retro minimal theme for legacy (site) pages.
-   Goal: SKSE-like typography + spacing, while keeping dark mode support.
-*/
-
-/* Layout container */
-.site-container {
+.site-page {
   margin-inline: auto;
   max-width: 860px;
   padding-inline: 16px;
-}
-
-@media (min-width: 640px) {
-  .site-container {
-    padding-inline: 24px;
-  }
-}
-
-/* Page rhythm */
-.site-page {
-  padding-block: 24px;
-}
-
-@media (min-width: 640px) {
-  .site-page {
-    padding-block: 40px;
-  }
 }
 
 /* Classic link style */

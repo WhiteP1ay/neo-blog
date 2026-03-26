@@ -9,10 +9,6 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="site-page">
-      <div className="site-container">
-        <LoginForm />
-      </div>
-    </main>
+    <LoginForm />
   );
 }

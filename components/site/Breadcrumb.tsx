@@ -9,6 +9,14 @@ interface BreadcrumbItem {
   href: string;
 }
 
+const ROOT_SEGMENT_LABEL_MAP: Record<string, string> = {
+  me: 'About',
+  about: 'About',
+  topics: '专题',
+  tools: '工具',
+  blog: '博客',
+};
+
 /**
  * 根据路径生成面包屑
  */
@@ -24,44 +32,22 @@ function generateBreadcrumbs(pathname: string | null): BreadcrumbItem[] {
     return items;
   }
 
-  // 处理特殊路径
-  if (segments[0] === 'me') {
-    items.push({ label: 'About', href: '/me' });
-    return items;
-  }
+  const [root, ...rest] = segments;
+  const rootLabel = ROOT_SEGMENT_LABEL_MAP[root];
 
-  if (segments[0] === 'about') {
-    items.push({ label: 'About', href: '/about' });
-    return items;
-  }
-
-  if (segments[0] === 'topics') {
-    items.push({ label: '专题', href: '/topics' });
-    if (segments.length > 1) {
-      // 专题详情页，需要动态获取专题名称
-      items.push({ label: '专题详情', href: `/topics/${segments[1]}` });
-    }
-    return items;
-  }
-
-  if (segments[0] === 'tools') {
-    items.push({ label: '工具', href: '/tools' });
-    return items;
-  }
-
-  if (segments[0] === 'blog') {
-    items.push({ label: '博客', href: '/blog' });
-    if (segments.length > 1) {
+  if (rootLabel) {
+    items.push({ label: rootLabel, href: `/${root}` });
+    if (root === 'blog' && rest.length > 0) {
       // 博客详情页或其他子页面
       items.push({ label: '文章', href: `/${segments.join('/')}` });
     }
     return items;
   }
 
-  // 处理文章页面（数字ID）
-  if (/^\\d+$/.test(segments[0])) {
+  // 纯数字路径兼容：默认视作旧博客文章路径
+  if (/^\d+$/.test(root)) {
     items.push({ label: '博客', href: '/blog' });
-    items.push({ label: '文章', href: `/${segments[0]}` });
+    items.push({ label: '文章', href: `/${root}` });
     return items;
   }
 

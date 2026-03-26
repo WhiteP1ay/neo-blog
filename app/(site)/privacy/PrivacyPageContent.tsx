@@ -1,11 +1,8 @@
 import { formatDate } from '@/app/utils/date';
 
-/**
- * 隐私政策正文（独立路由与弹窗共用）
- */
 export function PrivacyPageContent() {
   return (
-    <div className="prose prose-neutral dark:prose-invert site-prose">
+    <div>
       <h1>隐私政策</h1>
       <p>最后更新日期：{formatDate(new Date())}</p>
 

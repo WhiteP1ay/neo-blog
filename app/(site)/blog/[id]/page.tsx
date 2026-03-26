@@ -102,14 +102,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <StructuredData data={jsonLd} />
-      <main className="site-page">
-        <div className="site-container">
-          <div className="mb-4">
-            <Breadcrumb currentLabel={row.title} />
-          </div>
-          <BlogPostReadView post={post} />
-        </div>
-      </main>
+      <BlogPostReadView post={post} />
     </>
   );
 }

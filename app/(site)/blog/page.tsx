@@ -1,16 +1,13 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getHomeExplorerData } from '@/server/actions/posts';
-import { formatDate } from '@/app/utils/date';
-import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { BlogCategoryTabBar } from '@/components/site/blog/BlogCategoryTabBar';
-import { WeChatSidebar } from '@/components/site/WeChatSidebar';
+import { WeChatAD } from '@/components/site/WeChatAD';
 import {
   buildBlogTopicUiState,
-  needsBlogCanonicalTopicRedirect,
   resolveTopicSelection,
 } from './topicsHandle';
+import { PostList } from './PostList';
 
 export const metadata: Metadata = {
   title: '博客',
@@ -30,64 +27,36 @@ export default async function BlogPage({
 }: {
   searchParams: Promise<{ topic?: string }>;
 }) {
+  const topicState = await resolveBlogTopicState(searchParams);
+  if (!topicState) {
+    return <p>加载分类失败</p>
+  }
+  const { listPosts, activeKey, tabs } = topicState;
+  return (
+    <>
+      <BlogCategoryTabBar tabs={tabs} activeKey={activeKey} />
+      <PostList posts={listPosts} />
+      <hr className="site-hr" />
+      <WeChatAD />
+    </>
+  );
+}
+
+async function resolveBlogTopicState(
+  searchParams: Promise<{ topic?: string }>,
+) {
   const sp = await searchParams;
 
-  if (needsBlogCanonicalTopicRedirect(sp.topic)) {
-    redirect('/blog');
-  }
-
   const selection = resolveTopicSelection(sp.topic);
-
   const explorerResult = await getHomeExplorerData();
 
   if (!explorerResult.success) {
-    return (
-      <div className="bg-muted/40 min-h-screen">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-12">
-          <p className="text-muted-foreground text-center">暂时无法加载分类</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const topicState = buildBlogTopicUiState(explorerResult.data, selection);
   if (!topicState.ok) {
     redirect('/blog');
   }
-
-  const { listPosts, activeKey, tabs } = topicState;
-
-  return (
-    <main className="site-page">
-      <div className="site-container">
-        <Breadcrumb />
-        <BlogCategoryTabBar tabs={tabs} activeKey={activeKey} />
-
-        {listPosts.length === 0 ? (
-          <p className="text-foreground/80">暂无内容</p>
-        ) : (
-          <ul className="m-0 list-none p-0">
-            {listPosts.map((post) => (
-              <li key={post.id} className="py-2">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <Link href={`/blog/${post.id}`} className="min-w-0 font-medium">
-                    {post.isPinned ? <span className="mr-2 text-xs font-normal">[置顶]</span> : null}
-                    {post.title}
-                  </Link>
-                  {post.createdAt ? (
-                    <time dateTime={post.createdAt.toISOString()} className="shrink-0 text-xs tabular-nums text-foreground/70">
-                      {formatDate(post.createdAt)}
-                    </time>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <hr className="site-hr" />
-        <WeChatSidebar />
-      </div>
-    </main>
-  );
+  return topicState;
 }

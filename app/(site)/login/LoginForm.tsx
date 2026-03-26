@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/server/actions/login';
-import { BackToHome } from '@/components/site/BackToHome';
+import { Button } from '@/components/ui/button';
 
 export function LoginForm() {
   const [username, setUsername] = useState('');
@@ -31,7 +31,7 @@ export function LoginForm() {
   return (
     <section aria-label="管理员登录">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">管理员登录</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">登录</h1>
       </header>
 
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
@@ -71,18 +71,18 @@ export function LoginForm() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="h-9 rounded border border-border bg-background px-3 text-sm font-medium hover:opacity-90 disabled:opacity-50"
-        >
-          {loading ? '登录中...' : '登录'}
-        </button>
+        <div className='flex justify-end'>
+          <Button variant="outline">
+            <span>返回首页</span>
+          </Button>
+          <Button className='ml-4' type="submit" disabled={loading}>
+            {loading ? '登录中...' : '登录'}
+          </Button>
+        </div>
+
+
       </form>
 
-      <div className="mt-6">
-        <BackToHome showIcon={false} className="text-sm" />
-      </div>
     </section>
   );
 }
