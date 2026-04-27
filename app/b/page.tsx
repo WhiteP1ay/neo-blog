@@ -4,9 +4,13 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { getHomeExplorerData, getPostById } from '@/server/actions/posts';
 import { HomeExplorer } from '@/components/Home';
-import { buildHomeSearchString, resolveHomePageSearchParams } from '@/app/home-search-params';
+import { buildHomeSearchString, resolveHomePageSearchParams } from './paramsHandle';
 import { getSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
+import { ModalProvider } from '@/app/b/ModalProvider';
+import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
+import { PrivacyPageContent } from '@/app/(site)/privacy/PrivacyPageContent';
+import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
 
 export const revalidate = 60;
 
@@ -63,13 +67,13 @@ export default async function HomePage({
 
   const serializedPost = postDetail
     ? {
-        id: postDetail.id,
-        title: postDetail.title,
-        content: await highlightCodeBlocksInHtml(postDetail.content),
-        contentSource: postDetail.content,
-        createdAt: postDetail.createdAt?.toISOString() ?? null,
-        updatedAt: postDetail.updatedAt?.toISOString() ?? null,
-      }
+      id: postDetail.id,
+      title: postDetail.title,
+      content: await highlightCodeBlocksInHtml(postDetail.content),
+      contentSource: postDetail.content,
+      createdAt: postDetail.createdAt?.toISOString() ?? null,
+      updatedAt: postDetail.updatedAt?.toISOString() ?? null,
+    }
     : null;
 
   return (
@@ -86,6 +90,11 @@ export default async function HomePage({
             />
           </Suspense>
         </div>
+        <ModalProvider
+          aboutSlot={<AboutPageContent />}
+          privacySlot={<PrivacyPageContent />}
+          toolsSlot={<ToolsPageContent />}
+        />
       </main>
     </div>
   );

@@ -3,7 +3,7 @@
  */
 
 import { create } from 'zustand';
-import type { SiteModalId } from '@/app/nav';
+import type { SiteModalId } from '@/components/Home/type/layout';
 
 type SiteModalsState = {
   active: SiteModalId | null;

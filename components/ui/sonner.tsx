@@ -17,9 +17,6 @@ const typeAccent = {
   info: 'border-l-[3px] border-l-primary/70',
 };
 
-/**
- * Sonner：与站点 card / 边框风格一致；图标偏柔和，不用 richColors 的「后台通知条」配色。
- */
 export function Toaster({ ...props }: ToasterProps) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);

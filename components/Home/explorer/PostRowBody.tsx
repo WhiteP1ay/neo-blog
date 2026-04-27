@@ -7,7 +7,7 @@
  * - 这里只做展示，交互由父组件包裹 button/context-menu 提供
  */
 
-import { formatDateShort } from '@/app/utils/date';
+import { formatDateShort } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { HomeExplorerCategoryPayload } from '../type/payload';
 

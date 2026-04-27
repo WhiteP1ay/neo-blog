@@ -3,11 +3,8 @@
 import { useEffect } from 'react';
 
 const BTN_CLASS =
-  'hljs-copy-button pointer-events-auto absolute right-2 top-2 z-10 rounded-md border border-border/70 bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none';
+  'hljs-copy-button cursor-pointer pointer-events-auto absolute right-2 top-2 z-10 rounded-md';
 
-/**
- * 为 .prose 内代码块挂复制按钮（高亮由服务端 Shiki 完成，此处不再跑 highlight.js）
- */
 function attachCopyButton(pre: HTMLPreElement) {
   pre.querySelectorAll('.hljs-copy-button').forEach((n) => {
     n.remove();
@@ -47,11 +44,9 @@ function attachCopyButton(pre: HTMLPreElement) {
   pre.appendChild(btn);
 }
 
-/**
- * @param contentKey 文章或正文变化时重新扫描（如首页同 id 换内容、路由切换）
- */
 export function CodeBlockCopyButtons({ contentKey }: { contentKey?: string | number }) {
   useEffect(() => {
+    //读取一下然后丢弃结果,用于消除未使用变量的警告，或明确表示故意不使用它
     void contentKey;
     const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => {

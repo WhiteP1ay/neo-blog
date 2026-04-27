@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SiteRedDotModal } from '@/components/SiteRedDotModal';
-import type { SiteModalId } from '@/app/nav';
+import { SiteRedDotModal } from '@/components/Home/modal/Modal';
+import type { SiteModalId } from '@/components/Home/type/layout';
 import { closeSiteModal, useSiteModalsStore } from '@/components/Home';
 
 const TITLES: Record<SiteModalId, string> = {
@@ -11,10 +11,7 @@ const TITLES: Record<SiteModalId, string> = {
   privacy: '隐私政策',
 };
 
-/**
- * 根布局挂载：zustand 里的 active 驱动三个弹窗
- */
-export function SiteModalsHost({
+export function ModalProvider({
   aboutSlot,
   privacySlot,
   toolsSlot,
@@ -61,3 +58,4 @@ export function SiteModalsHost({
     </>
   );
 }
+

@@ -4,7 +4,7 @@
  * 右侧阅读/编辑面板：登录管理员且处于 editingPost 时显示编辑器，否则显示只读阅读视图。
  */
 
-import { BlogPostReadView } from '@/components/site/blog/BlogPostReadView';
+import { BlogPostReadView } from '@/components/blog/BlogPostReadView';
 import { PostRichEditor } from './PostRichEditor';
 import type { HomeExplorerPostDetailPayload } from '../type/payload';
 import { useAdminUiStore } from '../store/admin-ui';

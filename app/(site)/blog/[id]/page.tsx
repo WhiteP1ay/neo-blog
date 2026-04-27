@@ -2,8 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPostById, getPosts } from '@/server/actions/posts';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
-import { BlogPostReadView } from '@/components/site/blog/BlogPostReadView';
-import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { BlogPostReadView } from '@/components/blog/BlogPostReadView';
 import { StructuredData, createBlogPostingSchema } from '@/components/site/StructuredData';
 
 export async function generateStaticParams() {

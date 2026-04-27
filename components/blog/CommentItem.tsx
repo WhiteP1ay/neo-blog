@@ -1,7 +1,7 @@
 'use client';
 
 import type { CommentWithReplies } from '@/server/types/comments-thread';
-import { formatDateShort } from '@/app/utils/date';
+import { formatDateShort } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface CommentItemProps {

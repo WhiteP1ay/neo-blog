@@ -1,6 +1,6 @@
-import { PostHeader } from '@/components/site/blog/PostHeader';
+import { PostHeader } from './PostHeader';
 import type { HomeExplorerPostDetailPayload } from '@/components/Home';
-import { CodeBlockCopyButtons } from '@/components/CodeBlockCopyButtons';
+import { CodeBlockCopyButtons } from '@/components/blog/CodeBlockCopyButtons';
 import { CommentsSection } from './CommentsSection';
 
 type BlogPostReadViewProps = {

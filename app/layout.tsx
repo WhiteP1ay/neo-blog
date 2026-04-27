@@ -1,11 +1,7 @@
-import type { Metadata } from 'next';
 import './global.css';
-import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
-import { PrivacyPageContent } from '@/app/(site)/privacy/PrivacyPageContent';
-import { SiteModalsHost } from '@/components/SitePageModals';
+import type { Metadata } from 'next';
 import { ToastProvider } from '@/components/Toast';
-import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import Script from 'next/script';
 
 export const metadata: Metadata = {
@@ -48,16 +44,17 @@ export default function RootLayout({
         )}
       </head>
       <body>
-        <ThemeProvider>
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          storageKey="theme"
+          disableTransitionOnChange
+        >
           <ToastProvider>
             {children}
-            <SiteModalsHost
-              aboutSlot={<AboutPageContent />}
-              privacySlot={<PrivacyPageContent />}
-              toolsSlot={<ToolsPageContent variant="modal" />}
-            />
           </ToastProvider>
-        </ThemeProvider>
+        </NextThemesProvider>
       </body>
     </html>
   );

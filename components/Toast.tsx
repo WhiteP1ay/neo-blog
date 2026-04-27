@@ -13,9 +13,6 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-/**
- * 根布局挂载：渲染 Sonner + 提供 showToast（内部转发到 sonner）。
- */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     switch (type) {

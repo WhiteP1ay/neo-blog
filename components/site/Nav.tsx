@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { SiteThemeSwitcher } from '@/components/site/SiteThemeSwitcher';
-import { navItems } from '@/app/nav';
 
+export const navItems = [
+  { href: '/blog', label: '博客' },
+  { href: '/tools', label: '工具' },
+  { href: '/about', label: '关于' },
+  { href: '/privacy', label: '隐私政策' },
+];
 
 export function Nav() {
   return (

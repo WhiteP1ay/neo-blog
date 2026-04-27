@@ -7,12 +7,12 @@
 import { useEffect, useState } from 'react';
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { SheetModalHeader, sheetModalCloseButtonClass, sheetModalRedDotClass } from '@/components/SheetModalHeader';
+import { SheetModalHeader } from '@/components/Home/modal/Header';
 import { openSiteModal } from '../store/modals';
 import { SettingsAnalytics } from './SettingsAnalytics';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import type { SiteModalId } from '@/app/nav';
+import type { SiteModalId } from '@/components/Home/type/layout';
 import { cn } from '@/lib/utils';
 
 const THEME_OPTIONS = [
@@ -80,11 +80,7 @@ export function WindowSettings({ onClose, isAdminLoggedIn = false }: WindowSetti
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <SheetModalHeader
-        closeControl={
-          <button type="button" onClick={onClose} className={sheetModalCloseButtonClass} aria-label="关闭设置">
-            <span className={sheetModalRedDotClass} />
-          </button>
-        }
+        onClose={onClose}
         title={
           <h2 id="home-settings-title" className="text-foreground text-sm font-semibold">
             设置

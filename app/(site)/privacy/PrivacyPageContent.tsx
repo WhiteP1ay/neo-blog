@@ -1,4 +1,4 @@
-import { formatDate } from '@/app/utils/date';
+import { formatDate } from '@/lib/utils';
 
 export function PrivacyPageContent() {
   return (
