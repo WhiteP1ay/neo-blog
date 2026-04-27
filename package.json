@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "biome lint --write"
+    "lint": "biome lint --write",
+    "db:seed-admin": "tsx scripts/seed-admin.ts",
+    "db:init-admin": "pnpm drizzle-kit push && pnpm db:seed-admin"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

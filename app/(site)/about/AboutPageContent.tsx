@@ -36,7 +36,6 @@ export function AboutPageContent() {
               Email
             </a>
           </li>
-          <li>个人微信：WhitePlay2233</li>
         </ul>
         <WeChatAD />
       </section>

@@ -2,87 +2,39 @@
 
 一套支持文件后台管理、实现访问统计的极简博客系统。
 
-## ✨ 特性
-
-- 📝 **Markdown 文件上传** - 支持拖拽或点击上传 `.md` 文件，自动解析并发布文章
-- 📊 **访问统计** - 完整的 PV（页面浏览量）和 UV（独立访客数）统计功能
-- 💬 **评论系统** - 支持嵌套的文章评论
-- 🎨 **极简设计** - 清爽简洁的界面，专注于内容展示
-- 🔐 **后台管理** - 附带有文章管理和数据统计后台
-- 📱 **响应式设计** - 适配桌面和移动设备
-
-## 📦 安装
-
-### 安装步骤
-
-1. **克隆项目**
-
 ```bash
-git clone <repository-url>
-cd neo-blog
+# 1) 推送 Drizzle 迁移到 Supabase
+pnpm drizzle-kit push
+
+# 2) 检查核心表是否存在
+psql "$DATABASE_URL" -c "\dt"
 ```
 
-2. **安装依赖**
+如果 `psql` 输出中可见 `posts` / `comments` / `users` / `analytics`，说明迁移成功。
 
-```bash
-yarn install
-# 或
-npm install
-```
-
-3. **配置环境变量**
-
-数据库连接方式基于 DATABASE_URL
-
-```env
-# 数据库连接（格式: postgresql://用户名:密码@主机:端口/数据库名）
-DATABASE_URL=postgresql://your_username:your_password@localhost:5432/neo_blog
-```
-
-**注意**：如果使用 `compose.yml` 启动数据库，还需要创建一个.env文件，并输入以下环境变量用于 PostgreSQL 容器配置：
-
-```env
-DATABASE_URL=postgresql://postgres:example@localhost:5432/neo_blog
-
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=example
-POSTGRES_DB=neo_blog
-```
-
-4. **初始化数据库**
+## 初始化数据库
 
 ```bash
 # 运行数据库迁移
-yarn drizzle-kit push
+pnpm drizzle-kit push
 # 或
 npx drizzle-kit push
 ```
 
-5. **创建管理员账户**
-
-首次使用需要手动在数据库中创建管理员账户，或通过数据库管理工具（如 Adminer）创建。
-
-6. **启动开发服务器**
+1. **创建管理员账户**
 
 ```bash
-yarn dev
-# 或
-npm run dev
+# 先在 .env 中配置 ADMIN_NAME / ADMIN_PASSWORD
+pnpm db:seed-admin
 ```
 
-访问 [http://localhost:3000](http://localhost:3000) 查看应用。
-
-## 🐳 Docker 部署
-
-### 使用 Docker Compose（推荐）
-
-项目包含 `compose.yml` 文件，可以快速启动数据库和管理工具：
+也可以直接一键执行“迁移 + 管理员初始化”：
 
 ```bash
-docker compose up -d
+pnpm db:init-admin
 ```
 
-### 构建镜像
+## 构建镜像
 
 ```bash
 # 构建并推送
@@ -129,6 +81,7 @@ docker run -d -p 3000:3000 \
      - `DOCKERHUB_TOKEN`: 你的 Docker Hub Access Token（在 Docker Hub → Account Settings → Security 中创建）
 
 2. **使用方式**：
+
    ```bash
    # 切换到 deploy 分支
    git checkout deploy
@@ -147,51 +100,6 @@ docker run -d -p 3000:3000 \
 
 工作流文件位置：`.github/workflows/deploy.yml`
 
-## 📖 使用指南
-
-### 后台管理
-
-1. 访问 `/login` 登录管理后台
-2. 登录后进入 `/admin` 管理页面
-
-### 文章管理
-
-- 在管理后台直接拖拽或点击上传 `.md` 文件
-- 系统会自动从文件名或文件第一行的 `# 标题` 提取标题
-- Markdown 内容被保存
-- 文章内容被转换成 html 并保存
-- 支持下载 Markdown
-- 修改内容仅支持重新上传
-- 文章的评论可以管理
-
-### 访问统计
-
-- 在管理后台的"统计"标签页查看：
-  - 总 PV（页面浏览量）
-  - 总 UV（独立访客数）
-  - 每日统计数据
-  - 热门文章排行
-  - 事件类型统计
-
-## 📁 项目结构
-
-```
-neo-blog/
-├── app/                    # Next.js App Router 页面
-│   ├── admin/             # 管理后台
-│   ├── api/               # API 路由
-│   ├── components/        # 公共组件
-│   └── [id]/              # 文章详情页
-├── server/                # 服务端代码
-│   ├── actions/           # Server Actions
-│   ├── db/                # 数据库配置
-│   └── utils/             # 工具函数
-├── drizzle/               # 数据库迁移文件
-├── Dockerfile             # Docker 镜像构建文件
-├── compose.yml            # Docker Compose 配置
-└── build-and-push.sh      # 构建和推送脚本
-```
-
 ## 🔧 开发
 
 ### 数据库迁移
@@ -203,6 +111,4 @@ yarn drizzle-kit generate
 # 应用迁移
 yarn drizzle-kit push
 
-# 查看数据库（使用 Adminer）
-# 访问 http://localhost:8080
 ```

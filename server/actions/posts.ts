@@ -90,7 +90,7 @@ export async function getHomeExplorerData(): Promise<
     const categories: HomeExplorerCategory[] = [
       {
         topicKey: 0,
-        name: "未分类",
+        name: "随笔",
         isPinned: false,
         sortOrder: 0,
         createdAt: null,

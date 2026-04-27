@@ -1,8 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Book, Github, Tv, Youtube } from 'lucide-react';
-import { SOCIAL_LINKS } from '@/app/constants';
+import {
+  Book,
+  //  Github, Tv, Youtube
+} from 'lucide-react';
+import { isMobile as isMobileUtil } from '@/lib/utils';
+import { headers } from 'next/headers';
+// import { SOCIAL_LINKS } from '@/app/constants';
 
 export const revalidate = 60;
 
@@ -18,14 +23,20 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
+
+  const headersList = await headers();
+  const userAgent = headersList.get('user-agent') || '';
+  const isMobile = isMobileUtil(userAgent);
+
   return (
     <div className="bg-background min-h-dvh">
       <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-6">
         <section className="flex flex-col gap-4 flex-1 justify-center items-center">
-          <h1 className="text-4xl font-bold">White Meta</h1>
-          <p className="text-lg text-muted-foreground">白玩dev,一个程序员/佛学爱好者/摩托佬/业余吉他手</p>
+          <h1 className="md:text-4xl text-2xl font-bold">欢迎来到 White Meta</h1>
+          <p className="text-lg text-muted-foreground">这里是白玩dev的个人网站</p>
+          <p className="md:text-lg text-muted-foreground text-sm">白玩dev：一个程序员/佛系青年/摩托佬/业余吉他手</p>
           <div className="flex gap-2">
-            <Button asChild variant="secondary">
+            {/* <Button asChild variant="secondary">
               <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
                 <Github className="size-4" />
                 GitHub
@@ -42,11 +53,11 @@ export default async function Home() {
                 <Tv className="size-4" />
                 Bilibili
               </a>
-            </Button>
+            </Button> */}
             <Button asChild>
-              <Link href="/b">
+              <Link href={isMobile ? '/blog' : '/b'}>
                 <Book className="size-4" />
-                Blog
+                进入 Blog
               </Link>
             </Button>
           </div>
