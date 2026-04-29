@@ -7,7 +7,7 @@ import { HomeExplorer } from '@/components/Home';
 import { buildHomeSearchString, resolveHomePageSearchParams } from './paramsHandle';
 import { getSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
-import { ModalProvider } from '@/app/b/ModalProvider';
+import { ModalProvider } from './ModalProvider';
 import { AboutPageContent } from '@/app/(site)/about/AboutPageContent';
 import { PrivacyPageContent } from '@/app/(site)/privacy/PrivacyPageContent';
 import { ToolsPageContent } from '@/app/(site)/tools/ToolsPageContent';
