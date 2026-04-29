@@ -120,3 +120,37 @@ body {
   color: var(--shiki-dark);
   background-color: var(--shiki-dark-bg);
 }
+
+/* 文章阅读区 + 富文本编辑区：统一表格与链接样式 */
+:where(.prose, .ProseMirror) table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+:where(.prose, .ProseMirror) th,
+:where(.prose, .ProseMirror) td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+
+:where(.prose, .ProseMirror) th {
+  background: color-mix(in oklab, hsl(var(--muted)) 85%, transparent);
+  font-weight: 600;
+  text-align: left;
+}
+
+:where(.prose, .ProseMirror) a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+  word-break: break-word;
+}
+
+:where(.prose, .ProseMirror) a:hover {
+  opacity: 0.85;
+}

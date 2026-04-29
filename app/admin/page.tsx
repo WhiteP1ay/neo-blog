@@ -46,7 +46,7 @@ export default async function HomePage({
   if (postId !== null) {
     const pr = await getPostById(postId, false);
     if (!pr.success || !pr.data) {
-      redirect(`/b?${buildHomeSearchString({ topic: activeTopicQuery })}`);
+      redirect(`/admin?${buildHomeSearchString({ topic: activeTopicQuery })}`);
     }
     postDetail = pr.data;
   }

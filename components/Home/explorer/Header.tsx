@@ -20,7 +20,7 @@ export function Header({ isAdminLoggedIn }: HeaderProps) {
   return (
     <header className="border-border bg-muted/40 shrink-0 border-b">
       <div className="flex h-10 items-center gap-3 px-4">
-        <Link href="/b" className="truncate text-base font-bold text-foreground">
+        <Link href="/admin" className="truncate text-base font-bold text-foreground">
           White Meta
         </Link>
 

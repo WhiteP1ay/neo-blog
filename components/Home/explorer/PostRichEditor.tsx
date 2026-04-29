@@ -7,6 +7,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Table from '@tiptap/extension-table';
+import TableCell from '@tiptap/extension-table-cell';
+import TableHeader from '@tiptap/extension-table-header';
+import TableRow from '@tiptap/extension-table-row';
+import Link from '@tiptap/extension-link';
 import { Bold, Heading2, Italic, List, ListOrdered } from 'lucide-react';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/button';
@@ -36,7 +41,20 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
   const [saving, setSaving] = useState(false);
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Link.configure({
+        autolink: true,
+        linkOnPaste: true,
+        openOnClick: false,
+      }),
+    ],
     content: post.content,
     immediatelyRender: false,
     editorProps: {
@@ -78,7 +96,7 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-3">
+      <div className="bg-background/95 sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border pb-3 backdrop-blur supports-backdrop-filter:bg-background/80">
         <Button
           type="button"
           variant={editor.isActive('bold') ? 'secondary' : 'ghost'}
@@ -128,6 +146,56 @@ export function PostRichEditor({ post, onSaved, onCancel }: PostRichEditorProps)
           aria-label="有序列表"
         >
           <ListOrdered className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={editor.isActive('table') ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() =>
+            editor
+              .chain()
+              .focus()
+              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+              .run()
+          }
+        >
+          表格
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          disabled={!editor.isActive('table')}
+        >
+          加行
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          disabled={!editor.isActive('table')}
+        >
+          删行
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().addColumnAfter().run()}
+          disabled={!editor.isActive('table')}
+        >
+          加列
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().deleteTable().run()}
+          disabled={!editor.isActive('table')}
+        >
+          删表
         </Button>
         <span className="min-w-4 flex-1" />
         <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
