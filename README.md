@@ -21,17 +21,18 @@ pnpm drizzle-kit push
 npx drizzle-kit push
 ```
 
-1. **创建管理员账户**
+1. **执行系统初始化（系统目录 + 管理员账户）**
 
 ```bash
-# 先在 .env 中配置 ADMIN_NAME / ADMIN_PASSWORD
-pnpm db:seed-admin
+# 先在 .env 中配置 INIT_ADMIN_NAME / INIT_ADMIN_PASSWORD
+# 也兼容 ADMIN_NAME / ADMIN_PASSWORD
+pnpm db:bootstrap
 ```
 
-也可以直接一键执行“迁移 + 管理员初始化”：
+也可以直接一键执行“迁移 + 系统初始化”：
 
 ```bash
-pnpm db:init-admin
+pnpm db:init
 ```
 
 ## 构建镜像

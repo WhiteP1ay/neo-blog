@@ -1,9 +1,9 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { SiteRedDotModal } from '@/components/Home/modal/Modal';
-import type { SiteModalId } from '@/components/Home/type/layout';
-import { closeSiteModal, useSiteModalsStore } from '@/components/Home';
+import { SiteRedDotModal } from '@/components/admin/modal/Modal';
+import type { SiteModalId } from '@/types/admin/layout';
+import { closeSiteModal, useSiteModalsStore } from '@/components/admin';
 
 const TITLES: Record<SiteModalId, string> = {
   tools: '工具与资源',

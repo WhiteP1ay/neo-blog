@@ -2,8 +2,11 @@ import { redirect } from "next/navigation";
 import type { HomeExplorerCategory } from '@/server/types/explorer';
 
 export type HomePageSearchParamsInput = {
+  view?: string;
   topic?: string;
   post?: string;
+  album?: string;
+  photo?: string;
 };
 
 /** 首页 topic 查询串：0 为未分类，正整数为专题 id */
@@ -13,13 +16,23 @@ export function topicToSearchValue(key: number): string {
 
 /** 首页 redirect 时构造 topic / post 查询串 */
 export function buildHomeSearchString(opts: {
+  view?: 'posts' | 'albums';
   topic: string;
   post?: number;
+  album?: number;
+  photo?: number;
 }) {
   const q = new URLSearchParams();
+  q.set('view', opts.view ?? 'posts');
   q.set("topic", opts.topic);
   if (opts.post != null) {
     q.set("post", String(opts.post));
+  }
+  if (opts.album != null) {
+    q.set('album', String(opts.album));
+  }
+  if (opts.photo != null) {
+    q.set('photo', String(opts.photo));
   }
   return q.toString();
 }
@@ -62,4 +75,11 @@ export function resolveHomePageSearchParams(
   }
 
   return { activeTopicQuery, postId };
+}
+
+export function resolveAdminView(sp: HomePageSearchParamsInput): 'posts' | 'albums' {
+  if (sp.view === 'albums') {
+    return 'albums';
+  }
+  return 'posts';
 }

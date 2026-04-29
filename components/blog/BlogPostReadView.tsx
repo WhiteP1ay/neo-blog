@@ -1,5 +1,5 @@
 import { PostHeader } from './PostHeader';
-import type { HomeExplorerPostDetailPayload } from '@/components/Home';
+import type { HomeExplorerPostDetailPayload } from '@/components/admin';
 import { CodeBlockCopyButtons } from '@/components/blog/CodeBlockCopyButtons';
 import { CommentsSection } from './CommentsSection';
 

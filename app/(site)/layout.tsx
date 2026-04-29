@@ -9,13 +9,13 @@ import { Breadcrumb } from '@/components/site/Breadcrumb';
  */
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <Nav />
-      <main className='mt-4 site-page'>
+      <main className="site-page min-h-0 flex-1 overflow-auto py-4">
         <Breadcrumb />
         {children}
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

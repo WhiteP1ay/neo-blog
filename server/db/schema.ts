@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, varchar, text, boolean } from 'drizzle-orm/pg-core';
+import { integer, pgTable, timestamp, varchar, text, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 /**
@@ -12,16 +12,21 @@ export const usersTable = pgTable('users', {
   isVip: boolean().notNull().default(false),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp().notNull().defaultNow(),
-});
+}, (table) => ({
+  nameUniqueIndex: uniqueIndex('users_name_unique_idx').on(table.name),
+}));
 
 /**
  * 文章表
  */
 export const postsTable = pgTable('posts', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  nodeId: integer().references(() => explorerNodesTable.id, { onDelete: 'cascade' }),
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(), // 存储解析后的HTML
   markdownContent: text(), // 存储原始Markdown（可选，用于下载）
+  coverUrl: text(), // 从正文中提取的首图 URL
+  excerpt: text(), // 纯文本摘要（约 100 字）
   isPinned: boolean().notNull().default(false), // 是否置顶
   createdAt: timestamp(), // 创建时间（可为空）
   updatedAt: timestamp(), // 修改时间（可为空）
@@ -32,9 +37,8 @@ export const postsTable = pgTable('posts', {
  */
 export const commentsTable = pgTable('comments', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  postId: integer()
-    .notNull()
-    .references(() => postsTable.id, { onDelete: 'cascade' }),
+  targetType: varchar({ length: 16 }).notNull(), // post | album | photo
+  targetId: integer().notNull(),
   parentId: integer(), // 回复的父评论ID，null表示顶级评论
   author: varchar({ length: 255 }).notNull(), // 评论者昵称
   email: varchar({ length: 255 }), // 邮箱（可选）
@@ -42,7 +46,10 @@ export const commentsTable = pgTable('comments', {
   ip: varchar({ length: 45 }), // 存储IP地址
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp().notNull().defaultNow(),
-});
+}, (table) => ({
+  targetIndex: index('comments_target_idx').on(table.targetType, table.targetId),
+  parentIndex: index('comments_parent_idx').on(table.parentId),
+}));
 
 /**
  * 埋点数据表
@@ -60,66 +67,79 @@ export const analyticsTable = pgTable('analytics', {
 });
 
 /**
- * 专题表
+ * 资源管理树节点表（单根目录 + 任意层级）
  */
-export const topicsTable = pgTable('topics', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(), // 专题名称
-  description: text(), // 专题描述（可选）
-  coverImage: text(), // 封面图（base64 格式，存储在数据库中）
-  isPinned: boolean().notNull().default(false), // 是否置顶
-  isHidden: boolean().notNull().default(false), // 是否隐藏
-  /** 同 isPinned 分组内的展示顺序，越小越靠前 */
-  sortOrder: integer().notNull().default(0),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-});
+export const explorerNodesTable = pgTable(
+  'explorer_nodes',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    parentId: integer(),
+    code: varchar({ length: 64 }),
+    name: varchar({ length: 255 }).notNull(),
+    nodeType: varchar({ length: 20 }).notNull(), // folder | markdown | photo
+    isHidden: boolean().notNull().default(false),
+    allowComment: boolean().notNull().default(true),
+    sortOrder: integer().notNull().default(0),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => ({
+    parentSortIndex: index('explorer_nodes_parent_sort_idx').on(table.parentId, table.sortOrder),
+    typeIndex: index('explorer_nodes_type_idx').on(table.nodeType),
+    codeUniqueIndex: uniqueIndex('explorer_nodes_code_unique_idx').on(table.code),
+  }),
+);
 
 /**
- * 专题-文章关联表（多对多关系，带排序）
+ * 图片内容表：photo 节点的文件元信息。
  */
-export const topicPostsTable = pgTable('topic_posts', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  topicId: integer()
-    .notNull()
-    .references(() => topicsTable.id, { onDelete: 'cascade' }),
-  postId: integer()
-    .notNull()
-    .references(() => postsTable.id, { onDelete: 'cascade' }),
-  sortOrder: integer().notNull().default(0), // 排序顺序
-  createdAt: timestamp().notNull().defaultNow(),
-});
-
-// 定义关系
-export const topicsRelations = relations(topicsTable, ({ many }) => ({
-  topicPosts: many(topicPostsTable),
-}));
-
-export const postsRelations = relations(postsTable, ({ many }) => ({
-  topicPosts: many(topicPostsTable),
-}));
-
-export const topicPostsRelations = relations(topicPostsTable, ({ one }) => ({
-  topic: one(topicsTable, {
-    fields: [topicPostsTable.topicId],
-    references: [topicsTable.id],
+export const photosTable = pgTable(
+  'photos',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    nodeId: integer()
+      .notNull()
+      .references(() => explorerNodesTable.id, { onDelete: 'cascade' }),
+    fileUrl: text(),
+    objectKey: varchar({ length: 500 }),
+    size: integer(),
+    mimeType: varchar({ length: 120 }),
+    width: integer(),
+    height: integer(),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => ({
+    nodeUniqueIndex: uniqueIndex('photos_node_unique_idx').on(table.nodeId),
   }),
+);
+
+export const postsRelations = relations(postsTable, ({ one }) => ({
+  node: one(explorerNodesTable, {
+    fields: [postsTable.nodeId],
+    references: [explorerNodesTable.id],
+  }),
+}));
+
+export const explorerNodesRelations = relations(explorerNodesTable, ({ one, many }) => ({
+  parent: one(explorerNodesTable, {
+    fields: [explorerNodesTable.parentId],
+    references: [explorerNodesTable.id],
+  }),
+  children: many(explorerNodesTable),
   post: one(postsTable, {
-    fields: [topicPostsTable.postId],
-    references: [postsTable.id],
+    fields: [explorerNodesTable.id],
+    references: [postsTable.nodeId],
+  }),
+  photo: one(photosTable, {
+    fields: [explorerNodesTable.id],
+    references: [photosTable.nodeId],
   }),
 }));
 
-/**
- * 工具表
- */
-export const toolsTable = pgTable('tools', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(), // 工具名称
-  description: text(), // 工具描述（可选）
-  coverImage: text(), // 封面图（base64 或 URL）
-  url: text().notNull(), // 工具链接URL（点击直接跳转）
-  isHidden: boolean().notNull().default(false), // 是否隐藏
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-});
+export const photosRelations = relations(photosTable, ({ one }) => ({
+  node: one(explorerNodesTable, {
+    fields: [photosTable.nodeId],
+    references: [explorerNodesTable.id],
+  }),
+}));

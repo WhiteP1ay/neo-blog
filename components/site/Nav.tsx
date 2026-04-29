@@ -10,14 +10,14 @@ export const navItems = [
 
 export function Nav() {
   return (
-    <nav className="border-b border-border bg-background sticky top-0 left-0 right-0 z-50">
-      <div className="px-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 py-3">
+    <nav className="border-b border-border bg-background sticky top-0 left-0 right-0 z-50 h-12 shrink-0">
+      <div className="h-full px-4">
+        <div className="flex h-full items-center justify-between gap-x-6">
           <Link href="/" className="text-base font-semibold tracking-tight text-foreground no-underline">
             White Meta
           </Link>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-x-4">
             {navItems.map((item) => {
               return (
                 <Link className="text-sm underline underline-offset-4 hover:opacity-80" key={item.href} href={item.href}>

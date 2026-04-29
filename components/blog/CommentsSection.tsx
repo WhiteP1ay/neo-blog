@@ -50,7 +50,8 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
 
     try {
       const result = await createComment({
-        postId,
+        targetType: 'post',
+        targetId: postId,
         parentId: replyingTo || null,
         author: formData.author,
         email: formData.email || undefined,

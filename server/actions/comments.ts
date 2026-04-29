@@ -3,7 +3,7 @@
 
 import { db } from '@/server/db/db';
 import { commentsTable } from '@/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { getClientIP } from '@/server/utils/get-client-ip';
@@ -12,16 +12,25 @@ import type { ActionResult, ActionVoidResult } from '@/server/types/action-resul
 import type { CommentWithReplies } from '@/server/types/comments-thread';
 import type { Comment } from '@/server/types/models';
 
+export type CommentTargetType = 'post' | 'album' | 'photo';
+
 /**
- * Server Action: 获取文章的所有评论
+ * Server Action: 获取目标实体的所有评论
  * 返回树形结构
  */
-export async function getCommentsByPostId(postId: number): Promise<ActionResult<CommentWithReplies[]>> {
+export async function getCommentsByTarget(
+  targetType: CommentTargetType,
+  targetId: number,
+): Promise<ActionResult<CommentWithReplies[]>> {
+  if (!targetType || !Number.isFinite(targetId) || targetId <= 0) {
+    return actionErr('缺少必要参数');
+  }
+
   try {
     const comments = await db
       .select()
       .from(commentsTable)
-      .where(eq(commentsTable.postId, postId))
+      .where(and(eq(commentsTable.targetType, targetType), eq(commentsTable.targetId, targetId)))
       .orderBy(desc(commentsTable.createdAt));
 
     const commentMap = new Map<number, CommentWithReplies>();
@@ -55,7 +64,8 @@ export async function getCommentsByPostId(postId: number): Promise<ActionResult<
  * Server Action: 创建评论
  */
 export async function createComment(data: {
-  postId: number;
+  targetType: CommentTargetType;
+  targetId: number;
   parentId?: number | null;
   author: string;
   email?: string;
@@ -63,7 +73,7 @@ export async function createComment(data: {
   /** 不传则从请求头解析；显式 `null` 表示不落库 IP */
   ip?: string | null;
 }): Promise<ActionResult<Comment>> {
-  if (!data.postId || !data.author || !data.content) {
+  if (!data.targetType || !data.targetId || !data.author || !data.content) {
     return actionErr('缺少必要参数');
   }
 
@@ -73,7 +83,8 @@ export async function createComment(data: {
     const result = await db
       .insert(commentsTable)
       .values({
-        postId: data.postId,
+        targetType: data.targetType,
+        targetId: data.targetId,
         parentId: data.parentId || null,
         author: data.author,
         email: data.email || null,
@@ -87,6 +98,13 @@ export async function createComment(data: {
     console.error('创建评论失败:', error);
     return actionErr('创建评论失败');
   }
+}
+
+/**
+ * 向后兼容：文章评论读取接口。
+ */
+export async function getCommentsByPostId(postId: number): Promise<ActionResult<CommentWithReplies[]>> {
+  return getCommentsByTarget('post', postId);
 }
 
 /**
