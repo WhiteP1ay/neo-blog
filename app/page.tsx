@@ -5,8 +5,7 @@ import {
   Book,
   //  Github, Tv, Youtube
 } from 'lucide-react';
-import { isMobile as isMobileUtil } from '@/lib/utils';
-import { headers } from 'next/headers';
+
 // import { SOCIAL_LINKS } from '@/app/constants';
 
 export const revalidate = 60;
@@ -24,10 +23,6 @@ export const metadata: Metadata = {
 
 export default async function Home() {
 
-  const headersList = await headers();
-  const userAgent = headersList.get('user-agent') || '';
-  const isMobile = isMobileUtil(userAgent);
-
   return (
     <div className="bg-background min-h-dvh">
       <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-6">
@@ -36,26 +31,8 @@ export default async function Home() {
           <p className="text-lg text-muted-foreground">这里是白玩dev的个人网站</p>
           <p className="md:text-lg text-muted-foreground text-sm">白玩dev：一个程序员/佛系青年/摩托佬/业余吉他手</p>
           <div className="flex gap-2">
-            {/* <Button asChild variant="secondary">
-              <a href={SOCIAL_LINKS.github} target="_blank" rel="noopener noreferrer">
-                <Github className="size-4" />
-                GitHub
-              </a>
-            </Button>
-            <Button asChild variant="secondary">
-              <a href={SOCIAL_LINKS.youtube} target="_blank" rel="noopener noreferrer">
-                <Youtube className="size-4" />
-                YouTube
-              </a>
-            </Button>
-            <Button asChild variant="secondary">
-              <a href={SOCIAL_LINKS.bilibili} target="_blank" rel="noopener noreferrer">
-                <Tv className="size-4" />
-                Bilibili
-              </a>
-            </Button> */}
             <Button asChild>
-              <Link href={isMobile ? '/blog' : '/b'}>
+              <Link href={'/blog'}>
                 <Book className="size-4" />
                 进入 Blog
               </Link>
