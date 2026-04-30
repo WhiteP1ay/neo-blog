@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "biome lint --write",
     "db:bootstrap": "tsx scripts/bootstrap.ts",
-    "db:init": "pnpm drizzle-kit push && pnpm db:bootstrap"
+    "db:init": "pnpm drizzle-kit push && pnpm db:bootstrap",
+    "maintenance:cleanup-dangling": "tsx scripts/cleanup-dangling-nodes.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

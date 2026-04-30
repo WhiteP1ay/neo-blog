@@ -18,6 +18,18 @@ const EXTERNAL_POSTS_ROOT_CODE = 'external_posts_root';
 const EXTERNAL_PHOTOS_ROOT_CODE = 'external_photos_root';
 const SYSTEM_NOT_INITIALIZED_ERROR = '系统目录未初始化，请先执行 pnpm db:init';
 
+/**
+ * 校验父节点必须存在且为目录，避免生成“孤儿节点”导致树中不可见。
+ */
+async function assertFolderParent(parentId: number): Promise<ActionResult<void>> {
+  const parent = await db.query.explorerNodesTable.findFirst({
+    where: (n, { eq: eqFn }) => eqFn(n.id, parentId),
+  });
+  if (!parent) return actionErr('父目录不存在');
+  if (parent.nodeType !== 'folder') return actionErr('父节点必须是目录');
+  return actionOk(undefined);
+}
+
 async function getRootNode() {
   return db.query.explorerNodesTable.findFirst({
     where: (n, { and: andFn, eq: eqFn, isNull: isNullFn }) =>
@@ -138,6 +150,8 @@ export async function createMarkdownFile(parentId: number, name: string): Promis
   if (!gate.ok) return actionErr(gate.error);
   const trimmed = name.trim() || '无标题.md';
   try {
+    const parentGate = await assertFolderParent(parentId);
+    if (!parentGate.success) return actionErr(parentGate.error);
     const maxRow = await db.select({ m: max(explorerNodesTable.sortOrder) }).from(explorerNodesTable).where(eq(explorerNodesTable.parentId, parentId));
     const nextSort = (maxRow[0]?.m ?? -1) + 1;
     const nodeRows = await db
@@ -165,6 +179,8 @@ export async function createPhotoFileFromForm(parentId: number, formData: FormDa
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) return actionErr(gate.error);
   try {
+    const parentGate = await assertFolderParent(parentId);
+    if (!parentGate.success) return actionErr(parentGate.error);
     const fileRaw = formData.get('file');
     if (!(fileRaw instanceof File)) return actionErr('未找到上传文件');
     if (isMarkdownUpload(fileRaw)) {
@@ -207,6 +223,8 @@ export async function createMarkdownFileFromForm(parentId: number, formData: For
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) return actionErr(gate.error);
   try {
+    const parentGate = await assertFolderParent(parentId);
+    if (!parentGate.success) return actionErr(parentGate.error);
     const fileRaw = formData.get('file');
     if (!(fileRaw instanceof File)) return actionErr('未找到上传文件');
     const text = await fileRaw.text();
@@ -468,6 +486,67 @@ export async function deleteExplorerNodesBatch(input: { nodeIds: number[] }): Pr
   } catch (error) {
     console.error('批量删除节点失败:', error);
     return actionErr('批量删除节点失败');
+  }
+}
+
+export async function getDanglingNodeStats(): Promise<ActionResult<{ markdownCount: number; photoCount: number; total: number }>> {
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) return actionErr(gate.error);
+  try {
+    const [nodes, posts, photos] = await Promise.all([
+      db.select({ id: explorerNodesTable.id, nodeType: explorerNodesTable.nodeType }).from(explorerNodesTable),
+      db.select({ nodeId: postsTable.nodeId }).from(postsTable),
+      db.select({ nodeId: photosTable.nodeId }).from(photosTable),
+    ]);
+    const postNodeIds = new Set<number>();
+    for (const post of posts) {
+      if (post.nodeId != null) postNodeIds.add(post.nodeId);
+    }
+    const photoNodeIds = new Set<number>();
+    for (const photo of photos) {
+      photoNodeIds.add(photo.nodeId);
+    }
+    let markdownCount = 0;
+    let photoCount = 0;
+    for (const node of nodes) {
+      if (node.nodeType === 'markdown' && !postNodeIds.has(node.id)) markdownCount += 1;
+      if (node.nodeType === 'photo' && !photoNodeIds.has(node.id)) photoCount += 1;
+    }
+    return actionOk({ markdownCount, photoCount, total: markdownCount + photoCount });
+  } catch (error) {
+    console.error('统计脏节点失败:', error);
+    return actionErr('统计脏节点失败');
+  }
+}
+
+export async function cleanupDanglingNodes(): Promise<ActionResult<{ deleted: number }>> {
+  const gate = requireAdminSession(await getSession());
+  if (!gate.ok) return actionErr(gate.error);
+  try {
+    const [nodes, posts, photos] = await Promise.all([
+      db.select({ id: explorerNodesTable.id, nodeType: explorerNodesTable.nodeType }).from(explorerNodesTable),
+      db.select({ nodeId: postsTable.nodeId }).from(postsTable),
+      db.select({ nodeId: photosTable.nodeId }).from(photosTable),
+    ]);
+    const postNodeIds = new Set<number>();
+    for (const post of posts) {
+      if (post.nodeId != null) postNodeIds.add(post.nodeId);
+    }
+    const photoNodeIds = new Set<number>();
+    for (const photo of photos) {
+      photoNodeIds.add(photo.nodeId);
+    }
+    const danglingIds: number[] = [];
+    for (const node of nodes) {
+      if (node.nodeType === 'markdown' && !postNodeIds.has(node.id)) danglingIds.push(node.id);
+      if (node.nodeType === 'photo' && !photoNodeIds.has(node.id)) danglingIds.push(node.id);
+    }
+    if (danglingIds.length === 0) return actionOk({ deleted: 0 });
+    await db.delete(explorerNodesTable).where(inArray(explorerNodesTable.id, danglingIds));
+    return actionOk({ deleted: danglingIds.length });
+  } catch (error) {
+    console.error('清理脏节点失败:', error);
+    return actionErr('清理脏节点失败');
   }
 }
 

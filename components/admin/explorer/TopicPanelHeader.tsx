@@ -4,7 +4,7 @@
  * 专题栏头部：展开/收起切换 + 标题 +（管理员）新建专题入口。
  */
 
-import { PanelLeftClose, PanelRight, Plus } from 'lucide-react';
+import { PanelLeftClose, PanelRight, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ export type TopicPanelHeaderProps = {
   onCollapse: () => void;
   onExpand: () => void;
   onCreateTopic: () => void;
+  onRefresh: () => void;
   className?: string;
 };
 
@@ -23,6 +24,7 @@ export function TopicPanelHeader({
   onCollapse,
   onExpand,
   onCreateTopic,
+  onRefresh,
   className,
 }: TopicPanelHeaderProps) {
   return (
@@ -49,19 +51,32 @@ export function TopicPanelHeader({
             </Button>
             <span className="text-muted-foreground truncate text-xs font-semibold uppercase tracking-wide">专题</span>
           </div>
-          {isAdminLoggedIn ? (
+          <div className="flex items-center gap-0.5">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="size-7 shrink-0"
-              aria-label="新建专题"
-              title="新建专题"
-              onClick={onCreateTopic}
+              aria-label="刷新资源树"
+              title="刷新资源树"
+              onClick={onRefresh}
             >
-              <Plus className="size-4" />
+              <RefreshCw className="size-3.5" />
             </Button>
-          ) : null}
+            {isAdminLoggedIn ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7 shrink-0"
+                aria-label="新建专题"
+                title="新建专题"
+                onClick={onCreateTopic}
+              >
+                <Plus className="size-4" />
+              </Button>
+            ) : null}
+          </div>
         </>
       ) : (
         <Button

@@ -586,6 +586,7 @@ export function TopicPanel({ tree, selectedNodeId, isAdminLoggedIn, refreshExplo
             onCollapse={() => setTopicPanelExpanded(false)}
             onExpand={() => setTopicPanelExpanded(true)}
             onCreateTopic={() => void createRootFolder()}
+            onRefresh={refreshExplorer}
           />
           <div className={cn('grid min-h-0 flex-1 transition-[grid-template-rows] duration-340 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none', topicPanelExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
             <div className="min-h-0 overflow-hidden">

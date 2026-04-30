@@ -1,0 +1,35 @@
+name: Cleanup Dangling Explorer Nodes
+
+on:
+  schedule:
+    # 每天 UTC 19:00（北京时间次日 03:00）
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  cleanup-dangling:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cleanup dangling explorer nodes
+        run: pnpm maintenance:cleanup-dangling

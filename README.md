@@ -101,6 +101,19 @@ docker run -d -p 3000:3000 \
 
 工作流文件位置：`.github/workflows/deploy.yml`
 
+### GitHub Actions 定时清理悬挂节点
+
+项目包含定时维护工作流：`.github/workflows/maintenance-cleanup.yml`。
+
+- 执行命令：`pnpm maintenance:cleanup-dangling`
+- 触发方式：
+  - 每天 UTC 19:00（北京时间次日 03:00）
+  - 支持 Actions 页面手动触发（`workflow_dispatch`）
+
+#### 需要配置的 Secrets
+
+- `DATABASE_URL`: 生产数据库连接串
+
 ## 🔧 开发
 
 ### 数据库迁移
