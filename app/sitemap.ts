@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const postsResult = await getPosts();
   const posts = postsResult.success && postsResult.data ? postsResult.data : [];
 
-  // 首页和重要页面
+  // 首页与核心前台页面（精简版）
   const routes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -24,34 +24,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/topics`,
+      url: `${baseUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/tools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/me`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
     },
   ];
 
   // 文章页面
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${baseUrl}/${post.id}`,
+    url: `${baseUrl}/blog/${post.id}`,
     lastModified: post.updatedAt ? new Date(post.updatedAt) : new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.8,

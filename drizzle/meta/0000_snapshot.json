@@ -1,88 +1,9 @@
 {
-  "id": "c5ede1d3-abf5-4553-ad6a-3a01371cdede",
+  "id": "996817cf-fdb2-4d0c-a3cd-24ef02eff64e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.analytics": {
-      "name": "analytics",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "analytics_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "type": {
-          "name": "type",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "action": {
-          "name": "action",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "target": {
-          "name": "target",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "url": {
-          "name": "url",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ip": {
-          "name": "ip",
-          "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "userAgent": {
-          "name": "userAgent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.comments": {
       "name": "comments",
       "schema": "",
@@ -206,126 +127,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.explorer_nodes": {
-      "name": "explorer_nodes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "identity": {
-            "type": "always",
-            "name": "explorer_nodes_id_seq",
-            "schema": "public",
-            "increment": "1",
-            "startWith": "1",
-            "minValue": "1",
-            "maxValue": "2147483647",
-            "cache": "1",
-            "cycle": false
-          }
-        },
-        "parentId": {
-          "name": "parentId",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "nodeType": {
-          "name": "nodeType",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "isHidden": {
-          "name": "isHidden",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "allowComment": {
-          "name": "allowComment",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "sortOrder": {
-          "name": "sortOrder",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "explorer_nodes_parent_sort_idx": {
-          "name": "explorer_nodes_parent_sort_idx",
-          "columns": [
-            {
-              "expression": "parentId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sortOrder",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "explorer_nodes_type_idx": {
-          "name": "explorer_nodes_type_idx",
-          "columns": [
-            {
-              "expression": "nodeType",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.photos": {
       "name": "photos",
       "schema": "",
@@ -347,45 +148,35 @@
             "cycle": false
           }
         },
-        "nodeId": {
-          "name": "nodeId",
-          "type": "integer",
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
-        "fileUrl": {
-          "name": "fileUrl",
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "isHidden": {
+          "name": "isHidden",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "description": {
+          "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "objectKey": {
-          "name": "objectKey",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "size": {
-          "name": "size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mimeType": {
-          "name": "mimeType",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "width": {
-          "name": "width",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "height": {
-          "name": "height",
-          "type": "integer",
+        "coverUrl": {
+          "name": "coverUrl",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -404,38 +195,8 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "photos_node_unique_idx": {
-          "name": "photos_node_unique_idx",
-          "columns": [
-            {
-              "expression": "nodeId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "photos_nodeId_explorer_nodes_id_fk": {
-          "name": "photos_nodeId_explorer_nodes_id_fk",
-          "tableFrom": "photos",
-          "tableTo": "explorer_nodes",
-          "columnsFrom": [
-            "nodeId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -463,17 +224,25 @@
             "cycle": false
           }
         },
-        "nodeId": {
-          "name": "nodeId",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "title": {
           "name": "title",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "isHidden": {
+          "name": "isHidden",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "content": {
           "name": "content",
@@ -520,21 +289,7 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "posts_nodeId_explorer_nodes_id_fk": {
-          "name": "posts_nodeId_explorer_nodes_id_fk",
-          "tableFrom": "posts",
-          "tableTo": "explorer_nodes",
-          "columnsFrom": [
-            "nodeId"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -603,7 +358,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_name_unique_idx": {
+          "name": "users_name_unique_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

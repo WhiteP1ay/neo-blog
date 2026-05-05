@@ -1,10 +1,9 @@
 "use server";
 
 import { db } from "@/server/db/db";
-import { explorerNodesTable, postsTable } from "@/server/db/schema";
-import { desc, eq, max } from "drizzle-orm";
+import { postsTable } from "@/server/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { getSession, requireAdminSession } from "@/server/utils/auth";
-import { uploadImageToOss } from "@/server/utils/oss";
 import { highlightCodeBlocksInHtml } from "@/server/utils/highlight-code-blocks-in-html";
 import { markdownToHTML } from "@/server/utils/markdown";
 import { derivePostMetadata } from "@/server/utils/post-metadata";
@@ -19,71 +18,6 @@ import type {
 } from "@/server/types/action-result";
 import type { HomeExplorerCategory, HomePostPreview } from "@/server/types/explorer";
 import type { Post } from "@/server/types/models";
-
-const ROOT_NAME = "根目录";
-
-async function getOrCreateRootNodeId(): Promise<number> {
-  const existing = await db.query.explorerNodesTable.findFirst({
-    where: (nodes, { and, eq: eqFn, isNull }) =>
-      and(eqFn(nodes.nodeType, "folder"), isNull(nodes.parentId), eqFn(nodes.name, ROOT_NAME)),
-  });
-  if (existing) return existing.id;
-  const rows = await db
-    .insert(explorerNodesTable)
-    .values({
-      parentId: null,
-      name: ROOT_NAME,
-      nodeType: "folder",
-      sortOrder: 0,
-    })
-    .returning();
-  return rows[0].id;
-}
-
-/**
- * 校验目录节点并在其下创建 markdown 节点。
- */
-async function createMarkdownNodeForPost(
-  parentNodeId: number,
-  post: Pick<Post, "id" | "title">,
-): Promise<ActionVoidResult> {
-  const parentNode = await db.query.explorerNodesTable.findFirst({
-    where: (nodes, { eq }) => eq(nodes.id, parentNodeId),
-  });
-  if (!parentNode || parentNode.nodeType !== "folder") {
-    return actionErr("node 必须是有效目录");
-  }
-  const maxRow = await db
-    .select({ m: max(explorerNodesTable.sortOrder) })
-    .from(explorerNodesTable)
-    .where(eq(explorerNodesTable.parentId, parentNodeId));
-  const nextSort = (maxRow[0]?.m ?? -1) + 1;
-  const rows = await db.insert(explorerNodesTable).values({
-    parentId: parentNodeId,
-    name: `${post.title}.md`,
-    nodeType: "markdown",
-    sortOrder: nextSort,
-  }).returning();
-  await db.update(postsTable).set({
-    nodeId: rows[0].id,
-    updatedAt: new Date(),
-  }).where(eq(postsTable.id, post.id));
-  await db.update(explorerNodesTable).set({
-    name: `${post.title}.md`,
-    updatedAt: new Date(),
-  }).where(eq(explorerNodesTable.id, rows[0].id));
-  return actionOkVoid();
-}
-
-async function ensureFolderNode(parentNodeId: number): Promise<ActionResult<void>> {
-  const parentNode = await db.query.explorerNodesTable.findFirst({
-    where: (nodes, { eq }) => eq(nodes.id, parentNodeId),
-  });
-  if (!parentNode || parentNode.nodeType !== "folder") {
-    return actionErr("node 必须是有效目录");
-  }
-  return actionOk(undefined);
-}
 
 /**
  * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
@@ -140,6 +74,7 @@ export async function getHomeExplorerData(): Promise<
         isPinned: postsTable.isPinned,
       })
       .from(postsTable)
+      .where(eq(postsTable.type, ""))
       .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
     return actionOk([
       {
@@ -193,7 +128,6 @@ export async function createPost(data: {
   title: string;
   content: string;
   markdownContent?: string | null;
-  nodeId?: number | null;
 }): Promise<ActionResult<Post>> {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
@@ -215,13 +149,7 @@ export async function createPost(data: {
         excerpt: metadata.excerpt,
       })
       .returning();
-    const created = result[0];
-    const targetFolderId = data.nodeId ?? (await getOrCreateRootNodeId());
-    const folderCheck = await ensureFolderNode(targetFolderId);
-      if (!folderCheck.success) return actionErr(folderCheck.error);
-      const nodeResult = await createMarkdownNodeForPost(targetFolderId, { id: created.id, title: created.title });
-      if (!nodeResult.success) return actionErr(nodeResult.error);
-    return actionOk(created);
+    return actionOk(result[0]);
   } catch (error) {
     console.error("创建文章失败:", error);
     return actionErr("创建文章失败");
@@ -332,9 +260,7 @@ export async function deletePost(id: number): Promise<ActionVoidResult> {
     }
 
     const deleted = result[0];
-    if (deleted.nodeId != null) {
-      await db.delete(explorerNodesTable).where(eq(explorerNodesTable.id, deleted.nodeId));
-    }
+    void deleted;
     return actionOkVoid();
   } catch (error) {
     console.error("删除文章失败:", error);
@@ -356,7 +282,6 @@ export async function uploadMarkdownFromForm(
   try {
     const file = formData.get("file") as File | null;
     const postIdRaw = formData.get("postId") as string | null;
-    const nodeIdRaw = formData.get("nodeId") as string | null;
 
     if (!file) {
       return actionErr("未找到文件");
@@ -371,11 +296,6 @@ export async function uploadMarkdownFromForm(
     }
 
     const htmlContent = markdownToHTML(text);
-    const nodeId =
-      nodeIdRaw && Number.isFinite(Number(nodeIdRaw))
-        ? Number.parseInt(nodeIdRaw, 10)
-        : null;
-
     if (postIdRaw) {
       const result = await updatePost(Number.parseInt(postIdRaw, 10), {
         title,
@@ -394,7 +314,6 @@ export async function uploadMarkdownFromForm(
       title,
       content: htmlContent,
       markdownContent: text,
-      nodeId,
     });
 
     if (!result.success) {
@@ -408,42 +327,3 @@ export async function uploadMarkdownFromForm(
   }
 }
 
-/**
- * Server Action: 管理员上传图片（专题封面等，实际上传逻辑待接 OSS）
- */
-export async function uploadAdminImageFromForm(
-  formData: FormData,
-): Promise<
-  ActionResult<{
-    url: string;
-    objectKey: string;
-    size: number;
-    mimeType: string;
-    width: number | null;
-    height: number | null;
-  }>
-> {
-  const gate = requireAdminSession(await getSession());
-  if (!gate.ok) {
-    return actionErr(gate.error);
-  }
-
-  try {
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
-      return actionErr("未找到文件");
-    }
-
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return actionErr("图片大小不能超过 5MB");
-    }
-
-    const uploaded = await uploadImageToOss(file, "admin-images");
-    return actionOk(uploaded);
-  } catch (error) {
-    console.error("图片上传失败:", error);
-    return actionErr(error instanceof Error ? error.message : "图片上传失败");
-  }
-}

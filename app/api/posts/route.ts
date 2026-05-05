@@ -1,160 +1,156 @@
-import { NextResponse } from "next/server";
-import { desc, inArray } from "drizzle-orm";
-import { db } from "@/server/db/db";
-import { explorerNodesTable, postsTable } from "@/server/db/schema";
-import { getSystemNodeIds } from "@/server/actions/explorer-nodes";
-import { createPost } from "@/server/actions/posts";
-import { markdownToHTML } from "@/server/utils/markdown";
-import { getSession, requireAdminSession } from "@/server/utils/auth";
+import { NextResponse } from 'next/server';
+import { db } from '@/server/db/db';
+import { postsTable } from '@/server/db/schema';
+import { derivePostMetadata } from '@/server/utils/post-metadata';
+import { markdownToHTML } from '@/server/utils/markdown';
+import { getSession, requireAdminSession } from '@/server/utils/auth';
+
+type CreatePostBody = {
+  title?: unknown;
+  content?: unknown;
+  type?: unknown;
+  isHidden?: unknown;
+  isPinned?: unknown;
+  coverUrl?: unknown;
+  excerpt?: unknown;
+};
 
 /**
- * 文章列表：仅返回轻量字段，避免传输完整正文。
+ * 从 Markdown 内容推导文章标题（优先首个 H1）。
  */
+function resolvePostTitle(markdownContent: string, fallbackTitle: string): string {
+  const firstLine = markdownContent.split('\n')[0]?.trim() ?? '';
+  if (firstLine.startsWith('# ')) {
+    const heading = firstLine.slice(2).trim();
+    if (heading) {
+      return heading;
+    }
+  }
+  return fallbackTitle;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const nodeRaw = searchParams.get("node");
-    const nodeId = nodeRaw ? Number.parseInt(nodeRaw, 10) : null;
-    let rows: Array<{
-      id: number;
-      title: string;
-      excerpt: string | null;
-      coverUrl: string | null;
-      createdAt: Date | null;
-    }> = [];
+    const includeHidden = searchParams.get('includeHidden') === 'true';
+    const rows = await db.query.postsTable.findMany({
+      where: includeHidden
+        ? undefined
+        : (posts, { eq }) => eq(posts.isHidden, false),
+      orderBy: (posts, { desc: descFn }) => [descFn(posts.createdAt)],
+    });
 
-    if (nodeRaw != null) {
-      if (!Number.isFinite(nodeId)) {
-        return NextResponse.json({ error: "node 参数无效" }, { status: 400 });
-      }
-      const allNodes = await db.select().from(explorerNodesTable);
-      const allPosts = await db.select({ id: postsTable.id, nodeId: postsTable.nodeId }).from(postsTable);
-      const postIdByNode = new Map<number, number>();
-      for (const post of allPosts) {
-        if (post.nodeId != null) postIdByNode.set(post.nodeId, post.id);
-      }
-      const rootNode = allNodes.find((item) => item.id === nodeId);
-      if (!rootNode) {
-        return NextResponse.json({ error: "node 不存在" }, { status: 404 });
-      }
-      if (rootNode.nodeType !== "folder") {
-        return NextResponse.json({ error: "node 必须是目录" }, { status: 400 });
-      }
-      const byParent = new Map<number, typeof allNodes>();
-      for (const item of allNodes) {
-        if (item.parentId == null) continue;
-        const group = byParent.get(item.parentId);
-        if (group) group.push(item);
-        else byParent.set(item.parentId, [item]);
-      }
-      const queue = [nodeId];
-      const postIds = new Set<number>();
-      while (queue.length > 0) {
-        const current = queue.shift();
-        if (current == null) break;
-        const children = byParent.get(current) ?? [];
-        for (const child of children) {
-          if (child.nodeType === "markdown") {
-            const postId = postIdByNode.get(child.id);
-            if (postId != null) postIds.add(postId);
-          }
-          if (child.nodeType === "folder") {
-            queue.push(child.id);
-          }
-        }
-      }
-      if (postIds.size === 0) {
-        return NextResponse.json([]);
-      }
-      rows = await db
-        .select({
-          id: postsTable.id,
-          title: postsTable.title,
-          excerpt: postsTable.excerpt,
-          coverUrl: postsTable.coverUrl,
-          createdAt: postsTable.createdAt,
-        })
-        .from(postsTable)
-        .where(inArray(postsTable.id, [...postIds]))
-        .orderBy(desc(postsTable.createdAt));
-    } else {
-      rows = await db
-        .select({
-          id: postsTable.id,
-          title: postsTable.title,
-          excerpt: postsTable.excerpt,
-          coverUrl: postsTable.coverUrl,
-          createdAt: postsTable.createdAt,
-        })
-        .from(postsTable)
-        .orderBy(desc(postsTable.createdAt));
-    }
-
-    return NextResponse.json(
-      rows.map((item) => ({
+    return NextResponse.json({
+      data: rows.map((item) => ({
         id: item.id,
         title: item.title,
-        excerpt: item.excerpt ?? "",
-        cover_url: item.coverUrl,
-        created_at: item.createdAt,
+        type: item.type,
+        isHidden: item.isHidden,
+        isPinned: item.isPinned,
+        excerpt: item.excerpt ?? '',
+        coverUrl: item.coverUrl,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       })),
-    );
+    });
   } catch (error) {
-    console.error("获取文章列表失败:", error);
-    return NextResponse.json({ error: "获取文章列表失败" }, { status: 500 });
+    console.error('获取文章列表失败:', error);
+    return NextResponse.json({ error: '获取文章列表失败' }, { status: 500 });
   }
 }
 
 /**
- * 创建文章（支持指定目录 nodeId）。
+ * 创建文章（管理员）
  */
 export async function POST(request: Request) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json({ error: gate.error }, { status: gate.error === "未登录" ? 401 : 403 });
+    return NextResponse.json(
+      { error: gate.error },
+      { status: gate.error === '未登录' ? 401 : 403 },
+    );
   }
+
   try {
-    const body = (await request.json()) as {
-      title?: unknown;
-      content?: unknown;
-      nodeId?: unknown;
-    };
-    const title = typeof body.title === "string" ? body.title.trim() : "";
-    const content = typeof body.content === "string" ? body.content : "";
-    const nodeId =
-      typeof body.nodeId === "number" && Number.isFinite(body.nodeId)
-        ? body.nodeId
-        : typeof body.nodeId === "string" && body.nodeId.trim()
-          ? Number.parseInt(body.nodeId, 10)
-          : null;
-    const systemNodeResult = await getSystemNodeIds();
-    if (!systemNodeResult.success) {
-      return NextResponse.json({ error: systemNodeResult.error }, { status: 400 });
+    const contentType = request.headers.get('content-type') ?? '';
+    let title = '';
+    let markdownContent = '';
+    let type = '';
+    let isHidden = false;
+    let isPinned = false;
+    let inputCoverUrl = '';
+    let inputExcerpt = '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const titleRaw = formData.get('title');
+      const typeRaw = formData.get('type');
+      const isHiddenRaw = formData.get('isHidden');
+      const isPinnedRaw = formData.get('isPinned');
+      const coverUrlRaw = formData.get('coverUrl');
+      const excerptRaw = formData.get('excerpt');
+      const fileRaw = formData.get('file');
+      const contentRaw = formData.get('content');
+
+      title = typeof titleRaw === 'string' ? titleRaw.trim() : '';
+      type = typeof typeRaw === 'string' ? typeRaw : '';
+      isHidden = isHiddenRaw === 'true';
+      isPinned = isPinnedRaw === 'true';
+      inputCoverUrl = typeof coverUrlRaw === 'string' ? coverUrlRaw.trim() : '';
+      inputExcerpt = typeof excerptRaw === 'string' ? excerptRaw.trim() : '';
+
+      if (typeof contentRaw === 'string') {
+        markdownContent = contentRaw;
+      } else if (fileRaw instanceof File) {
+        markdownContent = await fileRaw.text();
+        if (!title) {
+          const fallbackTitle = fileRaw.name.replace(/\.[^.]+$/i, '').trim() || 'untitled';
+          title = resolvePostTitle(markdownContent, fallbackTitle);
+        }
+      }
+    } else {
+      const body = (await request.json()) as CreatePostBody;
+      title = typeof body.title === 'string' ? body.title.trim() : '';
+      markdownContent = typeof body.content === 'string' ? body.content : '';
+      type = typeof body.type === 'string' ? body.type : '';
+      isHidden = body.isHidden === true;
+      isPinned = body.isPinned === true;
+      inputCoverUrl = typeof body.coverUrl === 'string' ? body.coverUrl.trim() : '';
+      inputExcerpt = typeof body.excerpt === 'string' ? body.excerpt.trim() : '';
     }
+
     if (!title) {
-      return NextResponse.json({ error: "title 不能为空" }, { status: 400 });
+      return NextResponse.json({ error: 'title 不能为空' }, { status: 400 });
     }
-    if (!content.trim()) {
-      return NextResponse.json({ error: "content 不能为空" }, { status: 400 });
+    if (!markdownContent.trim()) {
+      return NextResponse.json({ error: 'content 不能为空' }, { status: 400 });
     }
-    const result = await createPost({
-      title,
-      content: markdownToHTML(content),
-      markdownContent: content,
-      nodeId: nodeId ?? systemNodeResult.data.postsRootNodeId,
+
+    const htmlContent = markdownToHTML(markdownContent);
+    const metadata = derivePostMetadata({
+      markdownContent,
+      content: htmlContent,
     });
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-    return NextResponse.json({
-      id: result.data.id,
-      title: result.data.title,
-      content: result.data.markdownContent ?? result.data.content,
-      created_at: result.data.createdAt,
-    });
+
+    const inserted = await db
+      .insert(postsTable)
+      .values({
+        title,
+        type,
+        isHidden,
+        isPinned,
+        content: htmlContent,
+        markdownContent,
+        coverUrl: inputCoverUrl || metadata.coverUrl,
+        excerpt: inputExcerpt || metadata.excerpt,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    return NextResponse.json({ data: inserted[0] }, { status: 201 });
   } catch (error) {
-    console.error("创建文章失败:", error);
-    return NextResponse.json({ error: "创建文章失败" }, { status: 500 });
+    console.error('创建文章失败:', error);
+    return NextResponse.json({ error: '创建文章失败' }, { status: 500 });
   }
 }
-

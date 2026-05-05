@@ -1,43 +1,131 @@
-.site-page {
-  margin-inline: auto;
-  max-width: 860px;
-  padding-inline: 16px;
+:root {
+  --retro-link: rgb(0 0 238);
+  --retro-link-visited: rgb(85 26 139);
+  --retro-paper: color-mix(in oklab, var(--background) 95%, var(--foreground) 5%);
 }
 
-/* Classic link style */
-.site-page a {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.dark {
+  --retro-link: rgb(153 188 255);
+  --retro-link-visited: rgb(192 166 255);
+  --retro-paper: color-mix(in oklab, var(--background) 92%, var(--foreground) 8%);
 }
 
-/* More “document-like” typography */
-.site-page {
+.retro-site {
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.65;
 }
 
 @media (min-width: 640px) {
-  .site-page {
+  .retro-site {
     font-size: 15px;
   }
 }
 
-/* Prefer a classic blue in light, brighter in dark */
-.site-page a {
-  color: rgb(0 0 238);
-}
-.dark .site-page a {
-  color: rgb(140 180 255);
-}
-
-.site-page a:hover {
-  opacity: 0.85;
+.site-doc-container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 860px;
+  padding-inline: 16px;
 }
 
-/* Simple separators */
+@media (min-width: 640px) {
+  .site-doc-container {
+    padding-inline: 20px;
+  }
+}
+
+.retro-site :where(main a, footer a, nav a) {
+  color: var(--retro-link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.retro-site :where(main a, footer a, nav a):visited {
+  color: var(--retro-link-visited);
+}
+
+.retro-site :where(main a, footer a, nav a):hover {
+  opacity: 0.82;
+}
+
+.retro-paper {
+  background: var(--retro-paper);
+  border: 1px solid color-mix(in oklab, var(--foreground) 20%, transparent);
+}
+
+.retro-panel {
+  border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
+  background: color-mix(in oklab, var(--retro-paper) 92%, transparent);
+}
+
+.retro-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: color-mix(in oklab, var(--foreground) 78%, transparent);
+}
+
+.retro-badge-row span::before {
+  content: '[';
+  margin-right: 0.2rem;
+  color: color-mix(in oklab, var(--foreground) 45%, transparent);
+}
+
+.retro-badge-row span::after {
+  content: ']';
+  margin-left: 0.2rem;
+  color: color-mix(in oklab, var(--foreground) 45%, transparent);
+}
+
 .site-hr {
   border: 0;
-  border-top: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent);
+  border-top: 1px dashed color-mix(in oklab, var(--foreground) 35%, transparent);
   margin-block: 16px;
+}
+
+.site-hr::after {
+  content: '---*---';
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  color: color-mix(in oklab, var(--foreground) 45%, transparent);
+}
+
+.retro-content :where(h1, h2, h3) {
+  margin-top: 1.2em;
+  margin-bottom: 0.45em;
+  line-height: 1.3;
+}
+
+.retro-content p {
+  margin-block: 0.8em;
+}
+
+.retro-content ul,
+.retro-content ol {
+  margin: 0.7em 0;
+  padding-left: 1.4em;
+}
+
+.retro-content code {
+  background: color-mix(in oklab, var(--foreground) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--foreground) 15%, transparent);
+  border-radius: 3px;
+  padding: 0.1em 0.25em;
+}
+
+/* 代码块中的 code 不应复用行内 code 装饰，避免渲染出横线/块状拼接 */
+.retro-content pre code {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.retro-content pre {
+  overflow-x: auto;
+  padding: 0.85rem;
 }
 

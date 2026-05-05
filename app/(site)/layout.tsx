@@ -1,21 +1,19 @@
 import type { ReactNode } from 'react';
-import { Nav } from '@/components/site/Nav';
-import { Footer } from '@/components/site/Footer';
-import './retro.css';
-import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { SiteFooter } from '@/components/site/retro/SiteFooter';
+import { SiteHeader } from '@/components/site/retro/SiteHeader';
+import { DocContainer } from '@/components/site/retro/DocContainer';
 
 /**
- * 除首页外的站点页：顶栏导航 + 页脚
+ * 复古站点布局：统一文档容器、头部导航与页脚。
  */
 export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col">
-      <Nav />
-      <main className="site-page min-h-0 flex-1 overflow-auto py-4">
-        <Breadcrumb />
-        {children}
+    <div id="top" className="retro-site min-h-dvh bg-background text-foreground">
+      <SiteHeader />
+      <main className="py-5 sm:py-8">
+        <DocContainer>{children}</DocContainer>
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

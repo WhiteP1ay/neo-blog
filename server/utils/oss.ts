@@ -1,159 +1,106 @@
+import { randomUUID } from 'node:crypto';
+import path from 'node:path';
 import OSS from 'ali-oss';
-import { imageSize } from 'image-size';
-
-export type OssUploadResult = {
-  url: string;
-  objectKey: string;
-  size: number;
-  mimeType: string;
-  width: number | null;
-  height: number | null;
-};
 
 type OssEnv = {
   accessKeyId: string;
   accessKeySecret: string;
   bucket: string;
   region: string;
-  endpoint: string | null;
-  baseUrl: string | null;
+  endpoint?: string;
+  baseUrl?: string;
 };
 
-const IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']);
-
-let cachedClient: OSS | null = null;
-let cachedEnv: OssEnv | null = null;
-
 /**
- * 读取并校验 OSS 相关环境变量，缺失时抛出明确错误。
+ * 从环境变量读取 OSS 配置，并做必填校验。
  */
 function getOssEnv(): OssEnv {
-  if (cachedEnv) {
-    return cachedEnv;
-  }
-
   const accessKeyId = process.env.OSS_ACCESS_KEY_ID?.trim() ?? '';
   const accessKeySecret = process.env.OSS_ACCESS_KEY_SECRET?.trim() ?? '';
   const bucket = process.env.OSS_BUCKET?.trim() ?? '';
-  const rawRegion = process.env.OSS_REGION?.trim() ?? '';
-  const rawEndpoint = process.env.OSS_ENDPOINT?.trim() ?? '';
-  const baseUrl = process.env.OSS_BASE_URL?.trim() ?? '';
+  const region = process.env.OSS_REGION?.trim() ?? '';
+  const endpoint = process.env.OSS_ENDPOINT?.trim() || undefined;
+  const baseUrl = process.env.OSS_BASE_URL?.trim() || undefined;
 
-  if (!accessKeyId) {
-    throw new Error('缺少环境变量 OSS_ACCESS_KEY_ID');
-  }
-  if (!accessKeySecret) {
-    throw new Error('缺少环境变量 OSS_ACCESS_KEY_SECRET');
-  }
-  if (!bucket) {
-    throw new Error('缺少环境变量 OSS_BUCKET');
-  }
-  if (!rawRegion) {
-    throw new Error('缺少环境变量 OSS_REGION');
+  if (!accessKeyId || !accessKeySecret || !bucket || !region) {
+    throw new Error('OSS 配置不完整，请检查 OSS_ACCESS_KEY_ID/OSS_ACCESS_KEY_SECRET/OSS_BUCKET/OSS_REGION');
   }
 
-  // 兼容用户填 cn-beijing；ali-oss 期望 oss-cn-beijing。
-  const region = rawRegion.startsWith('oss-') ? rawRegion : `oss-${rawRegion}`;
-  const endpoint = rawEndpoint
-    ? rawEndpoint.startsWith('http://') || rawEndpoint.startsWith('https://')
-      ? rawEndpoint
-      : `https://${rawEndpoint}`
-    : '';
-
-  cachedEnv = {
+  return {
     accessKeyId,
     accessKeySecret,
     bucket,
     region,
-    endpoint: endpoint || null,
-    baseUrl: baseUrl || null,
+    endpoint,
+    baseUrl,
   };
-  return cachedEnv;
 }
 
 /**
- * 懒加载 OSS 客户端，避免重复初始化。
+ * 生成上传到 OSS 的对象路径，按日期分目录便于后续管理。
  */
-function getOssClient() {
-  if (cachedClient) {
-    return cachedClient;
-  }
-
-  const env = getOssEnv();
-  cachedClient = new OSS({
-    accessKeyId: env.accessKeyId,
-    accessKeySecret: env.accessKeySecret,
-    bucket: env.bucket,
-    region: env.region,
-    endpoint: env.endpoint ?? undefined,
-    secure: true,
-  });
-  return cachedClient;
-}
-
-/**
- * 构造对外访问 URL，优先使用 OSS_BASE_URL。
- */
-function buildPublicUrl(objectKey: string, client: OSS, env: OssEnv): string {
-  if (env.baseUrl) {
-    return `${env.baseUrl.replace(/\/$/, '')}/${objectKey}`;
-  }
-  return client.signatureUrl(objectKey, { expires: 3600 * 24 * 3650 });
-}
-
-/**
- * 从 File 中解析像素宽高，解析失败时返回 null。
- */
-async function resolveImageDimensions(file: File): Promise<{ width: number | null; height: number | null }> {
-  try {
-    const arrayBuffer = await file.arrayBuffer();
-    const size = imageSize(Buffer.from(arrayBuffer));
-    return {
-      width: size.width ?? null,
-      height: size.height ?? null,
-    };
-  } catch {
-    return { width: null, height: null };
-  }
-}
-
-/**
- * 上传图片到 OSS 并返回完整元信息。
- */
-export async function uploadImageToOss(file: File, folder = 'photos'): Promise<OssUploadResult> {
-  if (!(file instanceof File)) {
-    throw new Error('上传文件无效');
-  }
-  if (!IMAGE_MIME_TYPES.has(file.type)) {
-    throw new Error('不支持的图片格式，请上传 JPG、PNG、GIF 或 WebP 格式');
-  }
-  if (file.size <= 0) {
-    throw new Error('上传文件为空');
-  }
-
-  const client = getOssClient();
-  const env = getOssEnv();
+function buildObjectKey(originalName: string): string {
+  const ext = path.extname(originalName).toLowerCase();
+  const safeExt = ext && ext.length <= 10 ? ext : '.bin';
   const now = new Date();
   const yyyy = String(now.getFullYear());
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  const ext = file.name.includes('.') ? file.name.substring(file.name.lastIndexOf('.')).toLowerCase() : '.bin';
-  const random = Math.random().toString(36).slice(2, 10);
-  const safeFolder = folder.replace(/^\/+|\/+$/g, '') || 'photos';
-  const objectKey = `${safeFolder}/${yyyy}/${mm}/${dd}/${Date.now()}-${random}${ext}`;
+  return `uploads/photos/${yyyy}/${mm}/${dd}/${Date.now()}-${randomUUID()}${safeExt}`;
+}
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await client.put(objectKey, buffer, {
-    mime: file.type,
+/**
+ * 拼出可公开访问的资源 URL（优先使用 OSS_BASE_URL）。
+ */
+function resolvePublicUrl(input: {
+  objectKey: string;
+  uploadResultUrl?: string;
+  bucket: string;
+  region: string;
+  baseUrl?: string;
+}): string {
+  if (input.baseUrl) {
+    const base = input.baseUrl.replace(/\/+$/, '');
+    return `${base}/${input.objectKey}`;
+  }
+  if (input.uploadResultUrl) {
+    if (input.uploadResultUrl.startsWith('//')) {
+      return `https:${input.uploadResultUrl}`;
+    }
+    return input.uploadResultUrl;
+  }
+  return `https://${input.bucket}.${input.region}.aliyuncs.com/${input.objectKey}`;
+}
+
+/**
+ * 上传图片到阿里云 OSS，返回对象 key 和可访问 URL（数据库只存元数据）。
+ */
+export async function uploadPhotoToOss(file: File): Promise<{ objectKey: string; publicUrl: string }> {
+  const config = getOssEnv();
+  const objectKey = buildObjectKey(file.name);
+  const client = new OSS({
+    accessKeyId: config.accessKeyId,
+    accessKeySecret: config.accessKeySecret,
+    bucket: config.bucket,
+    region: config.region,
+    endpoint: config.endpoint,
   });
 
-  const dimensions = await resolveImageDimensions(file);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await client.put(objectKey, buffer, {
+    headers: {
+      'Content-Type': file.type || 'application/octet-stream',
+    },
+  });
+
   return {
-    url: buildPublicUrl(objectKey, client, env),
     objectKey,
-    size: file.size,
-    mimeType: file.type,
-    width: dimensions.width,
-    height: dimensions.height,
+    publicUrl: resolvePublicUrl({
+      objectKey,
+      uploadResultUrl: result.url,
+      bucket: config.bucket,
+      region: config.region,
+      baseUrl: config.baseUrl,
+    }),
   };
 }

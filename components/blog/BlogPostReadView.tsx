@@ -1,10 +1,17 @@
 import { PostHeader } from './PostHeader';
-import type { HomeExplorerPostDetailPayload } from '@/components/admin';
 import { CodeBlockCopyButtons } from '@/components/blog/CodeBlockCopyButtons';
 import { CommentsSection } from './CommentsSection';
 
+type BlogPostDetail = {
+  id: number;
+  title: string;
+  content: string;
+  contentSource: string;
+  createdAt: string | null;
+};
+
 type BlogPostReadViewProps = {
-  post: HomeExplorerPostDetailPayload;
+  post: BlogPostDetail;
 };
 
 export function BlogPostReadView({ post }: BlogPostReadViewProps) {

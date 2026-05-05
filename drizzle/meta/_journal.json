@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777483683379,
-      "tag": "0000_fixed_redwing",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777485038005,
-      "tag": "0001_talented_screwball",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777485856510,
-      "tag": "0002_spooky_spot",
+      "when": 1777994371494,
+      "tag": "0000_steep_stardust",
       "breakpoints": true
     }
   ]

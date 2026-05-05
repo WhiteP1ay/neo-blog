@@ -12,7 +12,7 @@ import type { ActionResult, ActionVoidResult } from '@/server/types/action-resul
 import type { CommentWithReplies } from '@/server/types/comments-thread';
 import type { Comment } from '@/server/types/models';
 
-export type CommentTargetType = 'post' | 'album' | 'photo';
+export type CommentTargetType = 'post' | 'photo';
 
 /**
  * Server Action: 获取目标实体的所有评论

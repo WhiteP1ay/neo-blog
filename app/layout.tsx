@@ -1,4 +1,5 @@
 import './global.css';
+import './(site)/retro.css';
 import type { Metadata } from 'next';
 import { ToastProvider } from '@/components/Toast';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';

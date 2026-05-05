@@ -114,11 +114,16 @@ body {
 
 .prose pre.shiki code span {
   color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
+  background-color: transparent;
 }
 .dark .prose pre.shiki code span {
   color: var(--shiki-dark);
-  background-color: var(--shiki-dark-bg);
+  background-color: transparent;
+}
+
+/* Shiki 每行会拆成 .line，背景放在 pre 上，避免行级背景叠加出现横向白线 */
+.prose pre.shiki .line {
+  background: transparent !important;
 }
 
 /* 文章阅读区 + 富文本编辑区：统一表格与链接样式 */
