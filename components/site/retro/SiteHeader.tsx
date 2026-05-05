@@ -2,8 +2,6 @@ import Link from 'next/link';
 import { SiteThemeSwitcher } from '@/components/site/SiteThemeSwitcher';
 import { DocContainer } from './DocContainer';
 
-const retroNavItems = [{ href: '/', label: '文章列表' }] as const;
-
 /**
  * 复古站点头部：文档式标题 + 极简导航 + 主题切换。
  */
@@ -19,12 +17,6 @@ export function SiteHeader() {
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <nav aria-label="主导航" className="flex items-center gap-3">
-              {retroNavItems.map((item) => (
-                <Link key={item.href} href={item.href} className="underline underline-offset-4 hover:opacity-80">
-                  {item.label}
-                </Link>
-              ))}
-              <span className="text-muted-foreground">|</span>
               <Link href="/login" className="underline underline-offset-4 hover:opacity-80">
                 登录
               </Link>

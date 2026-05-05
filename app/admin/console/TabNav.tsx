@@ -3,9 +3,9 @@
 import type { TabKey } from './types';
 
 const TAB_ITEMS: Array<{ key: TabKey; label: string }> = [
-  { key: 'users', label: '用户管理' },
   { key: 'posts', label: '博文管理' },
   { key: 'photos', label: '照片管理' },
+  { key: 'users', label: '用户管理' },
   { key: 'comments', label: '评论管理' },
 ];
 

@@ -18,10 +18,10 @@ export type HomeExplorerPostPreview = {
  * 首页三栏：左侧分类；topicKey 为 0（虚拟未分类）或真实专题 id
  */
 export type HomeExplorerCategory = {
-  topicKey: number;
+  topicKey: string;
   name: string;
   isPinned: boolean;
-  /** 未分类为 0；真实专题为库内 sortOrder */
+  /** 首页按 type 分组展示，不参与排序时可固定为 0 */
   sortOrder: number;
   createdAt: Date | null;
   posts: HomeExplorerPostPreview[];

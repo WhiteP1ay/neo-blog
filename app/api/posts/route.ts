@@ -33,10 +33,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeHidden = searchParams.get('includeHidden') === 'true';
+    const type = (searchParams.get('type') ?? '').trim();
     const rows = await db.query.postsTable.findMany({
-      where: includeHidden
-        ? undefined
-        : (posts, { eq }) => eq(posts.isHidden, false),
+      where: (posts, { and, eq }) => {
+        const conditions = [];
+        if (!includeHidden) {
+          conditions.push(eq(posts.isHidden, false));
+        }
+        if (type) {
+          conditions.push(eq(posts.type, type));
+        }
+        if (conditions.length === 0) return undefined;
+        if (conditions.length === 1) return conditions[0];
+        return and(...conditions);
+      },
       orderBy: (posts, { desc: descFn }) => [descFn(posts.createdAt)],
     });
 

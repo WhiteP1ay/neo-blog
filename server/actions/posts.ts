@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db/db";
 import { postsTable } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, ne } from "drizzle-orm";
 import { getSession, requireAdminSession } from "@/server/utils/auth";
 import { highlightCodeBlocksInHtml } from "@/server/utils/highlight-code-blocks-in-html";
 import { markdownToHTML } from "@/server/utils/markdown";
@@ -66,26 +66,62 @@ export async function getHomeExplorerData(): Promise<
   ActionResult<HomeExplorerCategory[]>
 > {
   try {
+    const TYPE_BLACKLIST = new Set(["rei"]);
     const posts = await db
       .select({
         id: postsTable.id,
         title: postsTable.title,
+        type: postsTable.type,
         createdAt: postsTable.createdAt,
         isPinned: postsTable.isPinned,
       })
       .from(postsTable)
-      .where(eq(postsTable.type, ""))
+      .where(ne(postsTable.isHidden, true))
       .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
-    return actionOk([
+
+    const visiblePosts = posts.filter((post) => !TYPE_BLACKLIST.has(post.type));
+    const grouped = new Map<string, HomeExplorerCategory["posts"]>();
+    for (const post of visiblePosts) {
+      const key = post.type;
+      const current = grouped.get(key) ?? [];
+      current.push({
+        id: post.id,
+        title: post.title,
+        createdAt: post.createdAt,
+        isPinned: post.isPinned,
+      });
+      grouped.set(key, current);
+    }
+
+    const categories: HomeExplorerCategory[] = [
       {
-        topicKey: 0,
+        topicKey: "all",
         name: "全部",
         isPinned: false,
         sortOrder: 0,
         createdAt: null,
-        posts,
+        posts: visiblePosts.map((post) => ({
+          id: post.id,
+          title: post.title,
+          createdAt: post.createdAt,
+          isPinned: post.isPinned,
+        })),
       },
-    ]);
+    ];
+
+    for (const [type, typePosts] of grouped) {
+      categories.push({
+        topicKey: type,
+        // 空字符串 type 使用更可读的展示名称。
+        name: type === '' ? '未命名' : type,
+        isPinned: false,
+        sortOrder: 0,
+        createdAt: null,
+        posts: typePosts,
+      });
+    }
+
+    return actionOk(categories);
   } catch (error) {
     console.error("获取首页浏览数据失败:", error);
     return actionErr("获取首页浏览数据失败");

@@ -19,10 +19,20 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeHidden = searchParams.get('includeHidden') === 'true';
+    const type = (searchParams.get('type') ?? '').trim();
     const rows = await db.query.photosTable.findMany({
-      where: includeHidden
-        ? undefined
-        : (photos, { eq }) => eq(photos.isHidden, false),
+      where: (photos, { and, eq }) => {
+        const conditions = [];
+        if (!includeHidden) {
+          conditions.push(eq(photos.isHidden, false));
+        }
+        if (type) {
+          conditions.push(eq(photos.type, type));
+        }
+        if (conditions.length === 0) return undefined;
+        if (conditions.length === 1) return conditions[0];
+        return and(...conditions);
+      },
       orderBy: (photos, { desc: descFn }) => [descFn(photos.createdAt)],
     });
 

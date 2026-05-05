@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  redirect('/admin/users');
+  redirect('/admin/posts');
 }

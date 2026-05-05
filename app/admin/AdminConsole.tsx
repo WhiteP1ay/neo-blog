@@ -1,15 +1,15 @@
 'use client';
 
-import { CommentsPanel } from './console/panels/CommentsPanel';
-import { PhotosPanel } from './console/panels/PhotosPanel';
-import { PostsPanel } from './console/panels/PostsPanel';
-import { UsersPanel } from './console/panels/UsersPanel';
+import { CommentsSection } from './console/components/CommentsSection';
+import { PhotosSection } from './console/components/PhotosSection';
+import { PostsSection } from './console/components/PostsSection';
+import { UsersSection } from './console/components/UsersSection';
 import { TabNav } from './console/TabNav';
 import type { TabKey } from './console/types';
 import { useAdminConsole } from './console/useAdminConsole';
 
 export function AdminConsole({
-  initialTab = 'users',
+  initialTab = 'posts',
   showTabNav = true,
 }: {
   initialTab?: TabKey;
@@ -24,10 +24,10 @@ export function AdminConsole({
       {consoleState.loading ? <p>加载中...</p> : null}
       {consoleState.error ? <p className="text-red-500">{consoleState.error}</p> : null}
 
-      {consoleState.activeTab === 'users' ? <UsersPanel users={consoleState.users} form={consoleState.userForm} /> : null}
-      {consoleState.activeTab === 'posts' ? <PostsPanel posts={consoleState.posts} form={consoleState.postForm} /> : null}
-      {consoleState.activeTab === 'photos' ? <PhotosPanel photos={consoleState.photos} form={consoleState.photoForm} /> : null}
-      {consoleState.activeTab === 'comments' ? <CommentsPanel comments={consoleState.comments} form={consoleState.commentForm} /> : null}
+      {consoleState.activeTab === 'posts' ? <PostsSection posts={consoleState.posts} form={consoleState.postForm} /> : null}
+      {consoleState.activeTab === 'photos' ? <PhotosSection photos={consoleState.photos} form={consoleState.photoForm} /> : null}
+      {consoleState.activeTab === 'users' ? <UsersSection users={consoleState.users} form={consoleState.userForm} /> : null}
+      {consoleState.activeTab === 'comments' ? <CommentsSection comments={consoleState.comments} form={consoleState.commentForm} /> : null}
     </div>
   );
 }

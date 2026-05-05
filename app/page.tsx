@@ -23,8 +23,8 @@ export default async function Home({
   searchParams: Promise<{ topic?: string }>;
 }) {
   void _searchParams;
-  const listPosts = await resolveHomePosts();
-  if (!listPosts) {
+  const categories = await resolveHomeCategories();
+  if (!categories) {
     return <p className="text-sm text-muted-foreground">加载列表失败，请稍后重试。</p>;
   }
 
@@ -38,12 +38,7 @@ export default async function Home({
               <h1 className="text-2xl font-bold sm:text-3xl">White Meta</h1>
             </header>
             <hr className="site-hr" />
-            <section aria-labelledby="post-list-title" className="space-y-3">
-              <h2 id="post-list-title" className="text-lg font-semibold">
-                文章列表
-              </h2>
-              <PostList posts={listPosts} />
-            </section>
+            <PostList categories={categories} />
           </article>
         </DocContainer>
       </main>
@@ -52,10 +47,10 @@ export default async function Home({
   );
 }
 
-async function resolveHomePosts() {
+async function resolveHomeCategories() {
   const result = await getHomeExplorerData();
   if (!result.success || result.data.length === 0) {
     return null;
   }
-  return result.data[0]?.posts ?? [];
+  return result.data;
 }

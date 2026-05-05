@@ -5,9 +5,9 @@ import { AdminQueryProvider } from './console/AdminQueryProvider';
 import { getSession } from '@/server/utils/auth';
 
 const ADMIN_SECTIONS = [
-  { href: '/admin/users', label: '用户管理' },
   { href: '/admin/posts', label: '博文管理' },
   { href: '/admin/photos', label: '照片管理' },
+  { href: '/admin/users', label: '用户管理' },
   { href: '/admin/comments', label: '评论管理' },
 ] as const;
 
