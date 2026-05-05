@@ -77,7 +77,7 @@ export function PostTable({ posts, form }: PostTableProps) {
           ))}
         </div>
       </div>
-      <div className="overflow-x-auto rounded border">
+      <div className="overflow-x-auto overflow-y-visible rounded border">
         <DndContext collisionDetection={closestCenter} onDragEnd={(event) => void handleDragEnd(event)}>
           <table className="w-full text-sm">
             <thead>
@@ -164,21 +164,23 @@ function SortablePostRow({
                 <input type="checkbox" checked={form.editPostIsHidden} onChange={(e) => form.setEditPostIsHidden(e.target.checked)} />
                 隐藏
               </label>
-              <RichTextEditor
-                value={form.editPostContent}
-                onChange={form.setEditPostContent}
-                placeholder="编辑正文（HTML）"
-                toolbarRight={
-                  <>
-                    <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => void form.savePostEdit()}>
-                      保存
-                    </button>
-                    <button className="rounded border px-2 py-1 text-xs" type="button" onClick={form.cancelEditPost}>
-                      取消
-                    </button>
-                  </>
-                }
-              />
+              <div className="max-h-[70vh] overflow-y-auto">
+                <RichTextEditor
+                  value={form.editPostContent}
+                  onChange={form.setEditPostContent}
+                  placeholder="编辑正文（HTML）"
+                  toolbarRight={
+                    <>
+                      <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => void form.savePostEdit()}>
+                        保存
+                      </button>
+                      <button className="rounded border px-2 py-1 text-xs" type="button" onClick={form.cancelEditPost}>
+                        取消
+                      </button>
+                    </>
+                  }
+                />
+              </div>
             </div>
           </td>
         </tr>

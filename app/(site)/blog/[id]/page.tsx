@@ -98,9 +98,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           <Link href="/blog">返回文章列表</Link>
         </p>
         <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{row.title}</h1>
-        <p className="mt-2 text-xs text-muted-foreground">
+        {/* <p className="mt-2 text-xs text-muted-foreground">
           发布时间：{formatDate(row.createdAt)} · 更新时间：{formatDate(row.updatedAt)}
-        </p>
+        </p> */}
       </header>
 
       <hr className="site-hr" />
@@ -120,9 +120,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 /**
  * 日期格式化：确保 Date/null 都能稳定渲染。
  */
-function formatDate(date: Date | null): string {
-  if (!date) {
-    return '未知';
-  }
-  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-}
+// function formatDate(date: Date | null): string {
+//   if (!date) {
+//     return '未知';
+//   }
+//   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+// }
