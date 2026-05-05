@@ -23,6 +23,7 @@ export const postsTable = pgTable('posts', {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   title: varchar({ length: 255 }).notNull(),
   type: varchar({ length: 50 }).notNull().default(''),
+  sortOrder: integer().notNull().default(0),
   isHidden: boolean().notNull().default(false),
   content: text().notNull(), // 存储解析后的HTML
   markdownContent: text(), // 存储原始Markdown（可选，用于下载）

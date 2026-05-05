@@ -1,4 +1,4 @@
-import { asc } from 'drizzle-orm';
+import { asc, desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
 import { postsTable } from '@/server/db/schema';
@@ -22,7 +22,10 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
 
-  const posts = await db.select().from(postsTable).orderBy(asc(postsTable.id));
+  const posts = await db
+    .select()
+    .from(postsTable)
+    .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt), asc(postsTable.id));
   return NextResponse.json({ data: posts });
 }
 
@@ -98,6 +101,12 @@ export async function POST(request: Request) {
       excerpt: inputExcerpt || metadata.excerpt,
       coverUrl: inputCoverUrl || metadata.coverUrl,
       type,
+      sortOrder:
+        ((await db
+          .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
+          .from(postsTable)
+          .orderBy(desc(postsTable.sortOrder))
+          .limit(1))[0]?.sortOrder ?? 0) + 1,
       isHidden,
       createdAt: new Date(),
       updatedAt: new Date(),

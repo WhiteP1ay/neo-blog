@@ -1,5 +1,8 @@
 'use client';
 
+import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Fragment, useMemo, useState } from 'react';
 import type { PostItem } from '../../types';
 import { RichTextEditor } from '../RichTextEditor';
@@ -25,24 +28,40 @@ type PostTableProps = {
     startEditPost: (post: PostItem) => void;
     cancelEditPost: () => void;
     savePostEdit: () => Promise<void>;
+    reorderPosts: (orderedIds: number[]) => Promise<void>;
   };
 };
 
 export function PostTable({ posts, form }: PostTableProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const types = useMemo(
-    () => Array.from(new Set(posts.map((post) => post.type))).sort((a, b) => a.localeCompare(b)),
+  const orderedPosts = useMemo(
+    () => [...posts].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
     [posts],
   );
+  const types = useMemo(
+    () => Array.from(new Set(orderedPosts.map((post) => post.type))).sort((a, b) => a.localeCompare(b)),
+    [orderedPosts],
+  );
   const visiblePosts = useMemo(() => {
-    if (selectedTypes.length === 0) return posts;
-    return posts.filter((post) => selectedTypes.includes(post.type));
-  }, [posts, selectedTypes]);
+    if (selectedTypes.length === 0) return orderedPosts;
+    return orderedPosts.filter((post) => selectedTypes.includes(post.type));
+  }, [orderedPosts, selectedTypes]);
 
   const toggleType = (type: string) => {
     setSelectedTypes((current) =>
       current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
     );
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    if (selectedTypes.length > 0) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedPosts.findIndex((post) => post.id === Number(active.id));
+    const newIndex = orderedPosts.findIndex((post) => post.id === Number(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+    const moved = arrayMove(orderedPosts, oldIndex, newIndex);
+    await form.reorderPosts(moved.map((post) => post.id));
   };
 
   return (
@@ -59,74 +78,111 @@ export function PostTable({ posts, form }: PostTableProps) {
         </div>
       </div>
       <div className="overflow-x-auto rounded border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/40 text-left">
-              <th className="px-3 py-2">ID</th>
-              <th className="px-3 py-2">标题</th>
-              <th className="px-3 py-2">类型</th>
-              <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visiblePosts.map((post) => (
-              <Fragment key={post.id}>
-                <tr className="border-b">
-                  <td className="px-3 py-2">{post.id}</td>
-                  <td className="px-3 py-2">{post.title}</td>
-                  <td className="px-3 py-2">{post.type || '(空)'}</td>
-                  <td className="px-3 py-2">{post.isHidden ? '隐藏' : '显示'}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex gap-2">
-                      <button className="rounded border px-2 py-1" type="button" onClick={() => form.startEditPost(post)}>
-                        编辑
-                      </button>
-                      <button className="rounded border px-2 py-1" type="button" onClick={() => void form.togglePostHidden(post)}>
-                        切换显示
-                      </button>
-                      <button className="rounded border px-2 py-1" type="button" onClick={() => void form.deletePost(post.id)}>
-                        删除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                {form.editingPostId === post.id ? (
-                  <tr className="border-b bg-muted/20">
-                    <td className="px-3 py-3" colSpan={5}>
-                      <div className="space-y-2 rounded border border-dashed p-3">
-                        <input className="w-full rounded border px-2 py-1" placeholder="标题" value={form.editPostTitle} onChange={(e) => form.setEditPostTitle(e.target.value)} />
-                        <input className="w-full rounded border px-2 py-1" placeholder="类型" value={form.editPostType} onChange={(e) => form.setEditPostType(e.target.value)} />
-                        <input className="w-full rounded border px-2 py-1" placeholder="封面 URL（可选）" value={form.editPostCoverUrl} onChange={(e) => form.setEditPostCoverUrl(e.target.value)} />
-                        <textarea className="h-20 w-full rounded border px-2 py-1" placeholder="摘要（可选）" value={form.editPostExcerpt} onChange={(e) => form.setEditPostExcerpt(e.target.value)} />
-                        <label className="inline-flex items-center gap-1">
-                          <input type="checkbox" checked={form.editPostIsHidden} onChange={(e) => form.setEditPostIsHidden(e.target.checked)} />
-                          隐藏
-                        </label>
-                        <RichTextEditor
-                          value={form.editPostContent}
-                          onChange={form.setEditPostContent}
-                          placeholder="编辑正文（HTML）"
-                          toolbarRight={
-                            <>
-                              <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => void form.savePostEdit()}>
-                                保存
-                              </button>
-                              <button className="rounded border px-2 py-1 text-xs" type="button" onClick={form.cancelEditPost}>
-                                取消
-                              </button>
-                            </>
-                          }
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : null}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+        <DndContext collisionDetection={closestCenter} onDragEnd={(event) => void handleDragEnd(event)}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/40 text-left">
+                <th className="px-3 py-2">拖拽</th>
+                <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">标题</th>
+                <th className="px-3 py-2">类型</th>
+                <th className="px-3 py-2">状态</th>
+                <th className="px-3 py-2">操作</th>
+              </tr>
+            </thead>
+            <SortableContext items={visiblePosts.map((post) => post.id)} strategy={verticalListSortingStrategy}>
+              <tbody>
+                {visiblePosts.map((post) => (
+                  <SortablePostRow key={post.id} post={post} form={form} dragDisabled={selectedTypes.length > 0} />
+                ))}
+              </tbody>
+            </SortableContext>
+          </table>
+        </DndContext>
       </div>
     </div>
+  );
+}
+
+function SortablePostRow({
+  post,
+  form,
+  dragDisabled,
+}: {
+  post: PostItem;
+  form: PostTableProps['form'];
+  dragDisabled: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: post.id, disabled: dragDisabled });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <Fragment>
+      <tr ref={setNodeRef} style={style} className="border-b">
+        <td className="px-3 py-2">
+          <button
+            className="cursor-grab rounded border px-2 py-1 text-xs disabled:cursor-not-allowed"
+            type="button"
+            {...attributes}
+            {...listeners}
+            disabled={dragDisabled}
+            title={dragDisabled ? '筛选状态下暂不可拖拽排序' : '拖拽排序'}
+          >
+            拖拽
+          </button>
+        </td>
+        <td className="px-3 py-2">{post.id}</td>
+        <td className="px-3 py-2">{post.title}</td>
+        <td className="px-3 py-2">{post.type || '(空)'}</td>
+        <td className="px-3 py-2">{post.isHidden ? '隐藏' : '显示'}</td>
+        <td className="px-3 py-2">
+          <div className="flex gap-2">
+            <button className="rounded border px-2 py-1" type="button" onClick={() => form.startEditPost(post)}>
+              编辑
+            </button>
+            <button className="rounded border px-2 py-1" type="button" onClick={() => void form.togglePostHidden(post)}>
+              切换显示
+            </button>
+            <button className="rounded border px-2 py-1" type="button" onClick={() => void form.deletePost(post.id)}>
+              删除
+            </button>
+          </div>
+        </td>
+      </tr>
+      {form.editingPostId === post.id ? (
+        <tr className="border-b bg-muted/20">
+          <td className="px-3 py-3" colSpan={6}>
+            <div className="space-y-2 rounded border border-dashed p-3">
+              <input className="w-full rounded border px-2 py-1" placeholder="标题" value={form.editPostTitle} onChange={(e) => form.setEditPostTitle(e.target.value)} />
+              <input className="w-full rounded border px-2 py-1" placeholder="类型" value={form.editPostType} onChange={(e) => form.setEditPostType(e.target.value)} />
+              <input className="w-full rounded border px-2 py-1" placeholder="封面 URL（可选）" value={form.editPostCoverUrl} onChange={(e) => form.setEditPostCoverUrl(e.target.value)} />
+              <textarea className="h-20 w-full rounded border px-2 py-1" placeholder="摘要（可选）" value={form.editPostExcerpt} onChange={(e) => form.setEditPostExcerpt(e.target.value)} />
+              <label className="inline-flex items-center gap-1">
+                <input type="checkbox" checked={form.editPostIsHidden} onChange={(e) => form.setEditPostIsHidden(e.target.checked)} />
+                隐藏
+              </label>
+              <RichTextEditor
+                value={form.editPostContent}
+                onChange={form.setEditPostContent}
+                placeholder="编辑正文（HTML）"
+                toolbarRight={
+                  <>
+                    <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => void form.savePostEdit()}>
+                      保存
+                    </button>
+                    <button className="rounded border px-2 py-1 text-xs" type="button" onClick={form.cancelEditPost}>
+                      取消
+                    </button>
+                  </>
+                }
+              />
+            </div>
+          </td>
+        </tr>
+      ) : null}
+    </Fragment>
   );
 }

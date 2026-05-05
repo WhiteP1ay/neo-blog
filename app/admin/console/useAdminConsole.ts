@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import type { CommentItem, PhotoItem, PostItem, TabKey, UserItem } from './types';
 
@@ -182,6 +182,40 @@ export function useAdminConsole(initialTab: TabKey) {
     await refreshAll();
   };
 
+  const reorderPostsMutation = useMutation({
+    mutationFn: async (orderedIds: number[]) => {
+      await fetch('/api/admin/posts/reorder', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ orderedIds }),
+      }).then((res) => parseJsonResponse<{ success: boolean }>(res, false));
+    },
+    onMutate: async (orderedIds) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'posts'] });
+      const previousPosts = queryClient.getQueryData<PostItem[]>(['admin', 'posts']) ?? [];
+      if (previousPosts.length > 0) {
+        const rank = new Map<number, number>(orderedIds.map((id, index) => [id, index]));
+        const nextPosts = [...previousPosts]
+          .sort((a, b) => (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+          .map((post, index) => ({ ...post, sortOrder: index + 1 }));
+        queryClient.setQueryData(['admin', 'posts'], nextPosts);
+      }
+      return { previousPosts };
+    },
+    onError: (_error, _orderedIds, context) => {
+      if (context?.previousPosts) {
+        queryClient.setQueryData(['admin', 'posts'], context.previousPosts);
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
+    },
+  });
+
+  const reorderPosts = async (orderedIds: number[]) => {
+    await reorderPostsMutation.mutateAsync(orderedIds);
+  };
+
   const startEditPost = (post: PostItem) => {
     setEditingPostId(post.id);
     setEditPostTitle(post.title);
@@ -349,6 +383,7 @@ export function useAdminConsole(initialTab: TabKey) {
       startEditPost,
       cancelEditPost,
       savePostEdit,
+      reorderPosts,
     },
     photoForm: {
       newPhotoTitle,

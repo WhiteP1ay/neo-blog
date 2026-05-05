@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         if (conditions.length === 1) return conditions[0];
         return and(...conditions);
       },
-      orderBy: (posts, { desc: descFn }) => [descFn(posts.createdAt)],
+      orderBy: (posts, { asc: ascFn, desc: descFn }) => [ascFn(posts.sortOrder), descFn(posts.createdAt)],
     });
 
     return NextResponse.json({
@@ -147,6 +147,7 @@ export async function POST(request: Request) {
       .values({
         title,
         type,
+        sortOrder: ((await db.select({ id: postsTable.id, sortOrder: postsTable.sortOrder }).from(postsTable).orderBy((posts, { desc }) => desc(posts.sortOrder)).limit(1))[0]?.sortOrder ?? 0) + 1,
         isHidden,
         isPinned,
         content: htmlContent,

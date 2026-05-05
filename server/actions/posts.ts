@@ -2,7 +2,7 @@
 
 import { db } from "@/server/db/db";
 import { postsTable } from "@/server/db/schema";
-import { desc, eq, ne } from "drizzle-orm";
+import { asc, desc, eq, ne } from "drizzle-orm";
 import { getSession, requireAdminSession } from "@/server/utils/auth";
 import { highlightCodeBlocksInHtml } from "@/server/utils/highlight-code-blocks-in-html";
 import { markdownToHTML } from "@/server/utils/markdown";
@@ -27,7 +27,7 @@ export async function getPosts(): Promise<ActionResult<Post[]>> {
     const posts = await db
       .select()
       .from(postsTable)
-      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
+      .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt));
     return actionOk(posts);
   } catch (error) {
     console.error("获取文章列表失败:", error);
@@ -50,7 +50,7 @@ export async function getLatestPostsForHome(
         isPinned: postsTable.isPinned,
       })
       .from(postsTable)
-      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt))
+      .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt))
       .limit(limit);
     return actionOk(rows as HomePostPreview[]);
   } catch (error) {
@@ -77,7 +77,7 @@ export async function getHomeExplorerData(): Promise<
       })
       .from(postsTable)
       .where(ne(postsTable.isHidden, true))
-      .orderBy(desc(postsTable.isPinned), desc(postsTable.createdAt));
+      .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt));
 
     const visiblePosts = posts.filter((post) => !TYPE_BLACKLIST.has(post.type));
     const grouped = new Map<string, HomeExplorerCategory["posts"]>();
@@ -179,6 +179,12 @@ export async function createPost(data: {
       .insert(postsTable)
       .values({
         title: data.title,
+        sortOrder:
+          ((await db
+            .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
+            .from(postsTable)
+            .orderBy(desc(postsTable.sortOrder))
+            .limit(1))[0]?.sortOrder ?? 0) + 1,
         content: data.content,
         markdownContent: data.markdownContent || null,
         coverUrl: metadata.coverUrl,

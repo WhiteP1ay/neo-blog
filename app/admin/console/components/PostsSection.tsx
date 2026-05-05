@@ -35,6 +35,7 @@ type PostFormState = {
   startEditPost: (post: PostItem) => void;
   cancelEditPost: () => void;
   savePostEdit: () => Promise<void>;
+  reorderPosts: (orderedIds: number[]) => Promise<void>;
 };
 
 export function PostsSection({ posts, form }: { posts: PostItem[]; form: PostFormState }) {

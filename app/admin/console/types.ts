@@ -19,6 +19,7 @@ export type PostItem = {
   id: number;
   title: string;
   type: string;
+  sortOrder: number;
   isHidden: boolean;
   content: string;
   markdownContent: string | null;
