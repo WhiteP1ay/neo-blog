@@ -1,3 +1,4 @@
+import { desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
 import { postsTable } from '@/server/db/schema';
@@ -147,7 +148,12 @@ export async function POST(request: Request) {
       .values({
         title,
         type,
-        sortOrder: ((await db.select({ id: postsTable.id, sortOrder: postsTable.sortOrder }).from(postsTable).orderBy((posts, { desc }) => desc(posts.sortOrder)).limit(1))[0]?.sortOrder ?? 0) + 1,
+        sortOrder:
+          ((await db
+            .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
+            .from(postsTable)
+            .orderBy(desc(postsTable.sortOrder))
+            .limit(1))[0]?.sortOrder ?? 0) + 1,
         isHidden,
         isPinned,
         content: htmlContent,
