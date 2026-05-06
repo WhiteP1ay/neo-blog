@@ -22,8 +22,21 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
 
+  // 列表仅返回轻量元字段；正文 HTML/Markdown 体积可达数十 KB，
+  // 走代理/远程链路时拉全表会导致首屏 8-12s，编辑时再按 id 单独获取。
   const posts = await db
-    .select()
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+      type: postsTable.type,
+      sortOrder: postsTable.sortOrder,
+      isHidden: postsTable.isHidden,
+      isPinned: postsTable.isPinned,
+      coverUrl: postsTable.coverUrl,
+      excerpt: postsTable.excerpt,
+      createdAt: postsTable.createdAt,
+      updatedAt: postsTable.updatedAt,
+    })
     .from(postsTable)
     .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt), asc(postsTable.id));
   return NextResponse.json({ data: posts });
@@ -112,7 +125,19 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
     })
-    .returning();
+    // 同 PUT，仅回元字段，省掉刚插入的整段 HTML 再回传一次。
+    .returning({
+      id: postsTable.id,
+      title: postsTable.title,
+      type: postsTable.type,
+      sortOrder: postsTable.sortOrder,
+      isHidden: postsTable.isHidden,
+      isPinned: postsTable.isPinned,
+      coverUrl: postsTable.coverUrl,
+      excerpt: postsTable.excerpt,
+      createdAt: postsTable.createdAt,
+      updatedAt: postsTable.updatedAt,
+    });
 
   return NextResponse.json({ data: created[0] });
 }

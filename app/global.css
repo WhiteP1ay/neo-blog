@@ -159,3 +159,80 @@ body {
 :where(.prose, .ProseMirror) a:hover {
   opacity: 0.85;
 }
+
+/* 富文本编辑器：图片节点选中态视觉提示，方便用户与"图片 Markdown 编辑条"联动 */
+.ProseMirror img {
+  cursor: pointer;
+}
+
+.ProseMirror img.ProseMirror-selectednode,
+.ProseMirror-selectednode > img {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* 编辑器代码块高亮（tiptap lowlight / highlight.js token class） */
+:where(.prose, .ProseMirror) pre code .hljs-comment,
+:where(.prose, .ProseMirror) pre code .hljs-quote {
+  color: #6b7280;
+}
+
+:where(.prose, .ProseMirror) pre code .hljs-keyword,
+:where(.prose, .ProseMirror) pre code .hljs-selector-tag,
+:where(.prose, .ProseMirror) pre code .hljs-subst {
+  color: #c026d3;
+}
+
+:where(.prose, .ProseMirror) pre code .hljs-string,
+:where(.prose, .ProseMirror) pre code .hljs-attr,
+:where(.prose, .ProseMirror) pre code .hljs-template-tag {
+  color: #059669;
+}
+
+:where(.prose, .ProseMirror) pre code .hljs-title,
+:where(.prose, .ProseMirror) pre code .hljs-section,
+:where(.prose, .ProseMirror) pre code .hljs-type,
+:where(.prose, .ProseMirror) pre code .hljs-name {
+  color: #2563eb;
+}
+
+:where(.prose, .ProseMirror) pre code .hljs-number,
+:where(.prose, .ProseMirror) pre code .hljs-literal,
+:where(.prose, .ProseMirror) pre code .hljs-variable,
+:where(.prose, .ProseMirror) pre code .hljs-symbol,
+:where(.prose, .ProseMirror) pre code .hljs-bullet {
+  color: #d97706;
+}
+
+.dark :where(.prose, .ProseMirror) pre code .hljs-comment,
+.dark :where(.prose, .ProseMirror) pre code .hljs-quote {
+  color: #9ca3af;
+}
+
+.dark :where(.prose, .ProseMirror) pre code .hljs-keyword,
+.dark :where(.prose, .ProseMirror) pre code .hljs-selector-tag,
+.dark :where(.prose, .ProseMirror) pre code .hljs-subst {
+  color: #f472b6;
+}
+
+.dark :where(.prose, .ProseMirror) pre code .hljs-string,
+.dark :where(.prose, .ProseMirror) pre code .hljs-attr,
+.dark :where(.prose, .ProseMirror) pre code .hljs-template-tag {
+  color: #34d399;
+}
+
+.dark :where(.prose, .ProseMirror) pre code .hljs-title,
+.dark :where(.prose, .ProseMirror) pre code .hljs-section,
+.dark :where(.prose, .ProseMirror) pre code .hljs-type,
+.dark :where(.prose, .ProseMirror) pre code .hljs-name {
+  color: #60a5fa;
+}
+
+.dark :where(.prose, .ProseMirror) pre code .hljs-number,
+.dark :where(.prose, .ProseMirror) pre code .hljs-literal,
+.dark :where(.prose, .ProseMirror) pre code .hljs-variable,
+.dark :where(.prose, .ProseMirror) pre code .hljs-symbol,
+.dark :where(.prose, .ProseMirror) pre code .hljs-bullet {
+  color: #fbbf24;
+}

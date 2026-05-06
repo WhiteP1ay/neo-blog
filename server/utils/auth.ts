@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { db } from '@/server/db/db';
 
 import bcrypt from 'bcryptjs';
@@ -33,9 +34,12 @@ export async function createSession(userId: number) {
 }
 
 /**
- * 获取当前登录用户及权限；cookie 无效或用户不存在时返回 null
+ * 获取当前登录用户及权限；cookie 无效或用户不存在时返回 null。
+ *
+ * 使用 React `cache` 包装：同一个请求生命周期内多次调用（例如 `requireAdmin`
+ * + 业务逻辑里又用到 session）只会查一次 users 表，避免远程数据库 RTT 叠加。
  */
-export async function getSession(): Promise<AuthSession | null> {
+export const getSession = cache(async (): Promise<AuthSession | null> => {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_KEY);
   if (!session) {
@@ -60,7 +64,7 @@ export async function getSession(): Promise<AuthSession | null> {
     isAdmin: user.isAdmin,
     isVip: user.isVip,
   };
-}
+});
 
 /** 管理类操作：已登录且 isAdmin */
 export type RequireAdminResult =

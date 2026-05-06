@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminQueryProvider } from './console/AdminQueryProvider';
+import { AdminThemeSwitcher } from '@/components/admin/AdminThemeSwitcher';
 import { getSession } from '@/server/utils/auth';
 
 const ADMIN_SECTIONS = [
@@ -19,15 +20,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-6">
-      <div className="flex flex-wrap gap-2">
-        <Link href="/" className="rounded border px-3 py-1 text-sm hover:bg-muted">
-          返回首页
-        </Link>
-        {ADMIN_SECTIONS.map((section) => (
-          <Link key={section.href} href={section.href} className="rounded border px-3 py-1 text-sm hover:bg-muted">
-            {section.label}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/" className="rounded border px-3 py-1 text-sm hover:bg-muted">
+            返回首页
           </Link>
-        ))}
+          {ADMIN_SECTIONS.map((section) => (
+            <Link key={section.href} href={section.href} className="rounded border px-3 py-1 text-sm hover:bg-muted">
+              {section.label}
+            </Link>
+          ))}
+        </div>
+        <AdminThemeSwitcher />
       </div>
       <AdminQueryProvider>{children}</AdminQueryProvider>
     </div>

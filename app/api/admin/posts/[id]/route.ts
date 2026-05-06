@@ -23,6 +23,31 @@ function parseId(id: string): number | null {
   return value;
 }
 
+/**
+ * 取单篇博文完整数据（含 content / markdownContent），供 admin 编辑场景按需获取。
+ * 列表接口为减小体积已移除大字段，编辑时调用本接口拉详情。
+ */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if (!auth.ok) {
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const postId = parseId(id);
+  if (!postId) {
+    return NextResponse.json({ error: '无效博文ID' }, { status: 400 });
+  }
+
+  const post = await db.query.postsTable.findFirst({
+    where: (table, { eq: eqFn }) => eqFn(table.id, postId),
+  });
+  if (!post) {
+    return NextResponse.json({ error: '博文不存在' }, { status: 404 });
+  }
+  return NextResponse.json({ data: post });
+}
+
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if (!auth.ok) {
@@ -76,11 +101,22 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
   }
 
+  // returning 仅回元字段，避免把刚保存的整段 HTML 再回传前端浪费一次 RTT。
   const updated = await db
     .update(postsTable)
     .set(updatePayload)
     .where(eq(postsTable.id, postId))
-    .returning();
+    .returning({
+      id: postsTable.id,
+      title: postsTable.title,
+      type: postsTable.type,
+      sortOrder: postsTable.sortOrder,
+      isHidden: postsTable.isHidden,
+      isPinned: postsTable.isPinned,
+      coverUrl: postsTable.coverUrl,
+      excerpt: postsTable.excerpt,
+      updatedAt: postsTable.updatedAt,
+    });
 
   if (!updated[0]) {
     return NextResponse.json({ error: '博文不存在' }, { status: 404 });

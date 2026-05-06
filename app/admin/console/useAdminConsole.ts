@@ -2,7 +2,7 @@
 
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import type { CommentItem, PhotoItem, PostItem, TabKey, UserItem } from './types';
+import type { CommentItem, PhotoItem, PostDetail, PostItem, TabKey, UserItem } from './types';
 
 type JsonPayload<T> = {
   data?: T;
@@ -104,8 +104,18 @@ export function useAdminConsole(initialTab: TabKey) {
     return firstError instanceof Error ? firstError.message : '加载失败';
   }, [usersQuery, postsQuery, photosQuery, commentsQuery]);
 
+  /**
+   * 全量失效（仅在需要时使用）；后台 refetch 不阻塞调用方。
+   */
   const refreshAll = async () => {
     await queryClient.invalidateQueries({ queryKey: ['admin'] });
+  };
+
+  /**
+   * 仅失效指定子查询并立即返回，避免操作后被远程链路慢的列表拖累 UI。
+   */
+  const invalidateInBackground = (key: ReadonlyArray<unknown>) => {
+    void queryClient.invalidateQueries({ queryKey: [...key] });
   };
 
   useEffect(() => {
@@ -150,7 +160,7 @@ export function useAdminConsole(initialTab: TabKey) {
     setNewPostContent('');
     setNewPostType('');
     setNewPostIsHidden(false);
-    await refreshAll();
+    invalidateInBackground(['admin', 'posts']);
   };
 
   const uploadPostFile = async (file: File) => {
@@ -163,7 +173,7 @@ export function useAdminConsole(initialTab: TabKey) {
       parseJsonResponse<PostItem>(res, true),
     );
     setPostUploadHint(`已上传: ${file.name}`);
-    await refreshAll();
+    invalidateInBackground(['admin', 'posts']);
   };
 
   const togglePostHidden = async (item: PostItem) => {
@@ -172,14 +182,14 @@ export function useAdminConsole(initialTab: TabKey) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ isHidden: !item.isHidden }),
     }).then((res) => parseJsonResponse<PostItem>(res, true));
-    await refreshAll();
+    invalidateInBackground(['admin', 'posts']);
   };
 
   const deletePost = async (id: number) => {
     await fetch(`/api/admin/posts/${id}`, { method: 'DELETE' }).then((res) =>
       parseJsonResponse<{ success: boolean }>(res, false),
     );
-    await refreshAll();
+    invalidateInBackground(['admin', 'posts']);
   };
 
   const reorderPostsMutation = useMutation({
@@ -216,14 +226,32 @@ export function useAdminConsole(initialTab: TabKey) {
     await reorderPostsMutation.mutateAsync(orderedIds);
   };
 
-  const startEditPost = (post: PostItem) => {
+  const startEditPost = async (post: PostItem) => {
+    // 列表已不带 content，编辑时按需向详情接口拉完整正文。
     setEditingPostId(post.id);
     setEditPostTitle(post.title);
-    setEditPostContent(post.content);
     setEditPostType(post.type ?? '');
     setEditPostIsHidden(post.isHidden);
     setEditPostExcerpt(post.excerpt ?? '');
     setEditPostCoverUrl(post.coverUrl ?? '');
+    setEditPostContent('');
+    const detail = await fetch(`/api/admin/posts/${post.id}`).then((res) =>
+      parseJsonResponse<PostDetail>(res, true),
+    );
+    if (!detail) {
+      throw new Error('未取到博文详情');
+    }
+    // 用户可能在拉详情期间又点了别的，做下校验避免错填。
+    setEditingPostId((current) => {
+      if (current !== post.id) return current;
+      setEditPostTitle(detail.title);
+      setEditPostType(detail.type ?? '');
+      setEditPostIsHidden(detail.isHidden);
+      setEditPostExcerpt(detail.excerpt ?? '');
+      setEditPostCoverUrl(detail.coverUrl ?? '');
+      setEditPostContent(detail.content);
+      return current;
+    });
   };
 
   const cancelEditPost = () => {
@@ -258,7 +286,8 @@ export function useAdminConsole(initialTab: TabKey) {
         coverUrl: editPostCoverUrl,
       }),
     }).then((res) => parseJsonResponse<PostItem>(res, true));
-    await refreshAll();
+    // 不阻塞 UI，列表后台 refetch 即可（远程链路慢时也不影响关闭速度）。
+    invalidateInBackground(['admin', 'posts']);
     cancelEditPost();
   };
 

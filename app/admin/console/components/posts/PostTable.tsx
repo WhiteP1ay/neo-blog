@@ -26,7 +26,7 @@ type PostTableProps = {
     setEditPostCoverUrl: (value: string) => void;
     togglePostHidden: (item: PostItem) => Promise<void>;
     deletePost: (id: number) => Promise<void>;
-    startEditPost: (post: PostItem) => void;
+    startEditPost: (post: PostItem) => Promise<void>;
     cancelEditPost: () => void;
     savePostEdit: () => Promise<void>;
     reorderPosts: (orderedIds: number[]) => Promise<void>;
@@ -165,7 +165,7 @@ function SortablePostRow({
             <button
               className="rounded border px-2 py-1"
               type="button"
-              onClick={() => form.startEditPost(post)}
+              onClick={() => void form.startEditPost(post)}
               aria-label="编辑"
               title="编辑"
             >

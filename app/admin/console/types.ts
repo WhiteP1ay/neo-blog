@@ -13,7 +13,8 @@ export type UserItem = {
 };
 
 /**
- * 博文条目模型。
+ * 博文列表条目（轻量）。
+ * 列表接口为提速，不返回 content / markdownContent；编辑时通过详情接口按需获取。
  */
 export type PostItem = {
   id: number;
@@ -21,10 +22,16 @@ export type PostItem = {
   type: string;
   sortOrder: number;
   isHidden: boolean;
-  content: string;
-  markdownContent: string | null;
   excerpt: string | null;
   coverUrl: string | null;
+};
+
+/**
+ * 博文详情条目（含完整正文），仅用于编辑场景。
+ */
+export type PostDetail = PostItem & {
+  content: string;
+  markdownContent: string | null;
 };
 
 /**
