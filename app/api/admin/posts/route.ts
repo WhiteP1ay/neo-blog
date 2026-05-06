@@ -59,7 +59,8 @@ export async function POST(request: Request) {
     inputCoverUrl = typeof coverUrlRaw === 'string' ? coverUrlRaw.trim() : '';
     inputExcerpt = typeof excerptRaw === 'string' ? excerptRaw.trim() : '';
 
-    if (typeof contentRaw === 'string') {
+    // multipart 里 content 可能被提交为空字符串；此时应回退读取文件内容。
+    if (typeof contentRaw === 'string' && contentRaw.trim()) {
       markdownContent = contentRaw;
     } else if (fileRaw instanceof File) {
       markdownContent = await fileRaw.text();

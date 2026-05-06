@@ -168,17 +168,51 @@ export function RichTextEditor({
     return <div className={`rounded border p-3 text-sm text-muted-foreground ${minHeightClassName}`}>{placeholder}</div>;
   }
 
+  /**
+   * 根据当前光标位置推导块级格式，供下拉框展示当前状态。
+   */
+  const currentBlockFormat = editor.isActive('heading', { level: 1 })
+    ? 'h1'
+    : editor.isActive('heading', { level: 2 })
+      ? 'h2'
+      : editor.isActive('heading', { level: 3 })
+        ? 'h3'
+        : 'paragraph';
+
+  /**
+   * 统一处理段落/标题切换，避免工具栏散落多份逻辑。
+   */
+  const handleBlockFormatChange = (format: string) => {
+    const chain = editor.chain().focus();
+    if (format === 'paragraph') {
+      chain.setParagraph().run();
+      return;
+    }
+    if (format === 'h1' || format === 'h2' || format === 'h3') {
+      const level = Number.parseInt(format.slice(1), 10) as 1 | 2 | 3;
+      chain.setHeading({ level }).run();
+    }
+  };
+
   return (
     <div className="relative space-y-2">
       <div className="sticky top-0 z-30 flex flex-wrap gap-2 rounded border bg-background p-2 shadow-sm">
+        <select
+          aria-label="文本格式"
+          className="rounded border bg-background px-2 py-1 text-xs"
+          value={currentBlockFormat}
+          onChange={(event) => handleBlockFormatChange(event.target.value)}
+        >
+          <option value="paragraph">普通文本</option>
+          <option value="h1">H1</option>
+          <option value="h2">H2</option>
+          <option value="h3">H3</option>
+        </select>
         <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleBold().run()}>
           粗体
         </button>
         <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleItalic().run()}>
           斜体
-        </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-          H2
         </button>
         <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleBulletList().run()}>
           无序列表

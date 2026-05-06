@@ -3,6 +3,7 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Eye, EyeOff, GripVertical, Pencil, Trash2, Wrench } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
 import type { PostItem } from '../../types';
 import { RichTextEditor } from '../RichTextEditor';
@@ -82,12 +83,18 @@ export function PostTable({ posts, form }: PostTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/40 text-left">
-                <th className="px-3 py-2">拖拽</th>
+                <th className="px-3 py-2">
+                  <GripVertical className="h-4 w-4" aria-label="拖拽排序列" />
+                </th>
                 <th className="px-3 py-2">ID</th>
                 <th className="px-3 py-2">标题</th>
                 <th className="px-3 py-2">类型</th>
-                <th className="px-3 py-2">状态</th>
-                <th className="px-3 py-2">操作</th>
+                <th className="px-3 py-2">
+                  <Eye className="h-4 w-4" aria-label="显示状态列" />
+                </th>
+                <th className="px-3 py-2">
+                  <Wrench className="h-4 w-4" aria-label="操作列" />
+                </th>
               </tr>
             </thead>
             <SortableContext items={visiblePosts.map((post) => post.id)} strategy={verticalListSortingStrategy}>
@@ -130,24 +137,48 @@ function SortablePostRow({
             {...listeners}
             disabled={dragDisabled}
             title={dragDisabled ? '筛选状态下暂不可拖拽排序' : '拖拽排序'}
+            aria-label={dragDisabled ? '筛选状态下暂不可拖拽排序' : '拖拽排序'}
           >
-            拖拽
+            <GripVertical className="h-4 w-4" />
           </button>
         </td>
         <td className="px-3 py-2">{post.id}</td>
         <td className="px-3 py-2">{post.title}</td>
         <td className="px-3 py-2">{post.type || '(空)'}</td>
-        <td className="px-3 py-2">{post.isHidden ? '隐藏' : '显示'}</td>
+        <td className="px-3 py-2">
+          <button
+            className="rounded border px-2 py-1"
+            type="button"
+            onClick={() => void form.togglePostHidden(post)}
+            aria-label={post.isHidden ? '切换为显示' : '切换为隐藏'}
+            title={post.isHidden ? '切换为显示' : '切换为隐藏'}
+          >
+            {post.isHidden ? (
+              <EyeOff className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <Eye className="h-4 w-4 text-emerald-600" />
+            )}
+          </button>
+        </td>
         <td className="px-3 py-2">
           <div className="flex gap-2">
-            <button className="rounded border px-2 py-1" type="button" onClick={() => form.startEditPost(post)}>
-              编辑
+            <button
+              className="rounded border px-2 py-1"
+              type="button"
+              onClick={() => form.startEditPost(post)}
+              aria-label="编辑"
+              title="编辑"
+            >
+              <Pencil className="h-4 w-4" />
             </button>
-            <button className="rounded border px-2 py-1" type="button" onClick={() => void form.togglePostHidden(post)}>
-              切换显示
-            </button>
-            <button className="rounded border px-2 py-1" type="button" onClick={() => void form.deletePost(post.id)}>
-              删除
+            <button
+              className="rounded border px-2 py-1"
+              type="button"
+              onClick={() => void form.deletePost(post.id)}
+              aria-label="删除"
+              title="删除"
+            >
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         </td>
@@ -171,11 +202,15 @@ function SortablePostRow({
                   placeholder="编辑正文（HTML）"
                   toolbarRight={
                     <>
-                      <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => void form.savePostEdit()}>
-                        保存
-                      </button>
                       <button className="rounded border px-2 py-1 text-xs" type="button" onClick={form.cancelEditPost}>
                         取消
+                      </button>
+                      <button
+                        className="rounded border border-primary bg-primary px-2 py-1 text-xs text-primary-foreground"
+                        type="button"
+                        onClick={() => void form.savePostEdit()}
+                      >
+                        保存
                       </button>
                     </>
                   }
