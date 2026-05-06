@@ -5,12 +5,12 @@ import type { PhotoItem } from '../../types';
 
 type PhotoTableProps = {
   photos: PhotoItem[];
-  setPreview: (value: { title: string; url: string } | null) => void;
+  setPreviewPhotoId: (value: number | null) => void;
   togglePhotoHidden: (item: PhotoItem) => Promise<void>;
   deletePhoto: (id: number) => Promise<void>;
 };
 
-export function PhotoTable({ photos, setPreview, togglePhotoHidden, deletePhoto }: PhotoTableProps) {
+export function PhotoTable({ photos, setPreviewPhotoId, togglePhotoHidden, deletePhoto }: PhotoTableProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const types = useMemo(
     () => Array.from(new Set(photos.map((photo) => photo.type))).sort((a, b) => a.localeCompare(b)),
@@ -66,7 +66,7 @@ export function PhotoTable({ photos, setPreview, togglePhotoHidden, deletePhoto 
                       disabled={!photo.coverUrl}
                       onClick={() => {
                         if (!photo.coverUrl) return;
-                        setPreview({ title: photo.title, url: photo.coverUrl });
+                        setPreviewPhotoId(photo.id);
                       }}
                       title={photo.coverUrl ? '预览图片' : '没有可预览的图片 URL'}
                     >

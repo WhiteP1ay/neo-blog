@@ -33,13 +33,7 @@ export default async function Home({
       <SiteHeader />
       <main className="py-5 sm:py-8">
         <DocContainer>
-          <article className="retro-content space-y-5">
-            <header>
-              <h1 className="text-2xl font-bold sm:text-3xl">White Meta</h1>
-            </header>
-            <hr className="site-hr" />
-            <PostList categories={categories} />
-          </article>
+          <PostList categories={categories} />
         </DocContainer>
       </main>
       <SiteFooter />
