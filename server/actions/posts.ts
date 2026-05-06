@@ -66,7 +66,7 @@ export async function getHomeExplorerData(): Promise<
   ActionResult<HomeExplorerCategory[]>
 > {
   try {
-    const TYPE_BLACKLIST = new Set(["rei"]);
+    const TYPE_BLACKLIST = new Set(["rei", "asuka"]);
     const posts = await db
       .select({
         id: postsTable.id,
