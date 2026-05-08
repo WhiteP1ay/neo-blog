@@ -11,7 +11,7 @@ WORKDIR /app
 # 复制包管理文件
 COPY package.json pnpm-lock.yaml ./
 
-RUN pnpm install 
+RUN pnpm approve-builds esbuild sharp && pnpm install
 
 # 构建阶段
 FROM base AS builder
