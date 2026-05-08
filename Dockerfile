@@ -9,7 +9,7 @@ FROM base AS deps
 WORKDIR /app
 
 # 复制包管理文件
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 RUN pnpm install
 
