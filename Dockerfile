@@ -1,5 +1,5 @@
 # 使用官方 Node.js 运行时作为基础镜像
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 # 启用 pnpm（corepack 会自动匹配 lockfile 中的版本）
 RUN corepack enable
