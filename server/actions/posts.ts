@@ -179,12 +179,15 @@ export async function createPost(data: {
       .insert(postsTable)
       .values({
         title: data.title,
+        // 让新文章天然落到列表最前：取当前最小 sortOrder 再 -1（无文章时回落到 0）。
+        // C 端排序仍是 sortOrder ASC, createdAt DESC，新文章自然排在前面，
+        // 同时不破坏管理员之前手动 DnD 排好的相对顺序。
         sortOrder:
           ((await db
             .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
             .from(postsTable)
-            .orderBy(desc(postsTable.sortOrder))
-            .limit(1))[0]?.sortOrder ?? 0) + 1,
+            .orderBy(asc(postsTable.sortOrder))
+            .limit(1))[0]?.sortOrder ?? 1) - 1,
         content: data.content,
         markdownContent: data.markdownContent || null,
         coverUrl: metadata.coverUrl,

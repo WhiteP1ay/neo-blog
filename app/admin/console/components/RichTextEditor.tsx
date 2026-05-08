@@ -9,8 +9,9 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import StarterKit from '@tiptap/starter-kit';
 import { EditorContent, useEditor } from '@tiptap/react';
-import { NodeSelection, TextSelection } from '@tiptap/pm/state';
+import { setBlockType } from '@tiptap/pm/commands';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { NodeSelection } from '@tiptap/pm/state';
 import { common, createLowlight } from 'lowlight';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -194,19 +195,15 @@ export function RichTextEditor({
         const fencedCodeMatch = currentLineText.match(/^```([\w-]+)?$/);
         if (!fencedCodeMatch) return false;
         const fenceLang = fencedCodeMatch[1]?.trim().toLowerCase() || null;
+        const codeBlockType = view.state.schema.nodes.codeBlock;
+        if (!codeBlockType) return false;
         event.preventDefault();
+        // 先把围栏文本（```ts）从段落里清空，再用 setBlockType 把当前段落原地转成 codeBlock，
+        // 这样 ProseMirror 会保持光标在原文本位置（即新代码块内部），后续粘贴落点正确。
         const tr = state.tr.delete(lineStart, selection.from);
         view.dispatch(tr);
-        const nextState = view.state;
-        const codeBlockType = nextState.schema.nodes.codeBlock;
-        if (!codeBlockType) return false;
-        const node = codeBlockType.create({ language: fenceLang });
-        const insertionPos = nextState.selection.from;
-        const nextTr = nextState.tr.replaceSelectionWith(node);
-        // 将光标定位到代码块内容内部，避免插入后焦点落在块外。
-        nextTr.setSelection(TextSelection.create(nextTr.doc, insertionPos + 1));
-        nextTr.scrollIntoView();
-        view.dispatch(nextTr);
+        setBlockType(codeBlockType, { language: fenceLang })(view.state, view.dispatch);
+        view.focus();
         return true;
       },
       handlePaste: (view, event) => {

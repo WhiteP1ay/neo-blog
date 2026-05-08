@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminQueryProvider } from './console/AdminQueryProvider';
-import { AdminThemeSwitcher } from '@/components/admin/AdminThemeSwitcher';
+import { AdminSettingsPopover } from '@/components/admin/AdminSettingsPopover';
 import { getSession } from '@/server/utils/auth';
 
 const ADMIN_SECTIONS = [
@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </Link>
           ))}
         </div>
-        <AdminThemeSwitcher />
+        <AdminSettingsPopover />
       </div>
       <AdminQueryProvider>{children}</AdminQueryProvider>
     </div>

@@ -5,6 +5,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { Eye, EyeOff, GripVertical, Pencil, Trash2, Wrench } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
+import { useAdminSettings } from '@/stores/admin/settings';
 import type { PostItem } from '../../types';
 import { RichTextEditor } from '../RichTextEditor';
 
@@ -34,6 +35,8 @@ type PostTableProps = {
 };
 
 export function PostTable({ posts, form }: PostTableProps) {
+  const editMode = useAdminSettings((state) => state.editMode);
+  const isZen = editMode === 'zen';
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const orderedPosts = useMemo(
     () => [...posts].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id),
@@ -100,7 +103,13 @@ export function PostTable({ posts, form }: PostTableProps) {
             <SortableContext items={visiblePosts.map((post) => post.id)} strategy={verticalListSortingStrategy}>
               <tbody>
                 {visiblePosts.map((post) => (
-                  <SortablePostRow key={post.id} post={post} form={form} dragDisabled={selectedTypes.length > 0} />
+                  <SortablePostRow
+                    key={post.id}
+                    post={post}
+                    form={form}
+                    dragDisabled={selectedTypes.length > 0}
+                    suppressInlineEdit={isZen}
+                  />
                 ))}
               </tbody>
             </SortableContext>
@@ -115,10 +124,12 @@ function SortablePostRow({
   post,
   form,
   dragDisabled,
+  suppressInlineEdit,
 }: {
   post: PostItem;
   form: PostTableProps['form'];
   dragDisabled: boolean;
+  suppressInlineEdit: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: post.id, disabled: dragDisabled });
   const style = {
@@ -183,7 +194,7 @@ function SortablePostRow({
           </div>
         </td>
       </tr>
-      {form.editingPostId === post.id ? (
+      {form.editingPostId === post.id && !suppressInlineEdit ? (
         <tr className="border-b bg-muted/20">
           <td className="px-3 py-3" colSpan={6}>
             <div className="space-y-2 rounded border border-dashed p-3">

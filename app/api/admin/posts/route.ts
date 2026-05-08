@@ -14,6 +14,8 @@ type CreatePostBody = {
   coverUrl?: unknown;
   type?: unknown;
   isHidden?: unknown;
+  // mode=zen 时跳过封面/摘要自动派生，按调用方传值（通常为空）保存。
+  mode?: unknown;
 };
 
 export async function GET() {
@@ -55,6 +57,7 @@ export async function POST(request: Request) {
   let isHidden = false;
   let inputCoverUrl = '';
   let inputExcerpt = '';
+  let mode: 'traditional' | 'zen' = 'traditional';
 
   if (contentType.includes('multipart/form-data')) {
     const formData = await request.formData();
@@ -91,6 +94,7 @@ export async function POST(request: Request) {
     isHidden = body.isHidden === true;
     inputCoverUrl = typeof body.coverUrl === 'string' ? body.coverUrl : '';
     inputExcerpt = typeof body.excerpt === 'string' ? body.excerpt : '';
+    if (body.mode === 'zen') mode = 'zen';
   }
 
   const content = markdownToHTML(markdownContent);
@@ -106,21 +110,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
   }
 
+  // 禅模式下默认不派生封面/摘要，按调用方传值（通常为空字符串）保存。
+  const finalExcerpt = mode === 'zen' ? inputExcerpt : (inputExcerpt || metadata.excerpt);
+  const finalCoverUrl = mode === 'zen' ? inputCoverUrl : (inputCoverUrl || metadata.coverUrl);
+
   const created = await db
     .insert(postsTable)
     .values({
       title,
       content,
       markdownContent: markdownContent || null,
-      excerpt: inputExcerpt || metadata.excerpt,
-      coverUrl: inputCoverUrl || metadata.coverUrl,
+      excerpt: finalExcerpt,
+      coverUrl: finalCoverUrl,
       type,
+      // 让新文章天然落到列表最前：取当前最小 sortOrder 再 -1（无文章时回落到 0）。
+      // C 端排序为 sortOrder ASC, createdAt DESC，新文章自然在前，且不破坏已有手动顺序。
       sortOrder:
         ((await db
           .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
           .from(postsTable)
-          .orderBy(desc(postsTable.sortOrder))
-          .limit(1))[0]?.sortOrder ?? 0) + 1,
+          .orderBy(asc(postsTable.sortOrder))
+          .limit(1))[0]?.sortOrder ?? 1) - 1,
       isHidden,
       createdAt: new Date(),
       updatedAt: new Date(),
