@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { login } from '@/server/actions/login';
 import { Button } from '@/components/ui/button';
@@ -72,8 +73,8 @@ export function LoginForm() {
         </div>
 
         <div className='flex justify-end'>
-          <Button variant="outline">
-            <span>返回首页</span>
+          <Button variant="outline" asChild>
+            <Link href="/">返回首页</Link>
           </Button>
           <Button className='ml-4' type="submit" disabled={loading}>
             {loading ? '登录中...' : '登录'}

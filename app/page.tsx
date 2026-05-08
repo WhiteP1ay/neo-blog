@@ -8,11 +8,11 @@ export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'White Meta',
-  description: 'White Meta 复古文档风博客首页',
+  description: 'White Meta 白玩dev的个人网站',
   keywords: ['博客', '技术文章', '编程', '开发', '复古网站'],
   openGraph: {
     title: 'White Meta',
-    description: 'White Meta 复古文档风博客首页',
+    description: 'White Meta 白玩dev的个人网站',
     type: 'website',
   },
 };

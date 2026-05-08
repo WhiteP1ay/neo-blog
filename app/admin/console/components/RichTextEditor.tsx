@@ -1,6 +1,7 @@
 'use client';
 
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import Highlight from '@tiptap/extension-highlight';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Table from '@tiptap/extension-table';
@@ -13,14 +14,43 @@ import { setBlockType } from '@tiptap/pm/commands';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection } from '@tiptap/pm/state';
 import { common, createLowlight } from 'lowlight';
+import {
+  BetweenHorizontalStart,
+  BetweenVerticalStart,
+  Bold,
+  ChevronDown,
+  Highlighter,
+  Italic,
+  List,
+  ListOrdered,
+  Quote,
+  Rows3,
+  Columns3,
+  Table as TableIcon,
+  Trash2,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { EditorView } from '@tiptap/pm/view';
 import { useToast } from '@/components/Toast';
 
 const lowlight = createLowlight(common);
 const MARKDOWN_IMAGE_PATTERN = /!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)/g;
 const SINGLE_MARKDOWN_IMAGE_PATTERN = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)$/;
+
+/**
+ * 文字高亮预设色板。颜色都是浅色 pastel，在浅色与深色主题下可读性都尚可。
+ * 第一项作为「未指定颜色」时的默认 fallback。
+ */
+const HIGHLIGHT_PRESETS: Array<{ key: string; color: string; label: string }> = [
+  { key: 'yellow', color: '#fef08a', label: '黄' },
+  { key: 'green', color: '#bbf7d0', label: '绿' },
+  { key: 'blue', color: '#bfdbfe', label: '蓝' },
+  { key: 'pink', color: '#fbcfe8', label: '粉' },
+  { key: 'purple', color: '#ddd6fe', label: '紫' },
+  { key: 'orange', color: '#fed7aa', label: '橙' },
+];
+const DEFAULT_HIGHLIGHT_COLOR = HIGHLIGHT_PRESETS[0].color;
 
 type RichTextEditorProps = {
   value: string;
@@ -43,6 +73,34 @@ export function RichTextEditor({
   const { showToast } = useToast();
   const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
   const [selectedImageMarkdown, setSelectedImageMarkdown] = useState('');
+  const [highlightPaletteOpen, setHighlightPaletteOpen] = useState(false);
+  // 用 state 让色板按钮上的小色块可以响应颜色切换；ref 给扩展的 keyboard handler 读取最新值（避免闭包陈旧）。
+  const [lastHighlightColor, setLastHighlightColor] = useState(DEFAULT_HIGHLIGHT_COLOR);
+  const lastHighlightColorRef = useRef<string>(DEFAULT_HIGHLIGHT_COLOR);
+  useEffect(() => {
+    lastHighlightColorRef.current = lastHighlightColor;
+  }, [lastHighlightColor]);
+
+  /**
+   * 自定义 Highlight 扩展：保留 multicolor 能力，并把 Mod-Shift-H 改为「用最近一次颜色 toggle」。
+   */
+  const HighlightExtension = useMemo(
+    () =>
+      Highlight.extend({
+        addKeyboardShortcuts() {
+          return {
+            'Mod-Shift-h': () => {
+              const color = lastHighlightColorRef.current || DEFAULT_HIGHLIGHT_COLOR;
+              return this.editor.chain().focus().toggleHighlight({ color }).run();
+            },
+          };
+        },
+      }).configure({
+        multicolor: true,
+        HTMLAttributes: { class: 'rt-highlight' },
+      }),
+    [],
+  );
 
   /**
    * 将粘贴文本中的 Markdown 图片语法转换为图片节点，确保粘贴后立即所见即所得。
@@ -162,6 +220,9 @@ export function RichTextEditor({
       CodeBlockLowlight.configure({
         lowlight,
       }),
+      // multicolor=true 让 mark 节点带 data-color，可保存任意背景色；
+      // 自定义快捷键 Mod-Shift-H 复用最近一次选过的颜色（默认黄）。
+      HighlightExtension,
       Image,
       Link.configure({
         openOnClick: false,
@@ -388,39 +449,124 @@ export function RichTextEditor({
     }
   };
 
+  /**
+   * 高亮控制：选区为空时直接 toggle 默认色（与快捷键行为一致），有选区时套用指定颜色。
+   */
+  const applyHighlightColor = (color: string) => {
+    setLastHighlightColor(color);
+    editor.chain().focus().setHighlight({ color }).run();
+    setHighlightPaletteOpen(false);
+  };
+
+  const clearHighlight = () => {
+    editor.chain().focus().unsetHighlight().run();
+    setHighlightPaletteOpen(false);
+  };
+
+  const toggleHighlightShortcut = () => {
+    editor.chain().focus().toggleHighlight({ color: lastHighlightColor }).run();
+  };
+
+  const isHighlightActive = editor.isActive('highlight');
+
+  /** 工具栏统一按钮样式：方形 icon 按钮，带悬停反馈与可选激活态。 */
+  const iconButtonClass = (active = false) =>
+    `inline-flex h-7 w-7 items-center justify-center rounded border text-muted-foreground hover:bg-muted ${
+      active ? 'bg-muted text-foreground' : ''
+    }`;
+
   return (
     <div className="relative space-y-2">
       <div className="sticky top-0 z-30 space-y-2 bg-background">
-        <div className="flex flex-wrap gap-2 rounded border bg-background p-2 shadow-sm">
+        <div className="flex flex-wrap items-center gap-1.5 rounded border bg-background p-2 shadow-sm">
         <select
           aria-label="文本格式"
           className="rounded border bg-background px-2 py-1 text-xs"
           value={currentBlockFormat}
           onChange={(event) => handleBlockFormatChange(event.target.value)}
         >
-          <option value="paragraph">普通文本</option>
+          <option value="paragraph">正文</option>
           <option value="h1">H1</option>
           <option value="h2">H2</option>
           <option value="h3">H3</option>
         </select>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleBold().run()}>
-          粗体
-        </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleItalic().run()}>
-          斜体
-        </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleBulletList().run()}>
-          无序列表
-        </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-          有序列表
-        </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
-          引用
+        <button
+          type="button"
+          className={iconButtonClass(editor.isActive('bold'))}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          aria-label="粗体"
+          title="粗体 (Ctrl/Cmd + B)"
+        >
+          <Bold className="h-3.5 w-3.5" />
         </button>
         <button
-          className="rounded border px-2 py-1 text-xs"
           type="button"
+          className={iconButtonClass(editor.isActive('italic'))}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          aria-label="斜体"
+          title="斜体 (Ctrl/Cmd + I)"
+        >
+          <Italic className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          className={iconButtonClass(editor.isActive('bulletList'))}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          aria-label="无序列表"
+          title="无序列表"
+        >
+          <List className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          className={iconButtonClass(editor.isActive('orderedList'))}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          aria-label="有序列表"
+          title="有序列表"
+        >
+          <ListOrdered className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          className={iconButtonClass(editor.isActive('blockquote'))}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          aria-label="引用"
+          title="引用"
+        >
+          <Quote className="h-3.5 w-3.5" />
+        </button>
+        <div className="inline-flex items-stretch overflow-hidden rounded border">
+          <button
+            type="button"
+            className={`inline-flex h-7 items-center gap-1 px-2 text-muted-foreground hover:bg-muted ${
+              isHighlightActive ? 'bg-muted text-foreground' : ''
+            }`}
+            onClick={toggleHighlightShortcut}
+            aria-label="高亮"
+            aria-pressed={isHighlightActive}
+            title="高亮 (Ctrl/Cmd + Shift + H)"
+          >
+            <Highlighter className="h-3.5 w-3.5" />
+            <span
+              className="inline-block h-2 w-2 rounded-sm border align-middle"
+              style={{ backgroundColor: lastHighlightColor }}
+            />
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-7 items-center justify-center border-l px-1 text-muted-foreground hover:bg-muted"
+            onClick={() => setHighlightPaletteOpen((value) => !value)}
+            aria-label="选择高亮颜色"
+            aria-expanded={highlightPaletteOpen}
+            title="选择高亮颜色"
+          >
+            <ChevronDown className="h-3 w-3" />
+          </button>
+        </div>
+        <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+        <button
+          type="button"
+          className={iconButtonClass()}
           onClick={() =>
             editor
               .chain()
@@ -428,26 +574,89 @@ export function RichTextEditor({
               .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
               .run()
           }
+          aria-label="插入表格"
+          title="插入 3×3 表格"
         >
-          插入表格
+          <TableIcon className="h-3.5 w-3.5" />
         </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().addRowAfter().run()}>
-          +行
+        <button
+          type="button"
+          className={iconButtonClass()}
+          onClick={() => editor.chain().focus().addRowAfter().run()}
+          aria-label="增加一行"
+          title="在下方增加一行"
+        >
+          <BetweenHorizontalStart className="h-3.5 w-3.5" />
         </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().addColumnAfter().run()}>
-          +列
+        <button
+          type="button"
+          className={iconButtonClass()}
+          onClick={() => editor.chain().focus().addColumnAfter().run()}
+          aria-label="增加一列"
+          title="在右侧增加一列"
+        >
+          <BetweenVerticalStart className="h-3.5 w-3.5" />
         </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().deleteRow().run()}>
-          -行
+        <button
+          type="button"
+          className={iconButtonClass()}
+          onClick={() => editor.chain().focus().deleteRow().run()}
+          aria-label="删除当前行"
+          title="删除当前行"
+        >
+          <span className="relative inline-flex">
+            <Rows3 className="h-3.5 w-3.5" />
+            <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
+          </span>
         </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().deleteColumn().run()}>
-          -列
+        <button
+          type="button"
+          className={iconButtonClass()}
+          onClick={() => editor.chain().focus().deleteColumn().run()}
+          aria-label="删除当前列"
+          title="删除当前列"
+        >
+          <span className="relative inline-flex">
+            <Columns3 className="h-3.5 w-3.5" />
+            <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
+          </span>
         </button>
-        <button className="rounded border px-2 py-1 text-xs" type="button" onClick={() => editor.chain().focus().deleteTable().run()}>
-          删表
+        <button
+          type="button"
+          className={iconButtonClass()}
+          onClick={() => editor.chain().focus().deleteTable().run()}
+          aria-label="删除整个表格"
+          title="删除整个表格"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
         {toolbarRight ? <div className="ml-auto flex items-center gap-2">{toolbarRight}</div> : null}
         </div>
+        {highlightPaletteOpen ? (
+          <div className="flex flex-wrap items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
+            <span className="shrink-0 text-xs text-muted-foreground">高亮颜色</span>
+            {HIGHLIGHT_PRESETS.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                className="inline-flex h-6 w-6 items-center justify-center rounded border hover:scale-110"
+                style={{ backgroundColor: preset.color }}
+                aria-label={`应用 ${preset.label} 高亮`}
+                title={preset.label}
+                onClick={() => applyHighlightColor(preset.color)}
+              />
+            ))}
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-xs hover:bg-muted"
+              onClick={clearHighlight}
+              title="清除高亮"
+            >
+              清除
+            </button>
+            <span className="text-[10px] text-muted-foreground">快捷键 Ctrl/Cmd + Shift + H</span>
+          </div>
+        ) : null}
         {selectedImagePos !== null ? (
           <div className="flex items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
             <span className="shrink-0 text-xs text-muted-foreground">图片 Markdown</span>

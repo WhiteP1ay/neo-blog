@@ -3,12 +3,15 @@
 import { useMemo, useState } from 'react';
 import type { HomeExplorerCategory, HomeExplorerPostPreview } from "@/server/types/explorer";
 import Link from "next/link";
+import { AdminPostEditEntry } from "@/components/admin/AdminPostEditEntry";
+import { useIsAdmin } from "@/hooks/admin/useIsAdmin";
 
 interface PostListProps {
   categories: HomeExplorerCategory[];
 }
 
 export function PostList({ categories }: PostListProps) {
+  const isAdmin = useIsAdmin();
   const [activeType, setActiveType] = useState('all');
   const posts = useMemo<HomeExplorerPostPreview[]>(() => {
     const activeCategory = categories.find((category) => category.topicKey === activeType);
@@ -35,13 +38,16 @@ export function PostList({ categories }: PostListProps) {
       </div>
       <ul className="retro-paper space-y-2 rounded-sm p-4">
         {posts.map((post) => (
-          <li key={post.id} className="ml-5 list-disc text-sm">
+          <li key={post.id} className="group ml-5 list-disc text-sm">
             <Link href={`/blog/${post.id}`} className="align-middle">
               {post.title}
             </Link>
-            {/* <span className="ml-2 text-xs text-muted-foreground">
-              {formatDate(post.createdAt)}
-            </span> */}
+            {isAdmin ? (
+              <AdminPostEditEntry
+                postId={post.id}
+                className="ml-1 align-middle opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100"
+              />
+            ) : null}
           </li>
         ))}
       </ul>

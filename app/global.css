@@ -160,6 +160,17 @@ body {
   opacity: 0.85;
 }
 
+/* 文字高亮（tiptap Highlight 扩展），编辑器与阅读页保持一致：
+ * - 深浅主题下统一强制深色文字，避免浅色 pastel 背景上看不清；
+ * - 行内显示，不破坏 prose 行高 */
+:where(.prose, .ProseMirror) mark {
+  color: #18181b;
+  padding: 0.05em 0.2em;
+  border-radius: 0.2rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 /* 富文本编辑器：图片节点选中态视觉提示，方便用户与"图片 Markdown 编辑条"联动 */
 .ProseMirror img {
   cursor: pointer;

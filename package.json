@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "biome lint --write",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
+    "db:backfill-h1": "tsx scripts/backfill-post-h1.ts",
     "db:init": "pnpm drizzle-kit push && pnpm db:seed-admin"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@tanstack/react-query": "^5.100.6",
     "@tiptap/core": "2.27.2",
     "@tiptap/extension-code-block-lowlight": "^2.27.2",
+    "@tiptap/extension-highlight": "2.27.2",
     "@tiptap/extension-image": "^2.27.2",
     "@tiptap/extension-link": "2.27.2",
     "@tiptap/extension-table": "^2.27.2",

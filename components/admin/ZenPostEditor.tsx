@@ -3,7 +3,7 @@
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/components/Toast';
-import { RichTextEditor } from '../RichTextEditor';
+import { RichTextEditor } from '@/app/admin/console/components/RichTextEditor';
 
 /**
  * 从 HTML 字符串里取第一个 h1 的纯文本（去掉嵌套标签）。
@@ -79,22 +79,21 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     setContent(editInitialContent);
   }, [open, mode, editPostId, editInitialContent]);
 
-  const previewHeader = props.mode === 'create' ? parseZenHeader(content) : null;
-
   const handleSave = useCallback(async () => {
     if (submitting) return;
     if (!content.trim()) {
       showToast('正文不能为空', 'error');
       return;
     }
+    // 创建与编辑都从正文 h1 派生 title 与 type；缺 h1 直接拒绝保存，行为一致。
+    const { title, type } = parseZenHeader(content);
+    if (!title) {
+      showToast('请在正文最上方放一个 H1 作为标题', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       if (props.mode === 'create') {
-        const { title, type } = parseZenHeader(content);
-        if (!title) {
-          showToast('请在正文最上方放一个 H1 作为标题', 'error');
-          return;
-        }
         const response = await fetch('/api/admin/posts', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -121,9 +120,9 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             content,
-            // 显式带回原值，避免 PUT 派生覆盖了禅模式想保持的字段。
-            title: props.initialTitle,
-            type: props.initialType,
+            // 用从 h1 派生的最新 title/type 覆盖原值；isHidden/excerpt/coverUrl 保持禅模式简洁原则不动。
+            title,
+            type,
             isHidden: props.isHidden,
             excerpt: props.excerpt,
             coverUrl: props.coverUrl,
@@ -151,17 +150,6 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
       <header className="flex items-center justify-between border-b px-6 py-3">
         <div className="flex items-center gap-3">
           <span className="rounded border px-2 py-0.5 text-xs text-muted-foreground">禅模式</span>
-          {props.mode === 'create' ? (
-            <span className="text-xs text-muted-foreground">
-              标题：{previewHeader?.title || <em className="opacity-60">请在正文里写一个 H1</em>}
-              {previewHeader?.type ? `　·　type：${previewHeader.type}` : ''}
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">
-              编辑：{props.initialTitle}
-              {props.initialType ? `　·　type：${props.initialType}` : ''}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <button

@@ -4,9 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useAdminSettings } from '@/stores/admin/settings';
 import type { PostItem } from '../types';
+import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
 import { PostCreate } from './posts/PostCreate';
 import { PostTable } from './posts/PostTable';
-import { ZenPostEditor } from './posts/ZenPostEditor';
 
 type PostFormState = {
   newPostTitle: string;
