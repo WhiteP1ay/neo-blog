@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 所有 Git commit message 必须用中文书写。
 格式遵循 Conventional Commits：type: description
 
