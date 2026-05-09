@@ -13,6 +13,19 @@ export const metadata: Metadata = {
   description: 'White Meta is a blog for whitePlay',
   keywords: ['blog', '技术博客', '编程'],
   authors: [{ name: 'whitePlay' }],
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'White Meta',
+    statusBarStyle: 'black-translucent',
+  },
+  themeColor: '#353535',
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
@@ -52,9 +65,7 @@ export default function RootLayout({
           storageKey="theme"
           disableTransitionOnChange
         >
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <ToastProvider>{children}</ToastProvider>
         </NextThemesProvider>
       </body>
     </html>
