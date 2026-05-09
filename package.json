@@ -7,6 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome lint --write",
+    "icons:pwa": "node scripts/gen-pwa-brand-icons.mjs",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
     "db:backfill-h1": "tsx scripts/backfill-post-h1.ts",
     "db:init": "pnpm drizzle-kit push && pnpm db:seed-admin"
@@ -74,6 +75,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.5",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "typescript": "^5"
