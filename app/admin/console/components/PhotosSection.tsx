@@ -23,7 +23,16 @@ type PhotoFormState = {
   deletePhoto: (id: number) => Promise<void>;
 };
 
-export function PhotosSection({ photos, form }: { photos: PhotoItem[]; form: PhotoFormState }) {
+export function PhotosSection({
+  photos,
+  form,
+  selectedType = null,
+}: {
+  photos: PhotoItem[];
+  form: PhotoFormState;
+  /** 路径驱动的类型筛选，null 表示「全部」 */
+  selectedType?: string | null;
+}) {
   const { showToast } = useToast();
   const [previewPhotoId, setPreviewPhotoId] = useState<number | null>(null);
   const [openCreate, setOpenCreate] = useState(false);
@@ -82,6 +91,7 @@ export function PhotosSection({ photos, form }: { photos: PhotoItem[]; form: Pho
         setPreviewPhotoId={setPreviewPhotoId}
         togglePhotoHidden={form.togglePhotoHidden}
         deletePhoto={form.deletePhoto}
+        selectedType={selectedType}
       />
       <PhotoCreate open={openCreate} onClose={() => setOpenCreate(false)} form={form} />
       <PhotoPreview

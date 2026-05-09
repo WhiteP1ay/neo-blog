@@ -17,12 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home({
-  searchParams: _searchParams,
-}: {
-  searchParams: Promise<{ topic?: string }>;
-}) {
-  void _searchParams;
+export default async function Home() {
   const categories = await resolveHomeCategories();
   if (!categories) {
     return <p className="text-sm text-muted-foreground">加载列表失败，请稍后重试。</p>;
@@ -33,7 +28,7 @@ export default async function Home({
       <SiteHeader />
       <main className="py-5 sm:py-8">
         <DocContainer>
-          <PostList categories={categories} />
+          <PostList categories={categories} selectedTopicKey="all" />
         </DocContainer>
       </main>
       <SiteFooter />

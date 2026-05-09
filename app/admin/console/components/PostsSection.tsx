@@ -41,7 +41,16 @@ type PostFormState = {
   reorderPosts: (orderedIds: number[]) => Promise<void>;
 };
 
-export function PostsSection({ posts, form }: { posts: PostItem[]; form: PostFormState }) {
+export function PostsSection({
+  posts,
+  form,
+  selectedType = null,
+}: {
+  posts: PostItem[];
+  form: PostFormState;
+  /** 路径驱动的类型筛选，null 表示「全部」 */
+  selectedType?: string | null;
+}) {
   const editMode = useAdminSettings((state) => state.editMode);
   const queryClient = useQueryClient();
   const [openCreate, setOpenCreate] = useState(false);
@@ -70,7 +79,7 @@ export function PostsSection({ posts, form }: { posts: PostItem[]; form: PostFor
           新增博文
         </button>
       </div>
-      <PostTable posts={posts} form={form} />
+      <PostTable posts={posts} form={form} selectedType={selectedType} />
 
       {/* 传统模式新增弹窗 */}
       <PostCreate open={!isZen && openCreate} onClose={() => setOpenCreate(false)} form={form} />
