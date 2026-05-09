@@ -65,24 +65,37 @@ export function useAdminConsole(initialTab: TabKey) {
   const [commentAuthor, setCommentAuthor] = useState('');
   const [commentContent, setCommentContent] = useState('');
 
+  /**
+   * 客户端挂载后再启用列表请求，避免 SSR 已渲染出表格而水合时 QueryClient 为空缓存导致 isLoading=true，
+   * 与服务端 HTML 不一致触发 Hydration mismatch。
+   */
+  const [queriesEnabled, setQueriesEnabled] = useState(false);
+  useEffect(() => {
+    setQueriesEnabled(true);
+  }, []);
+
   const [usersQuery, postsQuery, photosQuery, commentsQuery] = useQueries({
     queries: [
       {
         queryKey: ['admin', 'users'],
         queryFn: async () => (await fetch('/api/admin/users').then((res) => parseJsonResponse<UserItem[]>(res, true))) ?? [],
+        enabled: queriesEnabled,
       },
       {
         queryKey: ['admin', 'posts'],
         queryFn: async () => (await fetch('/api/admin/posts').then((res) => parseJsonResponse<PostItem[]>(res, true))) ?? [],
+        enabled: queriesEnabled,
       },
       {
         queryKey: ['admin', 'photos'],
         queryFn: async () => (await fetch('/api/admin/photos').then((res) => parseJsonResponse<PhotoItem[]>(res, true))) ?? [],
+        enabled: queriesEnabled,
       },
       {
         queryKey: ['admin', 'comments'],
         queryFn: async () =>
           (await fetch('/api/admin/comments').then((res) => parseJsonResponse<CommentItem[]>(res, true))) ?? [],
+        enabled: queriesEnabled,
       },
     ],
   });
@@ -92,17 +105,20 @@ export function useAdminConsole(initialTab: TabKey) {
   const photos = photosQuery.data ?? [];
   const comments = commentsQuery.data ?? [];
 
-  /** 只在「尚无缓存数据」时视为加载中；后台 refetch 不刷屏 */
+  /** 挂载后再根据 isLoading 展示加载态，与首帧 SSR/水合输出一致 */
   const loading = useMemo(
-    () => [usersQuery, postsQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
-    [usersQuery, postsQuery, photosQuery, commentsQuery],
+    () =>
+      queriesEnabled &&
+      [usersQuery, postsQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
+    [queriesEnabled, usersQuery, postsQuery, photosQuery, commentsQuery],
   );
 
   const error = useMemo(() => {
+    if (!queriesEnabled) return '';
     const firstError = [usersQuery, postsQuery, photosQuery, commentsQuery].find((query) => query.error)?.error;
     if (!firstError) return '';
     return firstError instanceof Error ? firstError.message : '加载失败';
-  }, [usersQuery, postsQuery, photosQuery, commentsQuery]);
+  }, [queriesEnabled, usersQuery, postsQuery, photosQuery, commentsQuery]);
 
   /**
    * 全量失效（仅在需要时使用）；后台 refetch 不阻塞调用方。
