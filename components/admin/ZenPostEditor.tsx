@@ -1,7 +1,8 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useToast } from '@/components/Toast';
 import { RichTextEditor } from '@/app/admin/console/components/RichTextEditor';
 
@@ -63,6 +64,11 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   const { showToast } = useToast();
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  useLayoutEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
 
   const open = props.open;
   const mode = props.mode;
@@ -78,6 +84,27 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     }
     setContent(editInitialContent);
   }, [open, mode, editPostId, editInitialContent]);
+
+  /** 打开禅模式时禁止背后文档滚动；待 Portal 挂到 body 后再锁，避免遮罩尚未出现时误锁一页。 */
+  useEffect(() => {
+    if (!props.open || !portalTarget) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    const prevBodyPaddingRight = body.style.paddingRight;
+    const gutter = window.innerWidth - html.clientWidth;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    if (gutter > 0) {
+      body.style.paddingRight = `${gutter}px`;
+    }
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      body.style.paddingRight = prevBodyPaddingRight;
+    };
+  }, [props.open, portalTarget]);
 
   const handleSave = useCallback(async () => {
     if (submitting) return;
@@ -143,11 +170,12 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     }
   }, [content, props, showToast, submitting]);
 
-  if (!props.open) return null;
+  if (!props.open || !portalTarget) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <header className="flex items-center justify-between border-b px-6 py-3">
+  const overlay = (
+    // overflow-hidden + 下方滚动区 min-h-0：flex 子项才能低于内容高度，只保留一层纵向滚动；Portal 到 body 避免祖先 transform 影响 fixed。
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
         <div className="flex items-center gap-3">
           <span className="rounded border px-2 py-0.5 text-xs text-muted-foreground">禅模式</span>
         </div>
@@ -172,16 +200,20 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           </button>
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="mx-auto max-w-3xl">
+      <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 py-4">
+        {/* paddingBottom 用 inline，避免 Tailwind 任意类里嵌套 min(..., ...) 解析出问题；高度逻辑与原先 pb-[min(88vh,56rem)] 一致 */}
+        <div className="mx-auto max-w-3xl" style={{ paddingBottom: 'min(88vh, 56rem)' }}>
+          {/* min-h 不含 min(a,b)，避免 Tailwind 任意值解析异常；高度≈可视区减顶栏后再加 80vh */}
           <RichTextEditor
             value={content}
             onChange={setContent}
             placeholder={props.mode === 'create' ? '从一个 H1 标题开始，比如：【tech】Hello World' : '编辑正文'}
-            minHeightClassName="min-h-[70vh]"
+            minHeightClassName="min-h-[calc(100svh_-_6rem_+_80vh)]"
           />
         </div>
       </div>
     </div>
   );
+
+  return createPortal(overlay, portalTarget);
 }
