@@ -1,20 +1,17 @@
 import Link from 'next/link';
-import { checkAuth, logoutToHome } from '@/server/actions/login';
 import { SiteThemeSwitcher } from '@/components/site/SiteThemeSwitcher';
 import { DocContainer } from './DocContainer';
+import { SiteHeaderAuthNav } from './SiteHeaderAuthNav';
 
 const navLinkClass =
   'cursor-pointer rounded-md px-2 py-1 text-sm text-muted-foreground motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background';
 
-const navButtonClass =
-  `${navLinkClass} inline-flex items-center justify-center border-0 bg-transparent font-inherit`;
+const navButtonClass = `${navLinkClass} inline-flex items-center justify-center border-0 bg-transparent font-inherit`;
 
 /**
  * 站点头部：粘性顶栏、语义色导航与主题切换。
  */
-export async function SiteHeader() {
-  const { success: isLoggedIn } = await checkAuth();
-
+export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 py-4 backdrop-blur-sm supports-backdrop-filter:bg-background/70">
       <DocContainer>
@@ -29,17 +26,7 @@ export async function SiteHeader() {
           </div>
           <div className="flex flex-wrap items-center gap-x-1 gap-y-2 sm:gap-x-2">
             <nav aria-label="主导航" className="flex flex-wrap items-center gap-1">
-              {isLoggedIn ? (
-                <form action={logoutToHome}>
-                  <button type="submit" className={navButtonClass}>
-                    登出
-                  </button>
-                </form>
-              ) : (
-                <Link href="/login" className={navLinkClass}>
-                  登录
-                </Link>
-              )}
+              <SiteHeaderAuthNav navLinkClass={navLinkClass} navButtonClass={navButtonClass} />
               <Link href="/admin" className={navLinkClass}>
                 Admin
               </Link>

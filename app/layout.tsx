@@ -1,9 +1,13 @@
 import './global.css';
 import './(site)/retro.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { ToastProvider } from '@/components/Toast';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import Script from 'next/script';
+
+export const viewport: Viewport = {
+  themeColor: '#353535',
+};
 
 export const metadata: Metadata = {
   title: {
@@ -25,7 +29,6 @@ export const metadata: Metadata = {
     title: 'White Meta',
     statusBarStyle: 'black-translucent',
   },
-  themeColor: '#353535',
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
