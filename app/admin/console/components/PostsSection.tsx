@@ -1,23 +1,12 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { useAdminSettings } from '@/stores/admin/settings';
+import { useRef, useState } from 'react';
 import type { PostItem } from '../types';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
-import { PostCreate } from './posts/PostCreate';
 import { PostTable } from './posts/PostTable';
 
 type PostFormState = {
-  newPostTitle: string;
-  setNewPostTitle: (value: string) => void;
-  newPostContent: string;
-  setNewPostContent: (value: string) => void;
-  newPostType: string;
-  setNewPostType: (value: string) => void;
-  newPostIsHidden: boolean;
-  setNewPostIsHidden: (value: boolean) => void;
-  postUploadHint: string;
   editingPostId: number | null;
   editPostTitle: string;
   setEditPostTitle: (value: string) => void;
@@ -31,13 +20,11 @@ type PostFormState = {
   setEditPostExcerpt: (value: string) => void;
   editPostCoverUrl: string;
   setEditPostCoverUrl: (value: string) => void;
-  createPost: () => Promise<void>;
   uploadPostFile: (file: File) => Promise<void>;
   togglePostHidden: (item: PostItem) => Promise<void>;
   deletePost: (id: number) => Promise<void>;
   startEditPost: (post: PostItem) => Promise<void>;
   cancelEditPost: () => void;
-  savePostEdit: () => Promise<void>;
   reorderPosts: (orderedIds: number[]) => Promise<void>;
 };
 
@@ -51,51 +38,56 @@ export function PostsSection({
   /** 路径驱动的类型筛选，null 表示「全部」 */
   selectedType?: string | null;
 }) {
-  const editMode = useAdminSettings((state) => state.editMode);
   const queryClient = useQueryClient();
-  const [openCreate, setOpenCreate] = useState(false);
   const [openZenCreate, setOpenZenCreate] = useState(false);
+  const mdFileInputRef = useRef<HTMLInputElement>(null);
 
-  const isZen = editMode === 'zen';
-  const zenEditOpen = isZen && form.editingPostId !== null;
+  const zenEditOpen = form.editingPostId !== null;
 
   const invalidatePosts = () => {
     void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
   };
 
-  const handleNewClick = () => {
-    if (isZen) {
-      setOpenZenCreate(true);
-    } else {
-      setOpenCreate(true);
-    }
-  };
-
   return (
     <section className="space-y-3 rounded border p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-semibold">博文管理</h2>
-        <button className="rounded border px-3 py-1 text-sm" type="button" onClick={handleNewClick}>
-          新增博文
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button className="rounded border px-3 py-1 text-sm" type="button" onClick={() => setOpenZenCreate(true)}>
+            新增博文
+          </button>
+          <button
+            className="rounded border px-3 py-1 text-sm"
+            type="button"
+            onClick={() => mdFileInputRef.current?.click()}
+          >
+            上传 Markdown
+          </button>
+          <input
+            ref={mdFileInputRef}
+            type="file"
+            accept=".md,text/markdown"
+            className="sr-only"
+            aria-hidden
+            tabIndex={-1}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void form.uploadPostFile(file);
+              event.target.value = '';
+            }}
+          />
+        </div>
       </div>
       <PostTable posts={posts} form={form} selectedType={selectedType} />
 
-      {/* 传统模式新增弹窗 */}
-      <PostCreate open={!isZen && openCreate} onClose={() => setOpenCreate(false)} form={form} />
+      <ZenPostEditor
+        mode="create"
+        open={openZenCreate}
+        onClose={() => setOpenZenCreate(false)}
+        onCreated={invalidatePosts}
+      />
 
-      {/* 禅模式：新增 */}
-      {isZen ? (
-        <ZenPostEditor
-          mode="create"
-          open={openZenCreate}
-          onClose={() => setOpenZenCreate(false)}
-          onCreated={invalidatePosts}
-        />
-      ) : null}
-
-      {/* 禅模式：编辑（依赖 useAdminConsole 中 editPost* 状态由 PostTable 触发的 startEditPost 填充）*/}
-      {isZen && zenEditOpen && form.editingPostId !== null ? (
+      {zenEditOpen && form.editingPostId !== null ? (
         <ZenPostEditor
           mode="edit"
           open={zenEditOpen}

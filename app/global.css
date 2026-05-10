@@ -183,6 +183,11 @@ body {
   border-radius: 0.25rem;
 }
 
+/* 编辑器内链接：点击可选中整段，指针提示与阅读态区分 */
+.ProseMirror a.rt-editor-link {
+  cursor: pointer;
+}
+
 /* 编辑器代码块高亮（tiptap lowlight / highlight.js token class） */
 :where(.prose, .ProseMirror) pre code .hljs-comment,
 :where(.prose, .ProseMirror) pre code .hljs-quote {

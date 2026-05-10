@@ -9,18 +9,21 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TableRow from '@tiptap/extension-table-row';
 import StarterKit from '@tiptap/starter-kit';
+import type { Editor } from '@tiptap/core';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { setBlockType } from '@tiptap/pm/commands';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
-import { NodeSelection } from '@tiptap/pm/state';
+import type { MarkType, Node as ProseMirrorNode } from '@tiptap/pm/model';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import { common, createLowlight } from 'lowlight';
 import {
   BetweenHorizontalStart,
   BetweenVerticalStart,
   Bold,
   ChevronDown,
+  Code as InlineCodeIcon,
   Highlighter,
   Italic,
+  Link2,
   List,
   ListOrdered,
   Quote,
@@ -37,6 +40,67 @@ import { useToast } from '@/components/Toast';
 const lowlight = createLowlight(common);
 const MARKDOWN_IMAGE_PATTERN = /!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)/g;
 const SINGLE_MARKDOWN_IMAGE_PATTERN = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)$/;
+const SINGLE_MARKDOWN_LINK_PATTERN = /^\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)$/;
+
+function linkMarksEqual(a: { attrs: Record<string, unknown> }, b: { attrs: Record<string, unknown> }): boolean {
+  return String(a.attrs.href ?? '') === String(b.attrs.href ?? '');
+}
+
+/**
+ * 查找光标所在连续 link mark 的文档范围（合并同 href 的相邻文本片段）。
+ */
+function findLinkMarkRange(doc: ProseMirrorNode, pos: number, linkType: MarkType): { from: number; to: number } | null {
+  const $pos = doc.resolve(pos);
+  const parent = $pos.parent;
+  if (!parent.isTextblock) return null;
+
+  const base = $pos.start();
+  let cursor = 0;
+  for (let i = 0; i < parent.childCount; i++) {
+    const child = parent.child(i);
+    if (!child.isText) {
+      cursor += child.nodeSize;
+      continue;
+    }
+    const linkMark = child.marks.find((m) => m.type === linkType);
+    const from = base + cursor;
+    const to = from + child.nodeSize;
+    if (!linkMark) {
+      cursor += child.nodeSize;
+      continue;
+    }
+    const inside = pos >= from && pos < to;
+    if (!inside) {
+      cursor += child.nodeSize;
+      continue;
+    }
+    let mergeFrom = from;
+    let mergeTo = to;
+    for (let j = i - 1; j >= 0; j--) {
+      const c = parent.child(j);
+      if (!c.isText) break;
+      const m = c.marks.find((mk) => mk.type === linkType);
+      if (!m || !linkMarksEqual(m, linkMark)) break;
+      mergeFrom -= c.nodeSize;
+    }
+    for (let j = i + 1; j < parent.childCount; j++) {
+      const c = parent.child(j);
+      if (!c.isText) break;
+      const m = c.marks.find((mk) => mk.type === linkType);
+      if (!m || !linkMarksEqual(m, linkMark)) break;
+      mergeTo += c.nodeSize;
+    }
+    return { from: mergeFrom, to: mergeTo };
+  }
+  return null;
+}
+
+function buildLinkMarkdown(label: string, href: string, title?: string | null): string {
+  const safeHref = href.trim();
+  const safeLabel = label;
+  const t = title?.trim();
+  return t ? `[${safeLabel}](${safeHref} "${t}")` : `[${safeLabel}](${safeHref})`;
+}
 
 /**
  * 文字高亮预设色板。颜色都是浅色 pastel，在浅色与深色主题下可读性都尚可。
@@ -71,9 +135,16 @@ export function RichTextEditor({
   toolbarRight,
 }: RichTextEditorProps) {
   const { showToast } = useToast();
+  const editorRef = useRef<Editor | null>(null);
+  const openLinkPaletteRef = useRef<() => void>(() => {});
   const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
   const [selectedImageMarkdown, setSelectedImageMarkdown] = useState('');
+  const [selectedLinkFrom, setSelectedLinkFrom] = useState<number | null>(null);
+  const [selectedLinkTo, setSelectedLinkTo] = useState<number | null>(null);
+  const [selectedLinkMarkdown, setSelectedLinkMarkdown] = useState('');
   const [highlightPaletteOpen, setHighlightPaletteOpen] = useState(false);
+  const [linkPaletteOpen, setLinkPaletteOpen] = useState(false);
+  const [linkUrlDraft, setLinkUrlDraft] = useState('');
   // 用 state 让色板按钮上的小色块可以响应颜色切换；ref 给扩展的 keyboard handler 读取最新值（避免闭包陈旧）。
   const [lastHighlightColor, setLastHighlightColor] = useState(DEFAULT_HIGHLIGHT_COLOR);
   const lastHighlightColorRef = useRef<string>(DEFAULT_HIGHLIGHT_COLOR);
@@ -146,22 +217,19 @@ export function RichTextEditor({
   /**
    * 上传图片到 OSS（不入库），返回可访问 URL。
    */
-  const uploadImageToOss = useCallback(
-    async (file: File): Promise<string> => {
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/admin/uploads/image', {
-        method: 'POST',
-        body: formData,
-      });
-      const payload = (await response.json()) as { data?: { url?: string }; error?: string };
-      if (!response.ok || !payload.data?.url) {
-        throw new Error(payload.error ?? '图片上传失败');
-      }
-      return payload.data.url;
-    },
-    [],
-  );
+  const uploadImageToOss = useCallback(async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/api/admin/uploads/image', {
+      method: 'POST',
+      body: formData,
+    });
+    const payload = (await response.json()) as { data?: { url?: string }; error?: string };
+    if (!response.ok || !payload.data?.url) {
+      throw new Error(payload.error ?? '图片上传失败');
+    }
+    return payload.data.url;
+  }, []);
 
   /**
    * 粘贴/拖拽图片后异步上传并插入图片节点，同时复制 markdown 语法便于外部复用。
@@ -198,15 +266,31 @@ export function RichTextEditor({
   /**
    * 解析用户在“图片 Markdown 编辑条”里输入的语法。
    */
-  const parseImageMarkdown = useCallback((markdown: string): { src: string; alt: string; title: string | null } | null => {
-    const match = markdown.trim().match(SINGLE_MARKDOWN_IMAGE_PATTERN);
-    if (!match) return null;
-    return {
-      alt: (match[1] ?? '').trim(),
-      src: (match[2] ?? '').trim(),
-      title: (match[3] ?? '').trim() || null,
-    };
-  }, []);
+  const parseImageMarkdown = useCallback(
+    (markdown: string): { src: string; alt: string; title: string | null } | null => {
+      const match = markdown.trim().match(SINGLE_MARKDOWN_IMAGE_PATTERN);
+      if (!match) return null;
+      return {
+        alt: (match[1] ?? '').trim(),
+        src: (match[2] ?? '').trim(),
+        title: (match[3] ?? '').trim() || null,
+      };
+    },
+    [],
+  );
+
+  const parseLinkMarkdown = useCallback(
+    (markdown: string): { label: string; href: string; title: string | null } | null => {
+      const match = markdown.trim().match(SINGLE_MARKDOWN_LINK_PATTERN);
+      if (!match) return null;
+      return {
+        label: match[1] ?? '',
+        href: (match[2] ?? '').trim(),
+        title: (match[3] ?? '').trim() || null,
+      };
+    },
+    [],
+  );
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -226,6 +310,11 @@ export function RichTextEditor({
       Image,
       Link.configure({
         openOnClick: false,
+        HTMLAttributes: {
+          class: 'rt-editor-link',
+          target: '_blank',
+          rel: 'noopener noreferrer nofollow',
+        },
       }),
       Table.configure({
         resizable: true,
@@ -240,6 +329,17 @@ export function RichTextEditor({
         class: `prose prose-sm dark:prose-invert max-w-none rounded border bg-background p-3 text-foreground focus:outline-none ${minHeightClassName}`,
       },
       handleKeyDown: (view, event) => {
+        const ed = editorRef.current;
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+          openLinkPaletteRef.current();
+          return true;
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key === '`') {
+          event.preventDefault();
+          ed?.chain().focus().toggleCode().run();
+          return true;
+        }
         if (event.key === 'Tab') {
           event.preventDefault();
           const { state, dispatch } = view;
@@ -296,7 +396,7 @@ export function RichTextEditor({
         view.dispatch(view.state.tr.setSelection(nextSelection).scrollIntoView());
         return true;
       },
-      handleClick: (view, pos) => {
+      handleClick: (view, pos, _event) => {
         // 某些浏览器/节点结构下不会触发 handleClickOn，兜底用 pos 直接命中或回退一位识别图片。
         const directNode = view.state.doc.nodeAt(pos);
         if (directNode?.type.name === 'image') {
@@ -310,6 +410,18 @@ export function RichTextEditor({
           const nextSelection = NodeSelection.create(view.state.doc, prevPos);
           view.dispatch(view.state.tr.setSelection(nextSelection).scrollIntoView());
           return true;
+        }
+        const linkType = view.state.schema.marks.link;
+        if (linkType) {
+          let linkRange = findLinkMarkRange(view.state.doc, pos, linkType);
+          if (!linkRange && pos > 0) {
+            linkRange = findLinkMarkRange(view.state.doc, pos - 1, linkType);
+          }
+          if (linkRange) {
+            const nextSelection = TextSelection.create(view.state.doc, linkRange.from, linkRange.to);
+            view.dispatch(view.state.tr.setSelection(nextSelection).scrollIntoView());
+            return true;
+          }
         }
         return false;
       },
@@ -393,6 +505,75 @@ export function RichTextEditor({
     };
   }, [buildImageMarkdown, editor]);
 
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  useEffect(() => {
+    openLinkPaletteRef.current = () => {
+      if (!editor) return;
+      setHighlightPaletteOpen(false);
+      setLinkUrlDraft(editor.isActive('link') ? String(editor.getAttributes('link').href ?? '') : '');
+      setLinkPaletteOpen(true);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const linkType = editor.schema.marks.link;
+    if (!linkType) return;
+
+    const syncSelectedLink = () => {
+      const { selection } = editor.state;
+      if (selection instanceof NodeSelection && selection.node.type.name === 'image') {
+        setSelectedLinkFrom(null);
+        setSelectedLinkTo(null);
+        setSelectedLinkMarkdown('');
+        return;
+      }
+
+      const head = selection.from;
+      const anchor = selection.anchor;
+      const focus = selection.head;
+      const range = findLinkMarkRange(editor.state.doc, head, linkType);
+      if (!range) {
+        setSelectedLinkFrom(null);
+        setSelectedLinkTo(null);
+        setSelectedLinkMarkdown('');
+        return;
+      }
+
+      if (!selection.empty) {
+        const selFrom = Math.min(anchor, focus);
+        const selTo = Math.max(anchor, focus);
+        if (selFrom < range.from || selTo > range.to) {
+          setSelectedLinkFrom(null);
+          setSelectedLinkTo(null);
+          setSelectedLinkMarkdown('');
+          return;
+        }
+      }
+
+      const innerPos = range.to > range.from + 1 ? range.from + 1 : range.from;
+      const $inner = editor.state.doc.resolve(innerPos);
+      const lm = $inner.marks().find((m) => m.type === linkType);
+      const href = lm ? String(lm.attrs.href ?? '') : '';
+
+      const label = editor.state.doc.textBetween(range.from, range.to, '\n', '\n');
+      setSelectedLinkFrom(range.from);
+      setSelectedLinkTo(range.to);
+      setSelectedLinkMarkdown(buildLinkMarkdown(label, href));
+    };
+
+    syncSelectedLink();
+    editor.on('selectionUpdate', syncSelectedLink);
+    editor.on('update', syncSelectedLink);
+    return () => {
+      editor.off('selectionUpdate', syncSelectedLink);
+      editor.off('update', syncSelectedLink);
+    };
+  }, [editor]);
+
   /**
    * 将编辑条中的 Markdown 同步回当前选中图片节点。
    */
@@ -419,8 +600,75 @@ export function RichTextEditor({
     showToast('图片已更新', 'success');
   }, [editor, parseImageMarkdown, selectedImageMarkdown, selectedImagePos, showToast]);
 
+  /**
+   * 链接 URL 条：确认写入或移除链接。
+   */
+  const confirmLinkPalette = useCallback(() => {
+    if (!editor) return;
+    const url = linkUrlDraft.trim();
+    if (!url) {
+      if (editor.isActive('link')) {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      }
+      setLinkPaletteOpen(false);
+      return;
+    }
+    if (editor.isActive('link')) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    } else if (editor.state.selection.empty) {
+      let label = '链接';
+      try {
+        const normalized = url.includes('://') ? url : `https://${url}`;
+        label = new URL(normalized).hostname.replace(/^www\./, '') || label;
+      } catch {
+        /* 保留占位文案 */
+      }
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: 'text', text: label, marks: [{ type: 'link', attrs: { href: url } }] })
+        .run();
+    } else {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+    setLinkPaletteOpen(false);
+  }, [editor, linkUrlDraft]);
+
+  /**
+   * 「链接 Markdown」编辑条应用。
+   */
+  const applySelectedLinkMarkdown = useCallback(() => {
+    if (!editor || selectedLinkFrom === null || selectedLinkTo === null) return;
+    const parsed = parseLinkMarkdown(selectedLinkMarkdown);
+    if (!parsed || !parsed.href) {
+      showToast('链接语法无效，请使用 [文字](https://example.com)', 'error');
+      return;
+    }
+    const linkType = editor.schema.marks.link;
+    if (!linkType) return;
+
+    const from = selectedLinkFrom;
+    const to = selectedLinkTo;
+    const currentRange = findLinkMarkRange(editor.state.doc, from, linkType);
+    if (!currentRange || currentRange.from !== from || currentRange.to !== to) {
+      showToast('当前未选中完整链接，请重新点击链接后再修改', 'error');
+      return;
+    }
+
+    const mark = linkType.create({
+      href: parsed.href,
+    });
+    const textNode = editor.schema.text(parsed.label, [mark]);
+    const tr = editor.state.tr.replaceWith(from, to, textNode);
+    editor.view.dispatch(tr.scrollIntoView());
+    editor.commands.focus();
+    showToast('链接已更新', 'success');
+  }, [editor, parseLinkMarkdown, selectedLinkFrom, selectedLinkTo, selectedLinkMarkdown, showToast]);
+
   if (!editor) {
-    return <div className={`rounded border p-3 text-sm text-muted-foreground ${minHeightClassName}`}>{placeholder}</div>;
+    return (
+      <div className={`rounded border p-3 text-sm text-muted-foreground ${minHeightClassName}`}>{placeholder}</div>
+    );
   }
 
   /**
@@ -479,158 +727,179 @@ export function RichTextEditor({
     <div className="relative space-y-2">
       <div className="sticky top-0 z-30 space-y-2 bg-background">
         <div className="flex flex-wrap items-center gap-1.5 rounded border bg-background p-2 shadow-sm">
-        <select
-          aria-label="文本格式"
-          className="rounded border bg-background px-2 py-1 text-xs"
-          value={currentBlockFormat}
-          onChange={(event) => handleBlockFormatChange(event.target.value)}
-        >
-          <option value="paragraph">正文</option>
-          <option value="h1">H1</option>
-          <option value="h2">H2</option>
-          <option value="h3">H3</option>
-        </select>
-        <button
-          type="button"
-          className={iconButtonClass(editor.isActive('bold'))}
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          aria-label="粗体"
-          title="粗体 (Ctrl/Cmd + B)"
-        >
-          <Bold className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass(editor.isActive('italic'))}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          aria-label="斜体"
-          title="斜体 (Ctrl/Cmd + I)"
-        >
-          <Italic className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass(editor.isActive('bulletList'))}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          aria-label="无序列表"
-          title="无序列表"
-        >
-          <List className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass(editor.isActive('orderedList'))}
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          aria-label="有序列表"
-          title="有序列表"
-        >
-          <ListOrdered className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass(editor.isActive('blockquote'))}
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          aria-label="引用"
-          title="引用"
-        >
-          <Quote className="h-3.5 w-3.5" />
-        </button>
-        <div className="inline-flex items-stretch overflow-hidden rounded border">
+          <select
+            aria-label="文本格式"
+            className="rounded border bg-background px-2 py-1 text-xs"
+            value={currentBlockFormat}
+            onChange={(event) => handleBlockFormatChange(event.target.value)}
+          >
+            <option value="paragraph">正文</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
           <button
             type="button"
-            className={`inline-flex h-7 items-center gap-1 px-2 text-muted-foreground hover:bg-muted ${
-              isHighlightActive ? 'bg-muted text-foreground' : ''
-            }`}
-            onClick={toggleHighlightShortcut}
-            aria-label="高亮"
-            aria-pressed={isHighlightActive}
-            title="高亮 (Ctrl/Cmd + Shift + H)"
+            className={iconButtonClass(editor.isActive('bold'))}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            aria-label="粗体"
+            title="粗体 (Ctrl/Cmd + B)"
           >
-            <Highlighter className="h-3.5 w-3.5" />
-            <span
-              className="inline-block h-2 w-2 rounded-sm border align-middle"
-              style={{ backgroundColor: lastHighlightColor }}
-            />
+            <Bold className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
-            className="inline-flex h-7 items-center justify-center border-l px-1 text-muted-foreground hover:bg-muted"
-            onClick={() => setHighlightPaletteOpen((value) => !value)}
-            aria-label="选择高亮颜色"
-            aria-expanded={highlightPaletteOpen}
-            title="选择高亮颜色"
+            className={iconButtonClass(editor.isActive('italic'))}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            aria-label="斜体"
+            title="斜体 (Ctrl/Cmd + I)"
           >
-            <ChevronDown className="h-3 w-3" />
+            <Italic className="h-3.5 w-3.5" />
           </button>
-        </div>
-        <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() =>
-            editor
-              .chain()
-              .focus()
-              .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-              .run()
-          }
-          aria-label="插入表格"
-          title="插入 3×3 表格"
-        >
-          <TableIcon className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() => editor.chain().focus().addRowAfter().run()}
-          aria-label="增加一行"
-          title="在下方增加一行"
-        >
-          <BetweenHorizontalStart className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() => editor.chain().focus().addColumnAfter().run()}
-          aria-label="增加一列"
-          title="在右侧增加一列"
-        >
-          <BetweenVerticalStart className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() => editor.chain().focus().deleteRow().run()}
-          aria-label="删除当前行"
-          title="删除当前行"
-        >
-          <span className="relative inline-flex">
-            <Rows3 className="h-3.5 w-3.5" />
-            <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() => editor.chain().focus().deleteColumn().run()}
-          aria-label="删除当前列"
-          title="删除当前列"
-        >
-          <span className="relative inline-flex">
-            <Columns3 className="h-3.5 w-3.5" />
-            <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          className={iconButtonClass()}
-          onClick={() => editor.chain().focus().deleteTable().run()}
-          aria-label="删除整个表格"
-          title="删除整个表格"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        {toolbarRight ? <div className="ml-auto flex items-center gap-2">{toolbarRight}</div> : null}
+          <button
+            type="button"
+            className={iconButtonClass(editor.isActive('code'))}
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            aria-label="行内代码"
+            aria-pressed={editor.isActive('code')}
+            title="行内代码 (Ctrl/Cmd + `)"
+          >
+            <InlineCodeIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass(editor.isActive('link'))}
+            onClick={() => {
+              setHighlightPaletteOpen(false);
+              const nextOpen = !linkPaletteOpen;
+              if (nextOpen) {
+                setLinkUrlDraft(editor.isActive('link') ? String(editor.getAttributes('link').href ?? '') : '');
+              }
+              setLinkPaletteOpen(nextOpen);
+            }}
+            aria-label="插入或编辑链接"
+            aria-pressed={editor.isActive('link') || linkPaletteOpen}
+            title="链接 (Ctrl/Cmd + K)"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass(editor.isActive('bulletList'))}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            aria-label="无序列表"
+            title="无序列表"
+          >
+            <List className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass(editor.isActive('orderedList'))}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            aria-label="有序列表"
+            title="有序列表"
+          >
+            <ListOrdered className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass(editor.isActive('blockquote'))}
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            aria-label="引用"
+            title="引用"
+          >
+            <Quote className="h-3.5 w-3.5" />
+          </button>
+          <div className="inline-flex items-stretch overflow-hidden rounded border">
+            <button
+              type="button"
+              className={`inline-flex h-7 items-center gap-1 px-2 text-muted-foreground hover:bg-muted ${
+                isHighlightActive ? 'bg-muted text-foreground' : ''
+              }`}
+              onClick={toggleHighlightShortcut}
+              aria-label="高亮"
+              aria-pressed={isHighlightActive}
+              title="高亮 (Ctrl/Cmd + Shift + H)"
+            >
+              <Highlighter className="h-3.5 w-3.5" />
+              <span
+                className="inline-block h-2 w-2 rounded-sm border align-middle"
+                style={{ backgroundColor: lastHighlightColor }}
+              />
+            </button>
+            <button
+              type="button"
+              className="inline-flex h-7 items-center justify-center border-l px-1 text-muted-foreground hover:bg-muted"
+              onClick={() => setHighlightPaletteOpen((value) => !value)}
+              aria-label="选择高亮颜色"
+              aria-expanded={highlightPaletteOpen}
+              title="选择高亮颜色"
+            >
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </div>
+          <span className="mx-1 h-5 w-px bg-border" aria-hidden="true" />
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            aria-label="插入表格"
+            title="插入 3×3 表格"
+          >
+            <TableIcon className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+            aria-label="增加一行"
+            title="在下方增加一行"
+          >
+            <BetweenHorizontalStart className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+            aria-label="增加一列"
+            title="在右侧增加一列"
+          >
+            <BetweenVerticalStart className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().deleteRow().run()}
+            aria-label="删除当前行"
+            title="删除当前行"
+          >
+            <span className="relative inline-flex">
+              <Rows3 className="h-3.5 w-3.5" />
+              <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+            aria-label="删除当前列"
+            title="删除当前列"
+          >
+            <span className="relative inline-flex">
+              <Columns3 className="h-3.5 w-3.5" />
+              <span className="-bottom-0.5 -right-0.5 absolute text-[8px] leading-none">−</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass()}
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            aria-label="删除整个表格"
+            title="删除整个表格"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          {toolbarRight ? <div className="ml-auto flex items-center gap-2">{toolbarRight}</div> : null}
         </div>
         {highlightPaletteOpen ? (
           <div className="flex flex-wrap items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
@@ -657,6 +926,39 @@ export function RichTextEditor({
             <span className="text-[10px] text-muted-foreground">快捷键 Ctrl/Cmd + Shift + H</span>
           </div>
         ) : null}
+        {linkPaletteOpen ? (
+          <div className="flex flex-wrap items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
+            <span className="shrink-0 text-xs text-muted-foreground">链接 URL</span>
+            <input
+              className="min-w-0 flex-1 rounded border bg-background px-2 py-1 text-xs"
+              value={linkUrlDraft}
+              onChange={(event) => setLinkUrlDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  confirmLinkPalette();
+                }
+              }}
+              placeholder="https://example.com"
+            />
+            <button className="shrink-0 rounded border px-2 py-1 text-xs" type="button" onClick={confirmLinkPalette}>
+              应用
+            </button>
+            <button
+              className="shrink-0 rounded border px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
+              type="button"
+              onClick={() => {
+                if (editor.isActive('link')) {
+                  editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                }
+                setLinkPaletteOpen(false);
+              }}
+            >
+              移除链接
+            </button>
+            <span className="text-[10px] text-muted-foreground">快捷键 Ctrl/Cmd + K</span>
+          </div>
+        ) : null}
         {selectedImagePos !== null ? (
           <div className="flex items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
             <span className="shrink-0 text-xs text-muted-foreground">图片 Markdown</span>
@@ -672,7 +974,35 @@ export function RichTextEditor({
               }}
               placeholder="![alt](https://example.com/image.png)"
             />
-            <button className="shrink-0 rounded border px-2 py-1 text-xs" type="button" onClick={applySelectedImageMarkdown}>
+            <button
+              className="shrink-0 rounded border px-2 py-1 text-xs"
+              type="button"
+              onClick={applySelectedImageMarkdown}
+            >
+              应用
+            </button>
+          </div>
+        ) : null}
+        {selectedLinkFrom !== null && selectedLinkTo !== null ? (
+          <div className="flex items-center gap-2 rounded border border-dashed bg-background p-2 shadow-sm">
+            <span className="shrink-0 text-xs text-muted-foreground">链接 Markdown</span>
+            <input
+              className="min-w-0 flex-1 rounded border bg-background px-2 py-1 text-xs"
+              value={selectedLinkMarkdown}
+              onChange={(event) => setSelectedLinkMarkdown(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  applySelectedLinkMarkdown();
+                }
+              }}
+              placeholder="[文字](https://example.com)"
+            />
+            <button
+              className="shrink-0 rounded border px-2 py-1 text-xs"
+              type="button"
+              onClick={applySelectedLinkMarkdown}
+            >
               应用
             </button>
           </div>

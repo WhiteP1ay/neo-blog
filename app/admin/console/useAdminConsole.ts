@@ -2,6 +2,7 @@
 
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { useToast } from '@/components/Toast';
 import type { CommentItem, PhotoItem, PostDetail, PostItem, TabKey, UserItem } from './types';
 
 type JsonPayload<T> = {
@@ -35,17 +36,13 @@ async function parseJsonResponse<T>(response: Response, requireData = true): Pro
  */
 export function useAdminConsole(initialTab: TabKey) {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
 
   const [newUserName, setNewUserName] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
 
-  const [newPostTitle, setNewPostTitle] = useState('');
-  const [newPostContent, setNewPostContent] = useState('');
-  const [newPostType, setNewPostType] = useState('');
-  const [newPostIsHidden, setNewPostIsHidden] = useState(false);
-  const [postUploadHint, setPostUploadHint] = useState('');
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
   const [editPostTitle, setEditPostTitle] = useState('');
   const [editPostContent, setEditPostContent] = useState('');
@@ -78,17 +75,20 @@ export function useAdminConsole(initialTab: TabKey) {
     queries: [
       {
         queryKey: ['admin', 'users'],
-        queryFn: async () => (await fetch('/api/admin/users').then((res) => parseJsonResponse<UserItem[]>(res, true))) ?? [],
+        queryFn: async () =>
+          (await fetch('/api/admin/users').then((res) => parseJsonResponse<UserItem[]>(res, true))) ?? [],
         enabled: queriesEnabled,
       },
       {
         queryKey: ['admin', 'posts'],
-        queryFn: async () => (await fetch('/api/admin/posts').then((res) => parseJsonResponse<PostItem[]>(res, true))) ?? [],
+        queryFn: async () =>
+          (await fetch('/api/admin/posts').then((res) => parseJsonResponse<PostItem[]>(res, true))) ?? [],
         enabled: queriesEnabled,
       },
       {
         queryKey: ['admin', 'photos'],
-        queryFn: async () => (await fetch('/api/admin/photos').then((res) => parseJsonResponse<PhotoItem[]>(res, true))) ?? [],
+        queryFn: async () =>
+          (await fetch('/api/admin/photos').then((res) => parseJsonResponse<PhotoItem[]>(res, true))) ?? [],
         enabled: queriesEnabled,
       },
       {
@@ -107,9 +107,7 @@ export function useAdminConsole(initialTab: TabKey) {
 
   /** 挂载后再根据 isLoading 展示加载态，与首帧 SSR/水合输出一致 */
   const loading = useMemo(
-    () =>
-      queriesEnabled &&
-      [usersQuery, postsQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
+    () => queriesEnabled && [usersQuery, postsQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
     [queriesEnabled, usersQuery, postsQuery, photosQuery, commentsQuery],
   );
 
@@ -161,35 +159,21 @@ export function useAdminConsole(initialTab: TabKey) {
     await refreshAll();
   };
 
-  const createPost = async () => {
-    await fetch('/api/admin/posts', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        title: newPostTitle,
-        content: newPostContent,
-        type: newPostType,
-        isHidden: newPostIsHidden,
-      }),
-    }).then((res) => parseJsonResponse<PostItem>(res, true));
-    setNewPostTitle('');
-    setNewPostContent('');
-    setNewPostType('');
-    setNewPostIsHidden(false);
-    invalidateInBackground(['admin', 'posts']);
-  };
-
   const uploadPostFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('title', newPostTitle);
-    formData.append('type', newPostType);
-    formData.append('isHidden', String(newPostIsHidden));
-    await fetch('/api/admin/posts', { method: 'POST', body: formData }).then((res) =>
-      parseJsonResponse<PostItem>(res, true),
-    );
-    setPostUploadHint(`已上传: ${file.name}`);
-    invalidateInBackground(['admin', 'posts']);
+    formData.append('title', '');
+    formData.append('type', '');
+    formData.append('isHidden', 'false');
+    try {
+      await fetch('/api/admin/posts', { method: 'POST', body: formData }).then((res) =>
+        parseJsonResponse<PostItem>(res, true),
+      );
+      showToast(`已从 Markdown 创建：${file.name}`, 'success');
+      invalidateInBackground(['admin', 'posts']);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '上传失败', 'error');
+    }
   };
 
   const togglePostHidden = async (item: PostItem) => {
@@ -251,9 +235,7 @@ export function useAdminConsole(initialTab: TabKey) {
     setEditPostExcerpt(post.excerpt ?? '');
     setEditPostCoverUrl(post.coverUrl ?? '');
     setEditPostContent('');
-    const detail = await fetch(`/api/admin/posts/${post.id}`).then((res) =>
-      parseJsonResponse<PostDetail>(res, true),
-    );
+    const detail = await fetch(`/api/admin/posts/${post.id}`).then((res) => parseJsonResponse<PostDetail>(res, true));
     if (!detail) {
       throw new Error('未取到博文详情');
     }
@@ -278,33 +260,6 @@ export function useAdminConsole(initialTab: TabKey) {
     setEditPostIsHidden(false);
     setEditPostExcerpt('');
     setEditPostCoverUrl('');
-  };
-
-  const savePostEdit = async () => {
-    if (!editingPostId || !Number.isFinite(editingPostId)) {
-      throw new Error('无效博文ID');
-    }
-    if (!editPostTitle.trim()) {
-      throw new Error('标题不能为空');
-    }
-    if (!editPostContent.trim()) {
-      throw new Error('内容不能为空');
-    }
-    await fetch(`/api/admin/posts/${editingPostId}`, {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        title: editPostTitle,
-        content: editPostContent,
-        type: editPostType,
-        isHidden: editPostIsHidden,
-        excerpt: editPostExcerpt,
-        coverUrl: editPostCoverUrl,
-      }),
-    }).then((res) => parseJsonResponse<PostItem>(res, true));
-    // 不阻塞 UI，列表后台 refetch 即可（远程链路慢时也不影响关闭速度）。
-    invalidateInBackground(['admin', 'posts']);
-    cancelEditPost();
   };
 
   const createPhoto = async () => {
@@ -399,15 +354,6 @@ export function useAdminConsole(initialTab: TabKey) {
       deleteUser,
     },
     postForm: {
-      newPostTitle,
-      setNewPostTitle,
-      newPostContent,
-      setNewPostContent,
-      newPostType,
-      setNewPostType,
-      newPostIsHidden,
-      setNewPostIsHidden,
-      postUploadHint,
       editingPostId,
       editPostTitle,
       setEditPostTitle,
@@ -421,13 +367,11 @@ export function useAdminConsole(initialTab: TabKey) {
       setEditPostExcerpt,
       editPostCoverUrl,
       setEditPostCoverUrl,
-      createPost,
       uploadPostFile,
       togglePostHidden,
       deletePost,
       startEditPost,
       cancelEditPost,
-      savePostEdit,
       reorderPosts,
     },
     photoForm: {
