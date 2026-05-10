@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { PhotoItem } from '../types';
+import type { PhotoItem } from './types';
 import { useToast } from '@/components/Toast';
 import { PhotoCreate } from './photos/PhotoCreate';
 import { PhotoPreview } from './photos/PhotoPreview';

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { AdminDocumentScrollbar } from '@/components/admin/AdminDocumentScrollbar';
-import { AdminQueryProvider } from './console/AdminQueryProvider';
+import { AdminQueryProvider } from '@/components/admin/console/AdminQueryProvider';
 import { AdminSettingsPopover } from '@/components/admin/AdminSettingsPopover';
 import { getSession } from '@/server/utils/auth';
 

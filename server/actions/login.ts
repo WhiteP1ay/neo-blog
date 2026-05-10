@@ -37,6 +37,14 @@ export async function logout() {
 }
 
 /**
+ * Server Action: 前台导航登出（清除会话后回到首页）
+ */
+export async function logoutToHome() {
+  await clearSession();
+  redirect('/');
+}
+
+/**
  * Server Action: 检查是否已登录
  */
 export async function checkAuth() {

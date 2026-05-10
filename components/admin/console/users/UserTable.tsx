@@ -1,6 +1,6 @@
 'use client';
 
-import type { UserItem } from '../../types';
+import type { UserItem } from '../types';
 
 type UserTableProps = {
   users: UserItem[];

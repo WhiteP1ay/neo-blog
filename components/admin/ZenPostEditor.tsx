@@ -3,7 +3,7 @@
 import { Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { RichTextEditor } from '@/app/admin/console/components/RichTextEditor';
+import { RichTextEditor } from '@/components/admin/console/RichTextEditor';
 import { useToast } from '@/components/Toast';
 import { Switch } from '@/components/ui/switch';
 

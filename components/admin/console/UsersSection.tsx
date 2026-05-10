@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { UserItem } from '../types';
+import type { UserItem } from './types';
 import { UserCreate } from './users/UserCreate';
 import { UserTable } from './users/UserTable';
 

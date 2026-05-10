@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import type { PostItem } from '../types';
+import type { PostItem } from './types';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
 import { PostTable } from './posts/PostTable';
 

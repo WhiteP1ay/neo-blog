@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { CommentItem } from '../types';
+import type { CommentItem } from './types';
 import { CommentCreate } from './comments/CommentCreate';
 import { CommentTable } from './comments/CommentTable';
 

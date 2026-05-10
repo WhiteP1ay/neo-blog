@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { encodeTopicPathSegment } from '@/lib/url/segmentEncoding';
-import type { PhotoItem } from '../../types';
+import type { PhotoItem } from '../types';
 
 type PhotoTableProps = {
   photos: PhotoItem[];

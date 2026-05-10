@@ -1,6 +1,6 @@
 'use client';
 
-import type { CommentItem } from '../../types';
+import type { CommentItem } from '../types';
 
 type CommentTableProps = {
   comments: CommentItem[];

@@ -1,12 +1,12 @@
 'use client';
 
-import { CommentsSection } from './console/components/CommentsSection';
-import { PhotosSection } from './console/components/PhotosSection';
-import { PostsSection } from './console/components/PostsSection';
-import { UsersSection } from './console/components/UsersSection';
-import { TabNav } from './console/TabNav';
-import type { TabKey } from './console/types';
-import { useAdminConsole } from './console/useAdminConsole';
+import { CommentsSection } from '@/components/admin/console/CommentsSection';
+import { PhotosSection } from '@/components/admin/console/PhotosSection';
+import { PostsSection } from '@/components/admin/console/PostsSection';
+import { UsersSection } from '@/components/admin/console/UsersSection';
+import { TabNav } from '@/components/admin/console/TabNav';
+import type { TabKey } from '@/components/admin/console/types';
+import { useAdminConsole } from '@/components/admin/console/useAdminConsole';
 
 export function AdminConsole({
   initialTab = 'posts',

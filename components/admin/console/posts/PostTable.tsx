@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { encodeTopicPathSegment } from '@/lib/url/segmentEncoding';
-import type { PostItem } from '../../types';
+import type { PostItem } from '../types';
 
 type PostTableProps = {
   posts: PostItem[];
