@@ -1,10 +1,11 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useToast } from '@/components/Toast';
 import { RichTextEditor } from '@/app/admin/console/components/RichTextEditor';
+import { useToast } from '@/components/Toast';
+import { Switch } from '@/components/ui/switch';
 
 /**
  * 从 HTML 字符串里取第一个 h1 的纯文本（去掉嵌套标签）。
@@ -53,17 +54,25 @@ type ZenPostEditorProps =
       excerpt: string;
       coverUrl: string;
       onSaved?: () => void;
+      /** 删除成功后回调（例如 invalidate、重置父级编辑状态） */
+      onDeleted?: () => void;
     };
 
+const iconHeaderBtnClass =
+  'inline-flex min-h-9 min-w-9 touch-manipulation items-center justify-center rounded border text-muted-foreground hover:bg-muted disabled:opacity-60';
+
 /**
- * 全屏沉浸式编辑器：复用 RichTextEditor，只暴露最小工具条（保存 / 关闭）。
- * - create：从正文 h1 派生 title，从 【...】 派生 type，封面/摘要默认为空，文章默认可见。
- * - edit：原样保存正文 HTML，title/type/cover/excerpt/可见性沿用原值，保持简单可控。
+ * 全屏沉浸式编辑器：复用 RichTextEditor；顶栏右侧为前台显示 Switch、删除（仅编辑）、保存、关闭。
+ * - create：可设默认隐藏；保存时写入 isHidden。
+ * - edit：保存时写入正文派生的 title/type、draftIsHidden、原 excerpt/coverUrl。
  */
 export function ZenPostEditor(props: ZenPostEditorProps) {
   const { showToast } = useToast();
+  const visibilityFieldId = useId();
   const [content, setContent] = useState('');
+  const [draftIsHidden, setDraftIsHidden] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
   useLayoutEffect(() => {
@@ -74,10 +83,11 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   const mode = props.mode;
   const editPostId = props.mode === 'edit' ? props.postId : null;
   const editInitialContent = props.mode === 'edit' ? props.initialContent : '';
+  const editSourceHidden = props.mode === 'edit' ? props.isHidden : false;
 
   useEffect(() => {
     if (!open) return;
-    // 切换 mode / open / 编辑目标 时重置内部正文，进入禅模式时保证一个干净起点。
+    // 切换 mode / open / 编辑目标 时重置内部正文，打开全屏编辑器时保证干净起点。
     if (mode === 'create' || editPostId === null) {
       setContent('');
       return;
@@ -85,7 +95,19 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     setContent(editInitialContent);
   }, [open, mode, editPostId, editInitialContent]);
 
-  /** 打开禅模式时禁止背后文档滚动；待 Portal 挂到 body 后再锁，避免遮罩尚未出现时误锁一页。 */
+  /** 新建打开时默认前台显示 */
+  useEffect(() => {
+    if (!open || props.mode !== 'create') return;
+    setDraftIsHidden(false);
+  }, [open, props.mode]);
+
+  /** 编辑打开或切换文章时，同步可见性草稿 */
+  useEffect(() => {
+    if (!open || editPostId === null) return;
+    setDraftIsHidden(editSourceHidden);
+  }, [open, editPostId, editSourceHidden]);
+
+  /** 全屏编辑器打开时禁止背后文档滚动；待 Portal 挂到 body 后再锁，避免遮罩尚未出现时误锁一页。 */
   useEffect(() => {
     if (!props.open || !portalTarget) return;
     const html = document.documentElement;
@@ -106,8 +128,10 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     };
   }, [props.open, portalTarget]);
 
+  const busy = submitting || deleting;
+
   const handleSave = useCallback(async () => {
-    if (submitting) return;
+    if (busy) return;
     if (!content.trim()) {
       showToast('正文不能为空', 'error');
       return;
@@ -128,7 +152,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
             title,
             content,
             type,
-            isHidden: false,
+            isHidden: draftIsHidden,
             excerpt: '',
             coverUrl: '',
             mode: 'zen',
@@ -147,10 +171,9 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             content,
-            // 用从 h1 派生的最新 title/type 覆盖原值；isHidden/excerpt/coverUrl 保持禅模式简洁原则不动。
             title,
             type,
-            isHidden: props.isHidden,
+            isHidden: draftIsHidden,
             excerpt: props.excerpt,
             coverUrl: props.coverUrl,
           }),
@@ -168,22 +191,65 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [content, props, showToast, submitting]);
+  }, [busy, content, draftIsHidden, props, showToast]);
+
+  const handleDelete = useCallback(async () => {
+    if (props.mode !== 'edit' || busy) return;
+    if (!window.confirm('确定删除这篇文章吗？相关评论也会被删除，且不可恢复。')) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/posts/${props.postId}`, { method: 'DELETE' });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(payload.error ?? '删除失败');
+      }
+      showToast('已删除', 'success');
+      props.onDeleted?.();
+      props.onClose();
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : '删除失败', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  }, [busy, props, showToast]);
 
   if (!props.open || !portalTarget) return null;
+
+  const isEdit = props.mode === 'edit';
 
   const overlay = (
     // overflow-hidden + 下方滚动区 min-h-0：flex 子项才能低于内容高度，只保留一层纵向滚动；Portal 到 body 避免祖先 transform 影响 fixed。
     <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background">
-      <header className="flex shrink-0 items-center justify-between border-b px-6 py-3">
-        <div className="flex items-center gap-3">
-          <span className="rounded border px-2 py-0.5 text-xs text-muted-foreground">禅模式</span>
-        </div>
-        <div className="flex items-center gap-2">
+      <header className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b px-4 py-3 sm:px-6">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex items-center gap-2">
+            <Switch
+              id={visibilityFieldId}
+              checked={!draftIsHidden}
+              disabled={busy}
+              onCheckedChange={(checked) => setDraftIsHidden(!checked)}
+              aria-label="前台显示"
+            />
+            <label htmlFor={visibilityFieldId} className="cursor-pointer select-none text-xs text-muted-foreground">
+              前台显示
+            </label>
+          </div>
+          {isEdit ? (
+            <button
+              type="button"
+              className={iconHeaderBtnClass}
+              disabled={busy}
+              onClick={() => void handleDelete()}
+              aria-label="删除文章"
+              title="删除文章"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => void handleSave()}
-            disabled={submitting}
+            disabled={busy}
             className="rounded border border-primary bg-primary px-3 py-1 text-xs text-primary-foreground disabled:opacity-60"
           >
             {submitting ? '保存中…' : '保存'}
@@ -191,8 +257,8 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           <button
             type="button"
             onClick={props.onClose}
-            disabled={submitting}
-            className="inline-flex h-7 w-7 items-center justify-center rounded border text-muted-foreground hover:bg-muted disabled:opacity-60"
+            disabled={busy}
+            className="inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded border text-muted-foreground hover:bg-muted disabled:opacity-60 sm:h-7 sm:w-7"
             aria-label="关闭"
             title="关闭"
           >

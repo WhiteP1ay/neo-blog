@@ -27,8 +27,8 @@ type AdminPostEditEntryProps = {
 /**
  * c 端文章列表 / 详情页给管理员准备的「编辑入口」：
  * - 渲染一个铅笔图标按钮（仅由调用方决定何时可见）
- * - 点击后向 admin 详情接口拉取完整数据，再以禅模式全屏打开
- * - 禅模式编辑器自身已在保存/关闭时给 toast 提示，故这里不再额外 toast
+ * - 点击后向 admin 详情接口拉取完整数据，再以全屏编辑器打开
+ * - 编辑器自身已在保存/关闭时给 toast 提示，故这里不再额外 toast
  *   （保存策略：toast only，不主动刷新当前页）
  */
 export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProps) {
@@ -83,8 +83,8 @@ export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProp
         }}
         disabled={loading}
         className={`inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60 ${className ?? ''}`.trim()}
-        aria-label="禅模式编辑该文章"
-        title="禅模式编辑"
+        aria-label="编辑文章"
+        title="编辑文章"
       >
         <Pencil className="h-3.5 w-3.5" />
       </button>
@@ -101,6 +101,7 @@ export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProp
           coverUrl={detail.coverUrl}
           onClose={() => setDetail(null)}
           onSaved={() => setDetail(null)}
+          onDeleted={() => setDetail(null)}
         />
       ) : null}
     </>

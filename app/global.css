@@ -255,7 +255,7 @@ body {
 
 /**
  * 细滚动条（Firefox scrollbar-color + WebKit），与主题边框色协调。
- * html.scrollbar-subtle：/admin 下文档滚动条；.scrollbar-subtle：分区内部滚动容器（如禅模式编辑器）。
+ * html.scrollbar-subtle：/admin 下文档滚动条；.scrollbar-subtle：分区内部滚动容器（如全屏博文编辑器）。
  */
 .scrollbar-subtle,
 html.scrollbar-subtle {

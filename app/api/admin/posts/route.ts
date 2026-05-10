@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
   }
 
-  // 禅模式下默认不派生封面/摘要，按调用方传值（通常为空字符串）保存。
+  // mode=zen 时默认不派生封面/摘要，按调用方传值（通常为空字符串）保存。
   const finalExcerpt = mode === 'zen' ? inputExcerpt : (inputExcerpt || metadata.excerpt);
   const finalCoverUrl = mode === 'zen' ? inputCoverUrl : (inputCoverUrl || metadata.coverUrl);
 

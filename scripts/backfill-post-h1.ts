@@ -7,7 +7,7 @@ import { postsTable } from '@/server/db/schema';
  * c 端阅读页已不再单独渲染文章标题，正文里 h1 即标题。
  * 此脚本扫描所有文章，给「正文开头没有 h1」的文章自动补一个 h1：
  *   - title 已经形如 `【xxx】...` → 直接用 title 作为 h1 文本
- *   - 否则若 type 非空 → 拼成 `【{type}】{title}` 作为 h1（兼容后续禅模式编辑提取 type）
+ *   - 否则若 type 非空 → 拼成 `【{type}】{title}` 作为 h1（兼容全屏编辑器从 h1 解析 type）
  *   - 否则 → 直接用 title
  *
  * 默认 dry-run：仅打印将要修改的列表，不写库。

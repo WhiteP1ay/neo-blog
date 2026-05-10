@@ -40,3 +40,7 @@ dev.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Cursor Agent stop hook（本地日志与限频状态）
+.cursor/next-dev-restart.log
+.cursor/.last-next-restart-at

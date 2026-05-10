@@ -24,7 +24,7 @@ export function AdminConsole({
   const consoleState = useAdminConsole(initialTab);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 p-6">
+    <div className="mx-auto max-w-6xl space-y-4">
       {showTabNav ? <TabNav activeTab={consoleState.activeTab} onChange={consoleState.setActiveTab} /> : null}
       {consoleState.loading ? <p>加载中...</p> : null}
       {consoleState.error ? <p className="text-red-500">{consoleState.error}</p> : null}

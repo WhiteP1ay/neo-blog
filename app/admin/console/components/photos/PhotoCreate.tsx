@@ -1,5 +1,7 @@
 'use client';
 
+import { Switch } from '@/components/ui/switch';
+
 type PhotoCreateProps = {
   open: boolean;
   onClose: () => void;
@@ -21,6 +23,8 @@ type PhotoCreateProps = {
 export function PhotoCreate({ open, onClose, form }: PhotoCreateProps) {
   if (!open) return null;
 
+  const hiddenSwitchId = 'photo-create-hidden';
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
       <button className="absolute inset-0 bg-black/70" type="button" aria-label="关闭新增照片弹窗" onClick={onClose} />
@@ -32,13 +36,35 @@ export function PhotoCreate({ open, onClose, form }: PhotoCreateProps) {
           </button>
         </div>
         <div className="space-y-2">
-          <input className="w-full rounded border px-2 py-1" placeholder="照片标题" value={form.newPhotoTitle} onChange={(e) => form.setNewPhotoTitle(e.target.value)} />
-          <input className="w-full rounded border px-2 py-1" placeholder="类型（默认空）" value={form.newPhotoType} onChange={(e) => form.setNewPhotoType(e.target.value)} />
-          <textarea className="h-20 w-full rounded border px-2 py-1" placeholder="描述" value={form.newPhotoDesc} onChange={(e) => form.setNewPhotoDesc(e.target.value)} />
-          <label className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={form.newPhotoIsHidden} onChange={(e) => form.setNewPhotoIsHidden(e.target.checked)} />
-            隐藏
-          </label>
+          <input
+            className="w-full rounded border px-2 py-1"
+            placeholder="照片标题"
+            value={form.newPhotoTitle}
+            onChange={(e) => form.setNewPhotoTitle(e.target.value)}
+          />
+          <input
+            className="w-full rounded border px-2 py-1"
+            placeholder="类型（默认空）"
+            value={form.newPhotoType}
+            onChange={(e) => form.setNewPhotoType(e.target.value)}
+          />
+          <textarea
+            className="h-20 w-full rounded border px-2 py-1"
+            placeholder="描述"
+            value={form.newPhotoDesc}
+            onChange={(e) => form.setNewPhotoDesc(e.target.value)}
+          />
+          <div className="flex items-center gap-2">
+            <Switch
+              id={hiddenSwitchId}
+              checked={form.newPhotoIsHidden}
+              onCheckedChange={form.setNewPhotoIsHidden}
+              aria-label="创建为隐藏"
+            />
+            <label htmlFor={hiddenSwitchId} className="cursor-pointer select-none text-sm text-muted-foreground">
+              隐藏（前台不可见）
+            </label>
+          </div>
           <button
             className="rounded border px-3 py-1"
             type="button"

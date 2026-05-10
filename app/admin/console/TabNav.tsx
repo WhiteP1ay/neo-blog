@@ -18,7 +18,7 @@ export function TabNav({ activeTab, onChange }: { activeTab: TabKey; onChange: (
       {TAB_ITEMS.map((item) => (
         <button
           key={item.key}
-          className="rounded border px-3 py-1"
+          className="min-h-10 touch-manipulation rounded border px-3 py-2 text-sm sm:min-h-0 sm:py-1"
           type="button"
           onClick={() => onChange(item.key)}
           aria-pressed={activeTab === item.key}

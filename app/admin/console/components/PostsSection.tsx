@@ -100,6 +100,10 @@ export function PostsSection({
           coverUrl={form.editPostCoverUrl}
           onClose={form.cancelEditPost}
           onSaved={invalidatePosts}
+          onDeleted={() => {
+            form.cancelEditPost();
+            invalidatePosts();
+          }}
         />
       ) : null}
     </section>

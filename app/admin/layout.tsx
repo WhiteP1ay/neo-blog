@@ -21,14 +21,21 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <AdminDocumentScrollbar>
-      <div className="mx-auto max-w-6xl space-y-4 p-6">
+      <div className="mx-auto max-w-6xl space-y-4 px-3 py-4 sm:px-6 sm:py-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <Link href="/" className="rounded border px-3 py-1 text-sm hover:bg-muted">
+            <Link
+              href="/"
+              className="min-h-10 touch-manipulation rounded border px-3 py-2 text-sm leading-none hover:bg-muted sm:min-h-0 sm:py-1"
+            >
               返回首页
             </Link>
             {ADMIN_SECTIONS.map((section) => (
-              <Link key={section.href} href={section.href} className="rounded border px-3 py-1 text-sm hover:bg-muted">
+              <Link
+                key={section.href}
+                href={section.href}
+                className="min-h-10 touch-manipulation rounded border px-3 py-2 text-sm leading-none hover:bg-muted sm:min-h-0 sm:py-1"
+              >
                 {section.label}
               </Link>
             ))}
