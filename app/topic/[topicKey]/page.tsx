@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { getHomeExplorerData } from '@/server/actions/posts';
-import { DocContainer } from '@/components/site/retro/DocContainer';
-import { SiteHeader } from '@/components/site/retro/SiteHeader';
-import { SiteFooter } from '@/components/site/retro/SiteFooter';
+import { SiteShell } from '@/components/site/SiteShell';
 import { PostList } from '@/app/(site)/blog/PostList';
 import { decodeTopicPathSegment } from '@/lib/url/segmentEncoding';
 
@@ -42,19 +40,17 @@ export default async function TopicPage({ params }: PageProps) {
 
   const categories = await resolveHomeCategories();
   if (!categories) {
-    return <p className="text-sm text-muted-foreground">加载列表失败，请稍后重试。</p>;
+    return (
+      <SiteShell>
+        <p className="text-sm text-muted-foreground">加载列表失败，请稍后重试。</p>
+      </SiteShell>
+    );
   }
 
   return (
-    <div id="top" className="retro-site min-h-dvh bg-background text-foreground">
-      <SiteHeader />
-      <main className="py-5 sm:py-8">
-        <DocContainer>
-          <PostList categories={categories} selectedTopicKey={selectedTopicKey} />
-        </DocContainer>
-      </main>
-      <SiteFooter />
-    </div>
+    <SiteShell>
+      <PostList categories={categories} selectedTopicKey={selectedTopicKey} />
+    </SiteShell>
   );
 }
 

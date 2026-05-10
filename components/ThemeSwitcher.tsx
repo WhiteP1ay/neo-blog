@@ -39,7 +39,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
             key={option.key}
             type="button"
             onClick={() => setTheme(option.key)}
-            className={`rounded border px-2 py-1 transition-colors ${
+            className={`cursor-pointer rounded border px-2 py-1 motion-safe:transition-colors motion-safe:duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background ${
               selected ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'
             }`}
             aria-pressed={selected}

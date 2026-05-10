@@ -1,12 +1,9 @@
 import type { ReactNode } from 'react';
+import { DocContainer } from '@/components/site/retro/DocContainer';
 import { SiteFooter } from '@/components/site/retro/SiteFooter';
 import { SiteHeader } from '@/components/site/retro/SiteHeader';
-import { DocContainer } from '@/components/site/retro/DocContainer';
 
-/**
- * 前台站点布局：统一容器、头部导航与页脚。
- */
-export default function SiteLayout({ children }: { children: ReactNode }) {
+export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <div id="top" className="flex min-h-dvh flex-col bg-background text-foreground">
       <SiteHeader />

@@ -82,7 +82,7 @@ export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProp
           void openEditor();
         }}
         disabled={loading}
-        className={`inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60 ${className ?? ''}`.trim()}
+        className={`inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded text-muted-foreground motion-safe:transition-colors motion-safe:duration-200 hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background disabled:opacity-60 ${className ?? ''}`.trim()}
         aria-label="编辑文章"
         title="编辑文章"
       >

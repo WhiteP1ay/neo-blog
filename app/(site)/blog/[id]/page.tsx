@@ -95,16 +95,21 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     <article className="retro-content">
       <StructuredData data={jsonLd} />
       <header>
-        <p className="text-xs text-muted-foreground">
-          <Link href="/blog">返回文章列表</Link>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          <Link
+            href="/"
+            className="cursor-pointer rounded-md px-1 py-0.5 text-foreground motion-safe:transition-colors motion-safe:duration-200 hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+          >
+            返回文章列表
+          </Link>
           <BlogDetailAdminEdit postId={row.id} />
         </p>
       </header>
 
-      <hr className="site-hr" />
+      <div className="my-6 border-b border-border" role="presentation" />
 
       <section
-        className="retro-paper prose prose-neutral dark:prose-invert prose-sm sm:prose-base max-w-none rounded-sm p-4 sm:p-6"
+        className="rounded-xl border border-border bg-card prose prose-neutral dark:prose-invert prose-sm sm:prose-base max-w-none p-4 sm:p-6"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
 

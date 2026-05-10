@@ -5,8 +5,7 @@ type SiteThemeSwitcherProps = {
 };
 
 /**
- * 旧版 (site) 专用：复古极简风的主题切换。
- * - 用纯文本链接呈现，不依赖 dropdown/menu 等重 UI。
+ * 前台站点：Light / Dark / System 三态切换（纯按钮组，无下拉）。
  */
 export function SiteThemeSwitcher({ className }: SiteThemeSwitcherProps) {
   return <ThemeSwitcher className={className} />;

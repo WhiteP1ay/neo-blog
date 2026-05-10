@@ -1,51 +1,9 @@
 :root {
-  --retro-link: rgb(0 0 238);
-  --retro-link-visited: rgb(85 26 139);
   --retro-paper: color-mix(in oklab, var(--background) 95%, var(--foreground) 5%);
 }
 
 .dark {
-  --retro-link: rgb(153 188 255);
-  --retro-link-visited: rgb(192 166 255);
   --retro-paper: color-mix(in oklab, var(--background) 92%, var(--foreground) 8%);
-}
-
-.retro-site {
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-@media (min-width: 640px) {
-  .retro-site {
-    font-size: 15px;
-  }
-}
-
-.site-doc-container {
-  margin-inline: auto;
-  width: 100%;
-  max-width: 860px;
-  padding-inline: 16px;
-}
-
-@media (min-width: 640px) {
-  .site-doc-container {
-    padding-inline: 20px;
-  }
-}
-
-.retro-site :where(main a, footer a, nav a) {
-  color: var(--retro-link);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.retro-site :where(main a, footer a, nav a):visited {
-  color: var(--retro-link-visited);
-}
-
-.retro-site :where(main a, footer a, nav a):hover {
-  opacity: 0.82;
 }
 
 .retro-paper {
@@ -128,4 +86,3 @@
   overflow-x: auto;
   padding: 0.85rem;
 }
-
