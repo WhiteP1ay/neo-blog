@@ -161,14 +161,26 @@ body {
 }
 
 /* 文字高亮（tiptap Highlight 扩展），编辑器与阅读页保持一致：
- * - 深浅主题下统一强制深色文字，避免浅色 pastel 背景上看不清；
- * - 行内显示，不破坏 prose 行高 */
-:where(.prose, .ProseMirror) mark {
-  color: #18181b;
+ * - 浅色 pastel 背景上强制深色字；勿用 :where()，否则压不过 typography / text-*；
+ * - mark 内 strong / a / code 在 prose-invert 下另有浅色规则，需一并拉回继承 mark 的颜色 */
+.prose mark,
+.ProseMirror mark {
+  /* 压过 TipTap multicolor 旧 HTML 中的 style="color:inherit" */
+  color: #18181b !important;
   padding: 0.05em 0.2em;
   border-radius: 0.2rem;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+.prose mark strong,
+.ProseMirror mark strong,
+.prose mark a,
+.ProseMirror mark a,
+.prose mark code,
+.ProseMirror mark code {
+  /* 跟随 mark 上强制后的深色（inherit 解析为父元素计算色） */
+  color: inherit !important;
 }
 
 /* 富文本编辑器：图片节点选中态视觉提示，方便用户与"图片 Markdown 编辑条"联动 */

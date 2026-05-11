@@ -3,7 +3,7 @@ import { clearSession } from '@/server/utils/auth';
 
 /**
  * 登出接口：
- * - 清理 session cookie
+ * - 清理 `admin_session` Cookie
  */
 export async function POST() {
   try {

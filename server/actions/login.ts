@@ -1,6 +1,13 @@
 'use server';
 
-import { verifyPassword, createSession, clearSession, getSession } from '@/server/utils/auth';
+import {
+  verifyPassword,
+  createSession,
+  clearSession,
+  getSession,
+  isJwtSecretConfigurationError,
+  JWT_SECRET_SETUP_USER_MESSAGE,
+} from '@/server/utils/auth';
 import { redirect } from 'next/navigation';
 import { actionErr, actionOkVoid } from '@/server/types/action-result';
 import type { ActionVoidResult } from '@/server/types/action-result';
@@ -24,6 +31,9 @@ export async function login(username: string, password: string): Promise<ActionV
     return actionOkVoid();
   } catch (error) {
     console.error('登录失败:', error);
+    if (isJwtSecretConfigurationError(error)) {
+      return actionErr(JWT_SECRET_SETUP_USER_MESSAGE);
+    }
     return actionErr('登录失败');
   }
 }

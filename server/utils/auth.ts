@@ -1,14 +1,77 @@
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import { SignJWT, jwtVerify } from 'jose';
 import { db } from '@/server/db/db';
 
 import bcrypt from 'bcryptjs';
 
 /**
- * Session key
+ * Session key（Cookie 内为服务端签名的 JWT）
  */
 const SESSION_KEY = 'admin_session';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7天
+
+const JWT_ALG = 'HS256';
+
+function getSecretKeyBytes(): Uint8Array {
+  const s = process.env.AUTH_JWT_SECRET;
+  if (!s) {
+    throw new Error('缺少环境变量 AUTH_JWT_SECRET');
+  }
+  const key = new TextEncoder().encode(s);
+  if (key.length < 32) {
+    throw new Error('AUTH_JWT_SECRET 经 UTF-8 编码后长度须至少 32 字节');
+  }
+  return key;
+}
+
+function tryGetSecretKeyBytes(): Uint8Array | null {
+  try {
+    return getSecretKeyBytes();
+  } catch {
+    return null;
+  }
+}
+
+/** 登录失败时向用户展示的 JWT 密钥配置说明（密码已通过校验但无法签发 Cookie 时使用） */
+export const JWT_SECRET_SETUP_USER_MESSAGE =
+  '无法完成登录 setup error';
+
+export function isJwtSecretConfigurationError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('AUTH_JWT_SECRET');
+}
+
+async function signSessionJwt(userId: number): Promise<string> {
+  const key = getSecretKeyBytes();
+  const nowSec = Math.floor(Date.now() / 1000);
+  return new SignJWT({})
+    .setProtectedHeader({ alg: JWT_ALG })
+    .setSubject(String(userId))
+    .setIssuedAt(nowSec)
+    .setExpirationTime(nowSec + SESSION_MAX_AGE)
+    .sign(key);
+}
+
+async function verifySessionJwt(token: string): Promise<number | null> {
+  const key = tryGetSecretKeyBytes();
+  if (!key) {
+    return null;
+  }
+  try {
+    const { payload } = await jwtVerify(token, key, { algorithms: [JWT_ALG] });
+    const sub = payload.sub;
+    if (sub == null || sub === '') {
+      return null;
+    }
+    const userId = Number.parseInt(sub, 10);
+    if (!Number.isInteger(userId) || userId < 1) {
+      return null;
+    }
+    return userId;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * 当前登录用户及权限（来自 users 表）
@@ -20,11 +83,12 @@ export type AuthSession = {
 };
 
 /**
- * 创建session
+ * 创建 session：写入 HttpOnly Cookie（JWT）
  */
 export async function createSession(userId: number) {
+  const token = await signSessionJwt(userId);
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_KEY, userId.toString(), {
+  cookieStore.set(SESSION_KEY, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -42,12 +106,12 @@ export async function createSession(userId: number) {
 export const getSession = cache(async (): Promise<AuthSession | null> => {
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_KEY);
-  if (!session) {
+  if (!session?.value) {
     return null;
   }
 
-  const userId = parseInt(session.value, 10);
-  if (Number.isNaN(userId)) {
+  const userId = await verifySessionJwt(session.value);
+  if (userId == null) {
     return null;
   }
 
@@ -82,7 +146,7 @@ export function requireAdminSession(session: AuthSession | null): RequireAdminRe
 }
 
 /**
- * 清除session
+ * 清除 session
  */
 export async function clearSession() {
   const cookieStore = await cookies();

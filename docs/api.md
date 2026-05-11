@@ -3,7 +3,7 @@
 本文档对应当前项目 `app/api` 路由实现。
 
 - Base URL: `/api`
-- 鉴权方式: 登录后由服务端写入 `HttpOnly` Cookie (`admin_session`)
+- 鉴权方式: 登录后由服务端写入 `HttpOnly` Cookie（`admin_session`，值为 `HS256` 签名的 JWT，需配置 `AUTH_JWT_SECRET`）
 - 权限规则:
   - 读操作（GET）默认开放
   - 写操作（POST/PUT/DELETE）中，`posts/photos` 需要管理员权限（`isAdmin=true`）
@@ -148,7 +148,7 @@
 
 ```bash
 curl -X POST "http://localhost:3000/api/posts" \
-  -b "admin_session=YOUR_COOKIE" \
+  -b "admin_session=YOUR_JWT" \
   -F "file=@./demo.md" \
   -F "isHidden=false" \
   -F "type="
@@ -352,7 +352,7 @@ curl -X POST "http://localhost:3000/api/posts" \
 
 ```bash
 curl -X POST "http://localhost:3000/api/photos" \
-  -b "admin_session=YOUR_COOKIE" \
+  -b "admin_session=YOUR_JWT" \
   -F "file=@./demo.png" \
   -F "isHidden=false" \
   -F "type="

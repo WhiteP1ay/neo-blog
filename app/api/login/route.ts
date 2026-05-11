@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createSession, verifyPassword } from '@/server/utils/auth';
+import {
+  createSession,
+  verifyPassword,
+  isJwtSecretConfigurationError,
+  JWT_SECRET_SETUP_USER_MESSAGE,
+} from '@/server/utils/auth';
 
 type LoginRequestBody = {
   username?: unknown;
@@ -9,7 +14,7 @@ type LoginRequestBody = {
 /**
  * 登录接口：
  * - 校验用户名密码
- * - 写入 session cookie
+ * - 写入 HttpOnly Cookie（`admin_session`，服务端签名的 JWT）
  * - 返回 { success: true }
  */
 export async function POST(request: Request) {
@@ -30,6 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('API 登录失败:', error);
-    return NextResponse.json({ error: '登录失败' }, { status: 500 });
+    const message = isJwtSecretConfigurationError(error) ? JWT_SECRET_SETUP_USER_MESSAGE : '登录失败';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

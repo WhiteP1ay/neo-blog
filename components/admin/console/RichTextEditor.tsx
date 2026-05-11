@@ -154,10 +154,31 @@ export function RichTextEditor({
 
   /**
    * 自定义 Highlight 扩展：保留 multicolor 能力，并把 Mod-Shift-H 改为「用最近一次颜色 toggle」。
+   * multicolor 时官方会在 style 里写 `color: inherit`，在 dark + prose-invert 下会继承浅色字，
+   * 叠在 pastel 背景上看不清；这里只输出 background-color，文字颜色交给全局 CSS。
    */
   const HighlightExtension = useMemo(
     () =>
       Highlight.extend({
+        addAttributes() {
+          return {
+            color: {
+              default: null,
+              parseHTML: (element) =>
+                element.getAttribute('data-color') ||
+                (element instanceof HTMLElement ? element.style.backgroundColor : null),
+              renderHTML: (attributes) => {
+                if (!attributes.color) {
+                  return {};
+                }
+                return {
+                  'data-color': attributes.color,
+                  style: `background-color: ${attributes.color}`,
+                };
+              },
+            },
+          };
+        },
         addKeyboardShortcuts() {
           return {
             'Mod-Shift-h': () => {

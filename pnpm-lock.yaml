@@ -125,6 +125,9 @@ importers:
       image-size:
         specifier: ^2.0.2
         version: 2.0.2
+      jose:
+        specifier: ^6.2.3
+        version: 6.2.3
       lowlight:
         specifier: ^3.3.0
         version: 3.3.0
@@ -2332,6 +2335,9 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
+
+  jose@6.2.3:
+    resolution: {integrity: sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw==}
 
   js-base64@2.6.4:
     resolution: {integrity: sha512-pZe//GGmwJndub7ZghVHz7vjb2LgC1m8B07Au3eYqeqv9emhESByMXxaEgkUkEqJe87oBbSniGYoQNIBklc7IQ==}
@@ -4940,6 +4946,8 @@ snapshots:
   isstream@0.1.2: {}
 
   jiti@2.6.1: {}
+
+  jose@6.2.3: {}
 
   js-base64@2.6.4: {}
 
