@@ -109,7 +109,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       <div className="my-6 border-b border-border" role="presentation" />
 
       <section
-        className="rounded-xl border border-border bg-card prose prose-neutral dark:prose-invert prose-sm sm:prose-base max-w-none p-4 sm:p-6"
+        className="article-main rounded-xl border border-border bg-card prose prose-neutral dark:prose-invert prose-sm sm:prose-base max-w-none p-4 sm:p-6"
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
 
