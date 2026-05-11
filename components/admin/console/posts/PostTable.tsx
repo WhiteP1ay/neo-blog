@@ -3,7 +3,7 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Pencil, Trash2, Wrench } from 'lucide-react';
+import { Eye, GripVertical, Pencil, Trash2, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
@@ -30,7 +30,7 @@ const iconBtnMobile =
 const filterLinkClass =
   'min-h-10 touch-manipulation rounded border px-3 py-2 text-sm leading-none hover:bg-muted sm:min-h-0 sm:px-2 sm:py-1';
 
-/** 移动端卡片内：前台显示 + 编辑 + 删除 */
+/** 移动端卡片内：前台显示 + 预览 + 编辑 + 删除 */
 function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps['form'] }) {
   const switchId = `post-visible-${post.id}`;
   return (
@@ -46,6 +46,16 @@ function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps[
           前台显示
         </label>
       </div>
+      <Link
+        className={iconBtnMobile}
+        href={`/blog/${post.id}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="预览"
+        title="预览"
+      >
+        <Eye className="h-4 w-4" />
+      </Link>
       <button
         className={iconBtnMobile}
         type="button"
@@ -219,6 +229,16 @@ function SortablePostRow({
       </td>
       <td className="px-3 py-2">
         <div className="flex gap-2">
+          <Link
+            className="inline-flex items-center justify-center rounded border px-2 py-1"
+            href={`/blog/${post.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="预览"
+            title="预览"
+          >
+            <Eye className="h-4 w-4" />
+          </Link>
           <button
             className="rounded border px-2 py-1"
             type="button"
