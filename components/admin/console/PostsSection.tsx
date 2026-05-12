@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import type { PostItem } from './types';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
+import { PostAiPolishDialog } from './posts/PostAiPolishDialog';
 import { PostTable } from './posts/PostTable';
 
 type PostFormState = {
@@ -40,12 +41,18 @@ export function PostsSection({
 }) {
   const queryClient = useQueryClient();
   const [openZenCreate, setOpenZenCreate] = useState(false);
+  const [aiPolishPost, setAiPolishPost] = useState<PostItem | null>(null);
   const mdFileInputRef = useRef<HTMLInputElement>(null);
 
   const zenEditOpen = form.editingPostId !== null;
 
   const invalidatePosts = () => {
     void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
+  };
+
+  const postTableForm = {
+    ...form,
+    openAiPolish: (post: PostItem) => setAiPolishPost(post),
   };
 
   return (
@@ -78,7 +85,15 @@ export function PostsSection({
           />
         </div>
       </div>
-      <PostTable posts={posts} form={form} selectedType={selectedType} />
+      <PostTable posts={posts} form={postTableForm} selectedType={selectedType} />
+
+      <PostAiPolishDialog
+        post={aiPolishPost}
+        open={aiPolishPost !== null}
+        onOpenChange={(next) => {
+          if (!next) setAiPolishPost(null);
+        }}
+      />
 
       <ZenPostEditor
         mode="create"

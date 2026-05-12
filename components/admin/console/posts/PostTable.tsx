@@ -3,7 +3,7 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Eye, GripVertical, Pencil, Trash2, Wrench } from 'lucide-react';
+import { Eye, GripVertical, Pencil, Sparkles, Trash2, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
@@ -19,6 +19,7 @@ type PostTableProps = {
     deletePost: (id: number) => Promise<void>;
     startEditPost: (post: PostItem) => Promise<void>;
     reorderPosts: (orderedIds: number[]) => Promise<void>;
+    openAiPolish: (post: PostItem) => void;
   };
 };
 
@@ -56,6 +57,15 @@ function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps[
       >
         <Eye className="h-4 w-4" />
       </Link>
+      <button
+        className={iconBtnMobile}
+        type="button"
+        onClick={() => form.openAiPolish(post)}
+        aria-label="AI 润色"
+        title="AI 润色"
+      >
+        <Sparkles className="h-4 w-4" />
+      </button>
       <button
         className={iconBtnMobile}
         type="button"
@@ -239,6 +249,15 @@ function SortablePostRow({
           >
             <Eye className="h-4 w-4" />
           </Link>
+          <button
+            className="rounded border px-2 py-1"
+            type="button"
+            onClick={() => form.openAiPolish(post)}
+            aria-label="AI 润色"
+            title="AI 润色"
+          >
+            <Sparkles className="h-4 w-4" />
+          </button>
           <button
             className="rounded border px-2 py-1"
             type="button"
