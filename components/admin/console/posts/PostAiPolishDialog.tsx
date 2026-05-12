@@ -38,7 +38,8 @@ type PostAiPolishDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const PREVIEW_WINDOW_FEATURES = 'noopener,noreferrer,width=980,height=860';
+/** 勿含 noopener：带 noopener 时 window.open 会返回 null，导致无法 postMessage */
+const PREVIEW_WINDOW_FEATURES = 'width=980,height=860';
 
 export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDialogProps) {
   const queryClient = useQueryClient();
