@@ -1,9 +1,15 @@
 const DEEPSEEK_CHAT_URL = 'https://api.deepseek.com/v1/chat/completions';
 
+const DEFAULT_DEEPSEEK_MODEL = 'deepseek-chat';
+
+function resolveDeepseekModel(): string {
+  return process.env.DEEPSEEK_MODEL?.trim() || DEFAULT_DEEPSEEK_MODEL;
+}
+
 export type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
 /**
- * 调用 DeepSeek Chat（OpenAI 兼容接口）。API Key 仅服务端读取。
+ * 调用 DeepSeek Chat（OpenAI 兼容接口）。API Key 仅服务端读取；模型名见环境变量 DEEPSEEK_MODEL。
  */
 export async function deepseekChat(
   messages: ChatMessage[],
@@ -14,6 +20,8 @@ export async function deepseekChat(
     throw new Error('未配置环境变量 DEEPSEEK_API_KEY');
   }
 
+  const model = resolveDeepseekModel();
+
   const res = await fetch(DEEPSEEK_CHAT_URL, {
     method: 'POST',
     headers: {
@@ -21,7 +29,7 @@ export async function deepseekChat(
       Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: 'deepseek-chat',
+      model,
       messages,
       temperature: options?.temperature ?? 0.25,
       max_tokens: options?.maxTokens ?? 8192,
