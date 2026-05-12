@@ -46,10 +46,10 @@ export function appendEnglishSection(chineseHtml: string, englishFragmentHtml: s
   const h1 = root.find('h1').first();
   if (h1.length) {
     h1.append(
-      `<span id="${H1_EN_HINT_ID}" class="not-prose text-muted-foreground font-normal">（文末附英文版）</span>`,
+      `<span id="${H1_EN_HINT_ID}" class="not-prose text-muted-foreground font-normal">(English version below)</span>`,
     );
     h1.after(
-      `<p id="${BILINGUAL_NAV_ID}" class="not-prose text-sm"><a href="#${EN_SECTION_H2_ID}">跳转到英文部分</a></p>`,
+      `<p id="${BILINGUAL_NAV_ID}" class="not-prose text-sm"><a href="#${EN_SECTION_H2_ID}">Jump to English section</a></p>`,
     );
   }
   root.append(
