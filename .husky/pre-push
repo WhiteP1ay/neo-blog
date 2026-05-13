@@ -1,2 +1,4 @@
-# Git push 前运行 Playwright E2E（与 package.json 中 test:e2e 一致）
-pnpm test:e2e
+# Push 前跑 E2E。使用 line reporter：在 hook 无 TTY 时也能持续看到用例进度。
+printf '\n[pre-push] Playwright E2E 开始（含 webServer，首轮编译可能 1-2 分钟）\n\n' >&2
+export FORCE_COLOR=1
+pnpm test:e2e -- --reporter=line
