@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { eq } from 'drizzle-orm';
 import { db } from '@/server/db/db';
 import { postsTable } from '@/server/db/schema';
@@ -6,9 +7,8 @@ import { postsTable } from '@/server/db/schema';
 /**
  * c 端阅读页已不再单独渲染文章标题，正文里 h1 即标题。
  * 此脚本扫描所有文章，给「正文开头没有 h1」的文章自动补一个 h1：
- *   - title 已经形如 `【xxx】...` → 直接用 title 作为 h1 文本
- *   - 否则若 type 非空 → 拼成 `【{type}】{title}` 作为 h1（兼容全屏编辑器从 h1 解析 type）
- *   - 否则 → 直接用 title
+ *   - h1 文本使用 `stripLeadingTypeLikePrefixes(title)`（去掉历史 `【…】`、`[…]` 前缀后再写入正文）
+ *   - 文章类型由独立表与关联维护，不从标题或 H1 推断
  *
  * 默认 dry-run：仅打印将要修改的列表，不写库。
  * 加上 `--apply` 才会真正 UPDATE 数据库。
@@ -21,7 +21,6 @@ import { postsTable } from '@/server/db/schema';
  */
 
 const HAS_LEADING_H1_RE = /^\s*<h1[\s>]/i;
-const TITLE_HAS_TYPE_PREFIX_RE = /^【[^】]+】/;
 
 type Mode = { apply: boolean; onlyId: number | null };
 
@@ -60,21 +59,12 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * 推断要插入的 h1 文本：
- * - title 已含 【】 前缀 → 直接用
- * - type 非空 → 拼成 【type】title
- * - 否则 → 直接 title
+ * 推断要插入的 h1 文本：与列表页标题一致，去掉 `【…】`、`[…]` 装饰前缀。
  */
-function buildH1Text(title: string, type: string): string {
+function buildH1Text(title: string): string {
   const trimmedTitle = title.trim();
-  if (TITLE_HAS_TYPE_PREFIX_RE.test(trimmedTitle)) {
-    return trimmedTitle;
-  }
-  const trimmedType = type.trim();
-  if (trimmedType) {
-    return `【${trimmedType}】${trimmedTitle}`;
-  }
-  return trimmedTitle;
+  const stripped = stripLeadingTypeLikePrefixes(trimmedTitle);
+  return stripped.length > 0 ? stripped : trimmedTitle;
 }
 
 /**
@@ -92,7 +82,6 @@ async function main() {
     .select({
       id: postsTable.id,
       title: postsTable.title,
-      type: postsTable.type,
       content: postsTable.content,
     })
     .from(postsTable);
@@ -113,10 +102,10 @@ async function main() {
       continue;
     }
     toUpdate += 1;
-    const h1Text = buildH1Text(row.title, row.type);
+    const h1Text = buildH1Text(row.title);
     const nextContent = prependH1(row.content, h1Text);
 
-    console.log(`#${row.id}  title="${row.title}"  type="${row.type}"`);
+    console.log(`#${row.id}  title="${row.title}"`);
     console.log(`  → 将插入 h1：「${h1Text}」`);
 
     if (mode.apply) {

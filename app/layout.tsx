@@ -1,6 +1,7 @@
 import './global.css';
 import './(site)/retro.css';
 import type { Metadata, Viewport } from 'next';
+import { SiteLocaleProvider } from '@/components/site/SiteLocaleProvider';
 import { ToastProvider } from '@/components/Toast';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import Script from 'next/script';
@@ -68,7 +69,9 @@ export default function RootLayout({
           storageKey="theme"
           disableTransitionOnChange
         >
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <SiteLocaleProvider>{children}</SiteLocaleProvider>
+          </ToastProvider>
         </NextThemesProvider>
       </body>
     </html>

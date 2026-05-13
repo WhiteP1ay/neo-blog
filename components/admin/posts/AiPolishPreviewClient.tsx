@@ -24,8 +24,8 @@ const PHASE_LABELS: Record<string, string> = {
   polish_done: '润色完成',
   translate_start: '翻译英文中…',
   translate_done: '翻译完成',
-  assemble_start: '正在拼接英文区块…',
-  assemble_done: '已拼接英文区块',
+  assemble_start: '正在分离英文到独立字段…',
+  assemble_done: '英文预览已就绪',
   diff_start: '正在生成行级对比…',
   diff_done: '对比已生成',
 };
@@ -62,6 +62,7 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
   const { showToast } = useToast();
   const [state, setState] = useState<PreviewState>({ status: 'loading', phaseLabel: '正在读取任务…' });
   const [draftAfterHtml, setDraftAfterHtml] = useState('');
+  const [draftAfterHtmlEn, setDraftAfterHtmlEn] = useState('');
   const [paneHeightPx, setPaneHeightPx] = useState<number | null>(null);
   const [applying, setApplying] = useState(false);
   const dragRef = useRef<{ pointerId: number; startY: number; startH: number } | null>(null);
@@ -173,12 +174,18 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
         if (ev.type === 'done' && isRecord(ev.data)) {
           const d = ev.data;
           const coverOk = !('coverUrl' in d) || d.coverUrl === null || typeof d.coverUrl === 'string';
+          const afterEnOk = d.afterHtmlEn === null || typeof d.afterHtmlEn === 'string';
+          const excerptEnOk = d.excerptEn === null || typeof d.excerptEn === 'string';
+          const nextTitleEnOk = d.nextTitleEn === null || typeof d.nextTitleEn === 'string';
           if (
             typeof d.beforeHtml === 'string' &&
             typeof d.afterHtml === 'string' &&
             typeof d.nextTitle === 'string' &&
             typeof d.excerpt === 'string' &&
             coverOk &&
+            afterEnOk &&
+            excerptEnOk &&
+            nextTitleEnOk &&
             isRecord(d.diff) &&
             typeof d.diff.unified === 'string' &&
             typeof d.diff.truncated === 'boolean'
@@ -187,8 +194,11 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
               postId,
               beforeHtml: d.beforeHtml,
               afterHtml: d.afterHtml,
+              afterHtmlEn: d.afterHtmlEn === null ? null : (d.afterHtmlEn as string),
               nextTitle: d.nextTitle,
+              nextTitleEn: d.nextTitleEn === null ? null : (d.nextTitleEn as string),
               excerpt: d.excerpt,
+              excerptEn: d.excerptEn === null ? null : (d.excerptEn as string),
               coverUrl: d.coverUrl === undefined ? null : (d.coverUrl as string | null),
               diff: {
                 unified: d.diff.unified,
@@ -234,6 +244,7 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
       const vh = window.innerHeight;
       setPaneHeightPx(Math.round(clamp(vh * 0.58, 280, vh * 0.82)));
       setDraftAfterHtml(finalPayload.afterHtml);
+      setDraftAfterHtmlEn(finalPayload.afterHtmlEn ?? '');
       setState({ status: 'ready', payload: finalPayload });
     };
 
@@ -253,12 +264,20 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
       showToast('变更后内容为空，无法保存', 'error');
       return;
     }
+    if (state.payload.afterHtmlEn !== null && !draftAfterHtmlEn.trim()) {
+      showToast('英文正文为空，无法保存', 'error');
+      return;
+    }
+    const applyBody: Record<string, unknown> = { content };
+    if (state.payload.afterHtmlEn !== null) {
+      applyBody.contentEn = draftAfterHtmlEn;
+    }
     setApplying(true);
     try {
       const res = await fetch(`/api/admin/posts/${postId}/ai-polish/apply`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(applyBody),
       });
       const json = (await res.json()) as { error?: string };
       if (!res.ok) {
@@ -277,7 +296,7 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
     } finally {
       setApplying(false);
     }
-  }, [applying, draftAfterHtml, postId, showToast, state.status]);
+  }, [applying, draftAfterHtml, draftAfterHtmlEn, postId, showToast, state.status]);
 
   const onResizePointerDown = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {
@@ -324,16 +343,20 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
     return <div className="p-6 text-center text-sm text-destructive">{state.message}</div>;
   }
 
-  const { beforeHtml, nextTitle, diff } = state.payload;
+  const { beforeHtml, nextTitle, nextTitleEn, diff, afterHtmlEn } = state.payload;
   const paneH = paneHeightPx ?? Math.round(window.innerHeight * 0.58);
+  const hasEnSplit = afterHtmlEn !== null;
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden pb-24">
       <header className="shrink-0 space-y-1 border-b border-border px-3 pb-3 pt-3 sm:px-4 sm:pt-4">
         <h1 className="text-base font-semibold leading-tight">AI 润色预览</h1>
-        <p className="wrap-break-word text-sm text-muted-foreground">拟用标题：{nextTitle}</p>
+        <p className="wrap-break-word text-sm text-muted-foreground">拟用中文标题：{nextTitle}</p>
+        {hasEnSplit && nextTitleEn ? (
+          <p className="wrap-break-word text-sm text-muted-foreground">拟用英文标题（来自英文 h1）：{nextTitleEn}</p>
+        ) : null}
         {diff.truncated ? (
-          <p className="text-xs text-amber-600 dark:text-amber-500">Diff 已截断，请以「变更后」为准。</p>
+          <p className="text-xs text-amber-600 dark:text-amber-500">Diff 已截断，请以「变更后」编辑区为准。</p>
         ) : null}
       </header>
 
@@ -342,10 +365,17 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
         style={{ height: paneH, minHeight: 200 }}
       >
         <Tabs defaultValue="diff" className="flex min-h-0 flex-1 flex-col">
-          <TabsList className="shrink-0">
+          <TabsList className="h-auto shrink-0 flex-wrap gap-1">
             <TabsTrigger value="diff">行级变更</TabsTrigger>
             <TabsTrigger value="before">变更前</TabsTrigger>
-            <TabsTrigger value="after">变更后</TabsTrigger>
+            {hasEnSplit ? (
+              <>
+                <TabsTrigger value="afterZh">变更后 · 中文</TabsTrigger>
+                <TabsTrigger value="afterEn">变更后 · EN</TabsTrigger>
+              </>
+            ) : (
+              <TabsTrigger value="after">变更后</TabsTrigger>
+            )}
           </TabsList>
           <TabsContent
             value="diff"
@@ -372,6 +402,34 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
                 value={draftAfterHtml}
                 onChange={setDraftAfterHtml}
                 placeholder="在此编辑变更后的正文…"
+                minHeightClassName="min-h-[40vh]"
+              />
+            </div>
+          </TabsContent>
+          <TabsContent
+            value="afterZh"
+            forceMount
+            className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-background p-1">
+              <RichTextEditor
+                value={draftAfterHtml}
+                onChange={setDraftAfterHtml}
+                placeholder="在此编辑中文正文…"
+                minHeightClassName="min-h-[40vh]"
+              />
+            </div>
+          </TabsContent>
+          <TabsContent
+            value="afterEn"
+            forceMount
+            className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden data-[state=inactive]:hidden"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border bg-background p-1">
+              <RichTextEditor
+                value={draftAfterHtmlEn}
+                onChange={setDraftAfterHtmlEn}
+                placeholder="English body HTML…"
                 minHeightClassName="min-h-[40vh]"
               />
             </div>

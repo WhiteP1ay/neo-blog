@@ -4,12 +4,14 @@ import { Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { RichTextEditor } from '@/components/admin/console/RichTextEditor';
+import type { PostTypeAdminRow } from '@/components/admin/console/types';
 import { useToast } from '@/components/Toast';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 
 /**
  * 从 HTML 字符串里取第一个 h1 的纯文本（去掉嵌套标签）。
- * 用 DOMParser 在浏览器侧解析，避免引入 cheerio 等额外依赖。
  */
 function extractFirstH1Text(html: string): string {
   if (typeof window === 'undefined' || !html) return '';
@@ -22,58 +24,107 @@ function extractFirstH1Text(html: string): string {
   }
 }
 
-/**
- * 解析 h1 文本里的 【type】 前缀；保留原 h1 文本作为 title。
- */
-function parseZenHeader(html: string): { title: string; type: string } {
-  const h1Text = extractFirstH1Text(html);
-  if (!h1Text) return { title: '', type: '' };
-  const match = h1Text.match(/^【([^】]+)】/);
-  return {
-    title: h1Text,
-    type: match?.[1].trim() ?? '',
-  };
-}
-
 type ZenPostEditorProps =
   | {
       mode: 'create';
       open: boolean;
       onClose: () => void;
       onCreated?: () => void;
+      availableTypes: PostTypeAdminRow[];
     }
   | {
       mode: 'edit';
       open: boolean;
       onClose: () => void;
       postId: number;
-      initialTitle: string;
-      initialType: string;
+      initialTypeIds: number[];
       initialContent: string;
+      initialContentEn: string;
       isHidden: boolean;
       excerpt: string;
       coverUrl: string;
       onSaved?: () => void;
-      /** 删除成功后回调（例如 invalidate、重置父级编辑状态） */
       onDeleted?: () => void;
+      availableTypes: PostTypeAdminRow[];
     };
 
 const iconHeaderBtnClass =
   'inline-flex min-h-9 min-w-9 touch-manipulation items-center justify-center rounded border text-muted-foreground hover:bg-muted disabled:opacity-60';
 
+function TypeMultiSelect({
+  availableTypes,
+  value,
+  onChange,
+  disabled,
+}: {
+  availableTypes: PostTypeAdminRow[];
+  value: number[];
+  onChange: (next: number[]) => void;
+  disabled: boolean;
+}) {
+  const set = new Set(value);
+  const toggle = (id: number) => {
+    const next = new Set(set);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    onChange(availableTypes.filter((t) => next.has(t.id)).map((t) => t.id));
+  };
+
+  return (
+    <details className="relative max-w-xl rounded border border-dashed border-border bg-muted/20 px-3 py-2 text-sm">
+      <summary className="cursor-pointer select-none text-xs font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
+        文章类型
+        {value.length > 0 ? (
+          <span className="ml-2 text-foreground">（已选 {value.length}）</span>
+        ) : (
+          <span className="ml-2">（可选）</span>
+        )}
+      </summary>
+      <div className="mt-2 max-h-40 space-y-2 overflow-y-auto overscroll-y-contain pr-1">
+        {availableTypes.length === 0 ? (
+          <p className="text-xs text-muted-foreground">暂无类型，请先在「类型管理」中创建。</p>
+        ) : (
+          availableTypes.map((t) => (
+            <label
+              key={t.id}
+              className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-muted/60"
+            >
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 rounded border border-input"
+                checked={set.has(t.id)}
+                disabled={disabled}
+                onChange={() => toggle(t.id)}
+              />
+              <span>
+                {t.nameZh}
+                <span className="text-muted-foreground"> · {t.code}</span>
+              </span>
+            </label>
+          ))
+        )}
+      </div>
+    </details>
+  );
+}
+
 /**
- * 全屏沉浸式编辑器：复用 RichTextEditor；顶栏右侧为前台显示 Switch、删除（仅编辑）、保存、关闭。
- * - create：可设默认隐藏；保存时写入 isHidden。
- * - edit：保存时写入正文派生的 title/type、draftIsHidden、原 excerpt/coverUrl。
+ * 全屏沉浸式编辑器：复用 RichTextEditor；顶栏为前台显示、删除（仅编辑）、保存、关闭。
+ * 文章类型多选紧挨「中文正文 / English」标签下方（新建模式在正文编辑器上方）；
+ * 保存时标题取自正文首个 H1 的纯文本并去掉开头的 `【…】`、`[…]` 装饰前缀（类型仅由多选提交，不从 H1 解析）。
  */
 export function ZenPostEditor(props: ZenPostEditorProps) {
   const { showToast } = useToast();
   const visibilityFieldId = useId();
   const [content, setContent] = useState('');
+  const [contentEn, setContentEn] = useState('');
   const [draftIsHidden, setDraftIsHidden] = useState(false);
+  const [selectedTypeIds, setSelectedTypeIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+
+  const availableTypes = props.availableTypes;
 
   useLayoutEffect(() => {
     setPortalTarget(document.body);
@@ -83,31 +134,34 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   const mode = props.mode;
   const editPostId = props.mode === 'edit' ? props.postId : null;
   const editInitialContent = props.mode === 'edit' ? props.initialContent : '';
+  const editInitialContentEn = props.mode === 'edit' ? props.initialContentEn : '';
+  const editInitialTypeIds = props.mode === 'edit' ? props.initialTypeIds : [];
   const editSourceHidden = props.mode === 'edit' ? props.isHidden : false;
 
   useEffect(() => {
     if (!open) return;
-    // 切换 mode / open / 编辑目标 时重置内部正文，打开全屏编辑器时保证干净起点。
     if (mode === 'create' || editPostId === null) {
       setContent('');
+      setContentEn('');
+      setSelectedTypeIds([]);
       return;
     }
     setContent(editInitialContent);
-  }, [open, mode, editPostId, editInitialContent]);
+    setContentEn(editInitialContentEn);
+    setSelectedTypeIds(editInitialTypeIds);
+  }, [open, mode, editPostId, editInitialContent, editInitialContentEn, editInitialTypeIds]);
 
-  /** 新建打开时默认前台显示 */
   useEffect(() => {
     if (!open || props.mode !== 'create') return;
     setDraftIsHidden(false);
+    setSelectedTypeIds([]);
   }, [open, props.mode]);
 
-  /** 编辑打开或切换文章时，同步可见性草稿 */
   useEffect(() => {
     if (!open || editPostId === null) return;
     setDraftIsHidden(editSourceHidden);
   }, [open, editPostId, editSourceHidden]);
 
-  /** 全屏编辑器打开时禁止背后文档滚动；待 Portal 挂到 body 后再锁，避免遮罩尚未出现时误锁一页。 */
   useEffect(() => {
     if (!props.open || !portalTarget) return;
     const html = document.documentElement;
@@ -136,8 +190,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
       showToast('正文不能为空', 'error');
       return;
     }
-    // 创建与编辑都从正文 h1 派生 title 与 type；缺 h1 直接拒绝保存，行为一致。
-    const { title, type } = parseZenHeader(content);
+    const title = stripLeadingTypeLikePrefixes(extractFirstH1Text(content));
     if (!title) {
       showToast('请在正文最上方放一个 H1 作为标题', 'error');
       return;
@@ -151,7 +204,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           body: JSON.stringify({
             title,
             content,
-            type,
+            typeIds: selectedTypeIds,
             isHidden: draftIsHidden,
             excerpt: '',
             coverUrl: '',
@@ -172,10 +225,11 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
           body: JSON.stringify({
             content,
             title,
-            type,
+            typeIds: selectedTypeIds,
             isHidden: draftIsHidden,
             excerpt: props.excerpt,
             coverUrl: props.coverUrl,
+            contentEn,
           }),
         });
         const payload = (await response.json()) as { error?: string };
@@ -191,7 +245,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [busy, content, draftIsHidden, props, showToast]);
+  }, [busy, content, contentEn, draftIsHidden, props, selectedTypeIds, showToast]);
 
   const handleDelete = useCallback(async () => {
     if (props.mode !== 'edit' || busy) return;
@@ -216,9 +270,9 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   if (!props.open || !portalTarget) return null;
 
   const isEdit = props.mode === 'edit';
+  const editorMinHeightClassName = 'min-h-[calc(100svh_-_6rem_+_80vh)]';
 
   const overlay = (
-    // overflow-hidden + 下方滚动区 min-h-0：flex 子项才能低于内容高度，只保留一层纵向滚动；Portal 到 body 避免祖先 transform 影响 fixed。
     <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background">
       <header className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b px-4 py-3 sm:px-6">
         <div className="flex flex-wrap items-center justify-end gap-3">
@@ -267,15 +321,56 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
         </div>
       </header>
       <div className="scrollbar-subtle min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-6 py-4">
-        {/* paddingBottom 用 inline，避免 Tailwind 任意类里嵌套 min(..., ...) 解析出问题；高度逻辑与原先 pb-[min(88vh,56rem)] 一致 */}
         <div className="mx-auto max-w-3xl" style={{ paddingBottom: 'min(88vh, 56rem)' }}>
-          {/* min-h 不含 min(a,b)，避免 Tailwind 任意值解析异常；高度≈可视区减顶栏后再加 80vh */}
-          <RichTextEditor
-            value={content}
-            onChange={setContent}
-            placeholder={props.mode === 'create' ? '从一个 H1 标题开始，比如：【tech】Hello World' : '编辑正文'}
-            minHeightClassName="min-h-[calc(100svh_-_6rem_+_80vh)]"
-          />
+          {isEdit ? (
+            <Tabs defaultValue="zh" className="w-full">
+              <TabsList aria-label="正文语言">
+                <TabsTrigger value="zh">中文正文</TabsTrigger>
+                <TabsTrigger value="en">English</TabsTrigger>
+              </TabsList>
+              <div className="mt-3">
+                <TypeMultiSelect
+                  availableTypes={availableTypes}
+                  value={selectedTypeIds}
+                  onChange={setSelectedTypeIds}
+                  disabled={busy}
+                />
+              </div>
+              <TabsContent value="zh" className="mt-3">
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="编辑正文（首行 H1 作为标题）"
+                  minHeightClassName={editorMinHeightClassName}
+                />
+              </TabsContent>
+              <TabsContent value="en" className="mt-3">
+                <RichTextEditor
+                  value={contentEn}
+                  onChange={setContentEn}
+                  placeholder="英文正文（可选；保存时由正文内 H1 推导英文标题与摘要）"
+                  minHeightClassName={editorMinHeightClassName}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <>
+              <TypeMultiSelect
+                availableTypes={availableTypes}
+                value={selectedTypeIds}
+                onChange={setSelectedTypeIds}
+                disabled={busy}
+              />
+              <div className="mt-3">
+                <RichTextEditor
+                  value={content}
+                  onChange={setContent}
+                  placeholder="在正文最上方使用 H1 作为标题，例如「我的第一篇博文」"
+                  minHeightClassName={editorMinHeightClassName}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

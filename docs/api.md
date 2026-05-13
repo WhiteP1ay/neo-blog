@@ -83,6 +83,9 @@
 - **Path**: `/api/posts`
 - **Query**:
   - `includeHidden=true|false`（默认 `false`；默认仅返回 `isHidden=false`）
+  - `type`：按类型 **`post_types.code`** 过滤（仅返回关联了该类型的文章）。兼容旧参数名 `typeSlug`（语义相同）。未匹配到类型时返回空数组 `[]`。
+
+前台博文列表页使用 **`/blog?type=<code>`**；「未分类」桶为 **`/blog?uncategorized=1`**。英文站为 **`/en/blog?...`**。旧路径 **`/topic/...`** 由中间件 **308** 重定向到上述 query 形式。
 
 - **Success (200)**:
 
@@ -92,7 +95,7 @@
     {
       "id": 1,
       "title": "标题",
-      "type": "",
+      "types": [{ "id": 2, "code": "tech", "nameZh": "技术", "nameEn": "Tech" }],
       "isHidden": false,
       "isPinned": false,
       "excerpt": "摘要",
@@ -120,7 +123,7 @@
 {
   "title": "标题",
   "content": "# markdown 内容",
-  "type": "",
+  "typeIds": [1, 2],
   "isHidden": false,
   "isPinned": false,
   "coverUrl": "",
@@ -131,6 +134,7 @@
 说明:
 
 - `content` 传 Markdown，服务端会转换并存为 HTML。
+- `typeIds`：关联的 `post_types.id` 数组，可省略或 `[]` 表示未分类。
 - `coverUrl` / `excerpt` 不传时服务端会自动推导。
 - `multipart/form-data` 时可上传 `file`（Markdown 文件），常用于拖拽上传。
 
@@ -138,7 +142,6 @@
   - `file`: Markdown 文件（可选，推荐拖拽上传）
   - `content`: Markdown 文本（可选）
   - `title`: 标题（可选；若上传文件且不传，自动用首行 H1 或文件名）
-  - `type`: 类型（可选）
   - `isHidden`: `true|false`（可选）
   - `isPinned`: `true|false`（可选）
   - `coverUrl`: 封面地址（可选）
@@ -150,8 +153,7 @@
 curl -X POST "http://localhost:3000/api/posts" \
   -b "admin_session=YOUR_JWT" \
   -F "file=@./demo.md" \
-  -F "isHidden=false" \
-  -F "type="
+  -F "isHidden=false"
 ```
 
 - **Success (201)**:
@@ -161,7 +163,6 @@ curl -X POST "http://localhost:3000/api/posts" \
   "data": {
     "id": 1,
     "title": "标题",
-    "type": "",
     "isHidden": false,
     "content": "<p>...</p>",
     "markdownContent": "# markdown 内容",
@@ -169,7 +170,8 @@ curl -X POST "http://localhost:3000/api/posts" \
     "excerpt": "摘要",
     "isPinned": false,
     "createdAt": "2026-05-05T10:00:00.000Z",
-    "updatedAt": "2026-05-05T10:00:00.000Z"
+    "updatedAt": "2026-05-05T10:00:00.000Z",
+    "types": [{ "id": 1, "code": "tech", "nameZh": "技术", "nameEn": "Tech" }]
   }
 }
 ```
@@ -192,7 +194,6 @@ curl -X POST "http://localhost:3000/api/posts" \
   "data": {
     "id": 1,
     "title": "标题",
-    "type": "",
     "isHidden": false,
     "content": "<p>...</p>",
     "markdownContent": "# markdown 内容",
@@ -204,6 +205,8 @@ curl -X POST "http://localhost:3000/api/posts" \
   }
 }
 ```
+
+说明：`GET` 详情仍为数据库行结构；类型关联请使用管理端 `GET /api/admin/posts/:id`（响应含 `types` 数组）。
 
 - **Errors**:
   - `400`: `{ "error": "无效的文章 ID" }`
@@ -220,7 +223,7 @@ curl -X POST "http://localhost:3000/api/posts" \
 {
   "title": "新标题",
   "content": "# 新 markdown",
-  "type": "tech",
+  "typeIds": [1],
   "isHidden": true,
   "isPinned": false,
   "coverUrl": "https://example.com/new-cover.jpg",
@@ -231,6 +234,7 @@ curl -X POST "http://localhost:3000/api/posts" \
 说明:
 
 - 更新 `content` 时会同步更新 `content`(HTML) 与 `markdownContent`。
+- `typeIds`：传数组则**整表替换**该文的类型关联；不传该字段则不修改关联。
 - 未传 `coverUrl` / `excerpt` 时，会根据新内容自动推导更新。
 
 - **Success (200)**:
@@ -270,6 +274,52 @@ curl -X POST "http://localhost:3000/api/posts" \
   - `403`: 无权限
   - `404`: `{ "error": "文章不存在" }`
   - `500`: `{ "error": "删除文章失败" }`
+
+### 2.6 管理端：获取 / 更新单篇博文（HTML Zen 编辑）
+
+- **Method**: `GET` / `PUT`
+- **Path**: `/api/admin/posts/:id`
+- **权限**: 管理员（`isAdmin=true`）
+
+**GET** 返回数据库整行（含 `content`、`contentEn`、`titleEn`、`excerptEn`、`markdownContent` 等大字段），并在文章对象上附带 `types: [{ id, code, nameZh, nameEn }]`（多对多关联）。
+
+**PUT** Body 为部分字段更新，常用字段与公开 `PUT /api/posts/:id` 类似，并额外支持英文 HTML：
+
+- `typeIds`（`number[]`）：传则**整表替换**该文的类型关联；不传或省略字段则不修改关联。
+- `contentEn`（`string`）：英文正文 HTML。传空字符串或仅空白时，服务端将 `contentEn` / `titleEn` / `excerptEn` 置为 `null`（清空英文）。非空时若未显式传 `titleEn` / `excerptEn`，服务端会从英文正文首段 H1 与内容推导标题与摘要。
+- `titleEn`、`excerptEn`（`string`）：可选手动覆盖；与 `contentEn` 的自动推导逻辑见服务端实现。
+
+管理端全屏 Zen 编辑器在「编辑」模式下通过「中文正文 / English」Tab 分别维护 `content` 与 `contentEn`，保存时一并提交 `typeIds`。
+
+### 2.7 管理端：博文列表与分类内排序
+
+- **Method**: `GET`
+- **Path**: `/api/admin/posts`
+- **说明**: 列表项含 `types` 数组（轻量），正文仍须 `GET /api/admin/posts/:id` 按需加载。
+
+- **Method**: `PUT`
+- **Path**: `/api/admin/posts/reorder`
+- **Body**:
+
+```json
+{
+  "orderedIds": [3, 1, 2],
+  "typeId": 4
+}
+```
+
+- `typeId`：当前筛选类型的数据库 id；`-1` 表示「未分类」（无任何 `post_type_assignments` 关联）的文章在同一桶内重排。
+
+管理端博文列表筛选与前台一致，使用查询串：`/admin/posts?type=<code>`、`/admin/posts?uncategorized=1`；`/admin/posts` 表示全部。
+
+### 2.8 管理端：文章类型 CRUD 与排序
+
+- **GET** `/api/admin/post-types`：全部类型，`sortOrder` 升序。
+- **POST** `/api/admin/post-types`：`{ code, nameZh, nameEn, suppressLinkedPostsGlobally? }`。
+- **GET** `/api/admin/post-types/:id`
+- **PUT** `/api/admin/post-types/:id`：部分更新 `code` / `nameZh` / `nameEn` / `suppressLinkedPostsGlobally`。
+- **DELETE** `/api/admin/post-types/:id`：仍有文章关联时返回 `400`。
+- **PUT** `/api/admin/post-types/reorder`：`{ orderedIds: number[] }`（有序 id 列表，下标即新 `sortOrder`）。
 
 ---
 

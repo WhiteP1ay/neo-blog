@@ -1,10 +1,11 @@
 import { createTwoFilesPatch } from 'diff';
 import { deepseekChat } from '@/server/utils/deepseek-chat';
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
 import {
-  appendEnglishSection,
   demoteLeadingH1InFragment,
   extractFirstH1PlainText,
+  stripLeadingDecorationsFromFirstH1InHtml,
   stripTranslationArtifacts,
 } from '@/server/utils/post-ai-translation-html';
 
@@ -77,7 +78,7 @@ async function runPolish(html: string, signal: AbortSignal): Promise<string> {
   return stripModelCodeFences(raw);
 }
 
-async function runTranslate(html: string, signal: AbortSignal): Promise<string> {
+async function runTranslate(html: string, signal: AbortSignal, options?: { demoteLeading?: boolean }): Promise<string> {
   const rawEn = await deepseekChat(
     [
       { role: 'system', content: TRANSLATE_SYSTEM },
@@ -85,7 +86,21 @@ async function runTranslate(html: string, signal: AbortSignal): Promise<string> 
     ],
     { maxTokens: 8192, temperature: 0.2, signal },
   );
-  return demoteLeadingH1InFragment(stripModelCodeFences(rawEn));
+  const stripped = stripModelCodeFences(rawEn);
+  if (options?.demoteLeading === false) {
+    return stripped;
+  }
+  return demoteLeadingH1InFragment(stripped);
+}
+
+/** 批处理脚本：中文 HTML 润色（与线上一致） */
+export async function polishChineseHtml(html: string, signal: AbortSignal): Promise<string> {
+  return runPolish(html, signal);
+}
+
+/** 批处理脚本：中文全文英译，写入 contentEn（保留 h1 便于抽 titleEn） */
+export async function translateChineseHtmlToEnglishForContentEn(html: string, signal: AbortSignal): Promise<string> {
+  return runTranslate(html, signal, { demoteLeading: false });
 }
 
 export type AiPolishPreviewInput = {
@@ -100,9 +115,14 @@ export type AiPolishPreviewInput = {
 
 export type AiPolishPreviewResult = {
   beforeHtml: string;
+  /** 中文正文 HTML（不再内嵌英文区块） */
   afterHtml: string;
+  /** 英文正文 HTML；仅在选择翻译时有值 */
+  afterHtmlEn: string | null;
   nextTitle: string;
+  nextTitleEn: string | null;
   excerpt: string;
+  excerptEn: string | null;
   coverUrl: string | null;
   diff: { unified: string; truncated: boolean };
 };
@@ -115,6 +135,7 @@ export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promi
   const beforeHtml = sourceHtml;
 
   let nextContent: string;
+  let nextContentEn: string | null = null;
 
   if (translateAppendEn) {
     onPhase?.('started');
@@ -126,10 +147,14 @@ export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promi
       onPhase?.('polish_done');
     }
     onPhase?.('translate_start');
-    const englishFragment = await runTranslate(zh, signal);
+    const englishHtml = await runTranslate(zh, signal, { demoteLeading: false });
     onPhase?.('translate_done');
+    if (!englishHtml.trim()) {
+      throw new Error('英文翻译结果为空');
+    }
     onPhase?.('assemble_start');
-    nextContent = appendEnglishSection(zh, englishFragment);
+    nextContent = zh;
+    nextContentEn = englishHtml;
     onPhase?.('assemble_done');
   } else {
     onPhase?.('started');
@@ -142,10 +167,27 @@ export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promi
     throw new Error('模型返回内容为空');
   }
 
+  nextContent = stripLeadingDecorationsFromFirstH1InHtml(nextContent);
+  if (nextContentEn) {
+    nextContentEn = stripLeadingDecorationsFromFirstH1InHtml(nextContentEn);
+  }
+
   let nextTitle = titleFallback;
   const h1Text = extractFirstH1PlainText(nextContent);
   if (h1Text) {
-    nextTitle = h1Text;
+    const stripped = stripLeadingTypeLikePrefixes(h1Text);
+    if (stripped.length > 0) {
+      nextTitle = stripped;
+    }
+  }
+
+  let nextTitleEn: string | null = null;
+  if (nextContentEn) {
+    const h1En = extractFirstH1PlainText(nextContentEn);
+    nextTitleEn = h1En ? stripLeadingTypeLikePrefixes(h1En) : null;
+    if (nextTitleEn !== null && nextTitleEn.length === 0) {
+      nextTitleEn = null;
+    }
   }
 
   const metadata = derivePostMetadata({
@@ -153,15 +195,26 @@ export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promi
     markdownContent: null,
   });
 
+  const metadataEn = nextContentEn
+    ? derivePostMetadata({
+        content: nextContentEn,
+        markdownContent: null,
+      })
+    : null;
+
   onPhase?.('diff_start');
-  const diff = buildAiPolishHtmlDiff(beforeHtml, nextContent);
+  const diffLeft = translateAppendEn ? stripTranslationArtifacts(beforeHtml) : beforeHtml;
+  const diff = buildAiPolishHtmlDiff(diffLeft, nextContent);
   onPhase?.('diff_done');
 
   return {
     beforeHtml,
     afterHtml: nextContent,
+    afterHtmlEn: nextContentEn,
     nextTitle,
+    nextTitleEn,
     excerpt: metadata.excerpt,
+    excerptEn: metadataEn?.excerpt ?? null,
     coverUrl: metadata.coverUrl,
     diff,
   };

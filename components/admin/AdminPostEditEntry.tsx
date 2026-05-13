@@ -4,12 +4,13 @@ import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/components/Toast';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
+import type { PostTypeAdminRow } from '@/components/admin/console/types';
 
 type EditDetail = {
   postId: number;
-  initialTitle: string;
-  initialType: string;
+  initialTypeIds: number[];
   initialContent: string;
+  initialContentEn: string;
   isHidden: boolean;
   excerpt: string;
   coverUrl: string;
@@ -17,52 +18,56 @@ type EditDetail = {
 
 type AdminPostEditEntryProps = {
   postId: number;
-  /**
-   * 由调用方控制按钮位置/显隐过渡（例如 group hover 渐显），
-   * 避免在组件内部硬编码与上下文不匹配的样式。
-   */
   className?: string;
 };
 
 /**
- * c 端文章列表 / 详情页给管理员准备的「编辑入口」：
- * - 渲染一个铅笔图标按钮（仅由调用方决定何时可见）
- * - 点击后向 admin 详情接口拉取完整数据，再以全屏编辑器打开
- * - 编辑器自身已在保存/关闭时给 toast 提示，故这里不再额外 toast
- *   （保存策略：toast only，不主动刷新当前页）
+ * c 端文章列表 / 详情页给管理员准备的「编辑入口」
  */
 export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProps) {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<EditDetail | null>(null);
+  const [availableTypes, setAvailableTypes] = useState<PostTypeAdminRow[]>([]);
 
   const openEditor = async () => {
     if (loading || detail) return;
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/posts/${postId}`, { credentials: 'same-origin' });
-      const payload = (await response.json()) as {
+      const [detailRes, typesRes] = await Promise.all([
+        fetch(`/api/admin/posts/${postId}`, { credentials: 'same-origin' }),
+        fetch('/api/admin/post-types', { credentials: 'same-origin' }),
+      ]);
+      const typesPayload = (await typesRes.json()) as { data?: PostTypeAdminRow[]; error?: string };
+      if (!typesRes.ok || !typesPayload.data) {
+        throw new Error(typesPayload.error ?? '加载类型列表失败');
+      }
+      setAvailableTypes(typesPayload.data);
+
+      const payload = (await detailRes.json()) as {
         data?: {
           title?: string;
-          type?: string;
+          types?: Array<{ id: number }>;
           content?: string;
+          contentEn?: string | null;
           isHidden?: boolean;
           excerpt?: string | null;
           coverUrl?: string | null;
         };
         error?: string;
       };
-      if (!response.ok || !payload.data) {
+      if (!detailRes.ok || !payload.data) {
         throw new Error(payload.error ?? '加载文章详情失败');
       }
+      const d = payload.data;
       setDetail({
         postId,
-        initialTitle: payload.data.title ?? '',
-        initialType: payload.data.type ?? '',
-        initialContent: payload.data.content ?? '',
-        isHidden: payload.data.isHidden === true,
-        excerpt: payload.data.excerpt ?? '',
-        coverUrl: payload.data.coverUrl ?? '',
+        initialTypeIds: (d.types ?? []).map((t) => t.id),
+        initialContent: d.content ?? '',
+        initialContentEn: d.contentEn ?? '',
+        isHidden: d.isHidden === true,
+        excerpt: d.excerpt ?? '',
+        coverUrl: d.coverUrl ?? '',
       });
     } catch (error) {
       showToast(error instanceof Error ? error.message : '打开编辑器失败', 'error');
@@ -75,7 +80,6 @@ export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProp
     <>
       <button
         type="button"
-        // 阻止冒泡到外层 Link / row，避免点编辑时误触发跳转。
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -93,9 +97,10 @@ export function AdminPostEditEntry({ postId, className }: AdminPostEditEntryProp
           mode="edit"
           open
           postId={detail.postId}
-          initialTitle={detail.initialTitle}
-          initialType={detail.initialType}
+          availableTypes={availableTypes}
+          initialTypeIds={detail.initialTypeIds}
           initialContent={detail.initialContent}
+          initialContentEn={detail.initialContentEn}
           isHidden={detail.isHidden}
           excerpt={detail.excerpt}
           coverUrl={detail.coverUrl}

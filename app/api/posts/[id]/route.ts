@@ -1,20 +1,42 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
-import { postsTable } from '@/server/db/schema';
+import { postTypesTable, postsTable } from '@/server/db/schema';
 import { markdownToHTML } from '@/server/utils/markdown';
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
+import { stripLeadingDecorationsFromFirstH1InHtml } from '@/server/utils/post-ai-translation-html';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
+import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
+import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
 
 type UpdatePostBody = {
   title?: unknown;
   content?: unknown;
-  type?: unknown;
+  typeIds?: unknown;
   isHidden?: unknown;
   isPinned?: unknown;
   coverUrl?: unknown;
   excerpt?: unknown;
 };
+
+function summarizeTypes(rows: PostTypeRow[]) {
+  return rows.map((t) => ({
+    id: t.id,
+    code: t.code,
+    nameZh: t.nameZh,
+    nameEn: t.nameEn,
+  }));
+}
+
+async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const rows = await db
+    .select({ id: postTypesTable.id })
+    .from(postTypesTable)
+    .where(inArray(postTypesTable.id, ids));
+  return rows.length === ids.length;
+}
 
 function parseId(rawId: string): number | null {
   const parsed = Number.parseInt(rawId, 10);
@@ -63,6 +85,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const body = (await request.json()) as UpdatePostBody;
+    const typeIdsParsed = parseTypeIdsField(body.typeIds);
+    if (typeIdsParsed !== 'omit' && !typeIdsParsed.ok) {
+      return NextResponse.json({ error: 'typeIds 无效' }, { status: 400 });
+    }
+    if (typeIdsParsed !== 'omit' && !(await assertTypeIdsValid(typeIdsParsed.ids))) {
+      return NextResponse.json({ error: '存在无效的类型 id' }, { status: 400 });
+    }
+
     const current = await db.query.postsTable.findFirst({
       where: (posts, { eq: eqFn }) => eqFn(posts.id, postId),
     });
@@ -75,7 +105,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     };
 
     if (typeof body.title === 'string') {
-      const title = body.title.trim();
+      const title = stripLeadingTypeLikePrefixes(body.title.trim());
       if (!title) {
         return NextResponse.json({ error: 'title 不能为空' }, { status: 400 });
       }
@@ -84,8 +114,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const nextMarkdown =
       typeof body.content === 'string' ? body.content : current.markdownContent ?? null;
-    const nextHtml =
+    const nextHtmlRaw =
       typeof body.content === 'string' ? markdownToHTML(body.content) : current.content;
+    const nextHtml =
+      typeof body.content === 'string'
+        ? stripLeadingDecorationsFromFirstH1InHtml(nextHtmlRaw)
+        : nextHtmlRaw;
     if (typeof body.content === 'string') {
       if (!body.content.trim()) {
         return NextResponse.json({ error: 'content 不能为空' }, { status: 400 });
@@ -94,9 +128,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updatePayload.content = nextHtml;
     }
 
-    if (typeof body.type === 'string') {
-      updatePayload.type = body.type;
-    }
     if (typeof body.isHidden === 'boolean') {
       updatePayload.isHidden = body.isHidden;
     }
@@ -122,7 +153,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updatePayload.excerpt = metadata.excerpt;
     }
 
-    if (Object.keys(updatePayload).length === 1) {
+    const willUpdateAssignments = typeIdsParsed !== 'omit';
+    const columnKeys = Object.keys(updatePayload).filter((k) => k !== 'updatedAt');
+    if (columnKeys.length === 0 && !willUpdateAssignments) {
       return NextResponse.json({ error: '未提供可更新字段' }, { status: 400 });
     }
 
@@ -135,7 +168,24 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (!updated[0]) {
       return NextResponse.json({ error: '文章不存在' }, { status: 404 });
     }
-    return NextResponse.json({ data: updated[0] });
+
+    if (willUpdateAssignments) {
+      await replacePostTypeAssignments(db, postId, typeIdsParsed.ids);
+    }
+
+    const fresh = await db.query.postsTable.findFirst({
+      where: (posts, { eq: eqFn }) => eqFn(posts.id, postId),
+    });
+    if (!fresh) {
+      return NextResponse.json({ error: '文章不存在' }, { status: 404 });
+    }
+    const typeMap = await loadTypesByPostIds(db, [postId]);
+    return NextResponse.json({
+      data: {
+        ...fresh,
+        types: summarizeTypes(typeMap.get(postId) ?? []),
+      },
+    });
   } catch (error) {
     console.error('更新文章失败:', error);
     return NextResponse.json({ error: '更新文章失败' }, { status: 500 });

@@ -6,7 +6,7 @@
 export const EMPTY_TOPIC_PATH_TOKEN = '__empty';
 
 /**
- * @param raw 原始 type 或 topicKey（可为空串）
+ * @param raw 原始路径段（可为空串），用于照片等仍走路径筛选的场景
  */
 export function encodeTopicPathSegment(raw: string): string {
   if (raw === '') {

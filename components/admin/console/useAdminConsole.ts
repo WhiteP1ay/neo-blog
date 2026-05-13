@@ -2,8 +2,17 @@
 
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+import { ADMIN_REORDER_UNCATEGORIZED_TYPE_ID } from '@/lib/admin-post-constants';
 import { useToast } from '@/components/Toast';
-import type { CommentItem, PhotoItem, PostDetail, PostItem, TabKey, UserItem } from './types';
+import type {
+  CommentItem,
+  PhotoItem,
+  PostDetail,
+  PostItem,
+  PostTypeAdminRow,
+  TabKey,
+  UserItem,
+} from './types';
 
 type JsonPayload<T> = {
   data?: T;
@@ -44,9 +53,9 @@ export function useAdminConsole(initialTab: TabKey) {
   const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
 
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
-  const [editPostTitle, setEditPostTitle] = useState('');
   const [editPostContent, setEditPostContent] = useState('');
-  const [editPostType, setEditPostType] = useState('');
+  const [editPostContentEn, setEditPostContentEn] = useState('');
+  const [editPostTypeIds, setEditPostTypeIds] = useState<number[]>([]);
   const [editPostIsHidden, setEditPostIsHidden] = useState(false);
   const [editPostExcerpt, setEditPostExcerpt] = useState('');
   const [editPostCoverUrl, setEditPostCoverUrl] = useState('');
@@ -71,7 +80,7 @@ export function useAdminConsole(initialTab: TabKey) {
     setQueriesEnabled(true);
   }, []);
 
-  const [usersQuery, postsQuery, photosQuery, commentsQuery] = useQueries({
+  const [usersQuery, postsQuery, postTypesQuery, photosQuery, commentsQuery] = useQueries({
     queries: [
       {
         queryKey: ['admin', 'users'],
@@ -83,6 +92,14 @@ export function useAdminConsole(initialTab: TabKey) {
         queryKey: ['admin', 'posts'],
         queryFn: async () =>
           (await fetch('/api/admin/posts').then((res) => parseJsonResponse<PostItem[]>(res, true))) ?? [],
+        enabled: queriesEnabled,
+      },
+      {
+        queryKey: ['admin', 'post-types'],
+        queryFn: async () =>
+          (await fetch('/api/admin/post-types').then((res) =>
+            parseJsonResponse<PostTypeAdminRow[]>(res, true),
+          )) ?? [],
         enabled: queriesEnabled,
       },
       {
@@ -102,21 +119,26 @@ export function useAdminConsole(initialTab: TabKey) {
 
   const users = usersQuery.data ?? [];
   const posts = postsQuery.data ?? [];
+  const postTypes = postTypesQuery.data ?? [];
   const photos = photosQuery.data ?? [];
   const comments = commentsQuery.data ?? [];
 
   /** 挂载后再根据 isLoading 展示加载态，与首帧 SSR/水合输出一致 */
   const loading = useMemo(
-    () => queriesEnabled && [usersQuery, postsQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
-    [queriesEnabled, usersQuery, postsQuery, photosQuery, commentsQuery],
+    () =>
+      queriesEnabled &&
+      [usersQuery, postsQuery, postTypesQuery, photosQuery, commentsQuery].some((query) => query.isLoading),
+    [queriesEnabled, usersQuery, postsQuery, postTypesQuery, photosQuery, commentsQuery],
   );
 
   const error = useMemo(() => {
     if (!queriesEnabled) return '';
-    const firstError = [usersQuery, postsQuery, photosQuery, commentsQuery].find((query) => query.error)?.error;
+    const firstError = [usersQuery, postsQuery, postTypesQuery, photosQuery, commentsQuery].find(
+      (query) => query.error,
+    )?.error;
     if (!firstError) return '';
     return firstError instanceof Error ? firstError.message : '加载失败';
-  }, [queriesEnabled, usersQuery, postsQuery, photosQuery, commentsQuery]);
+  }, [queriesEnabled, usersQuery, postsQuery, postTypesQuery, photosQuery, commentsQuery]);
 
   /**
    * 全量失效（仅在需要时使用）；后台 refetch 不阻塞调用方。
@@ -163,7 +185,6 @@ export function useAdminConsole(initialTab: TabKey) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', '');
-    formData.append('type', '');
     formData.append('isHidden', 'false');
     try {
       await fetch('/api/admin/posts', { method: 'POST', body: formData }).then((res) =>
@@ -193,26 +214,30 @@ export function useAdminConsole(initialTab: TabKey) {
   };
 
   const reorderPostsMutation = useMutation({
-    mutationFn: async (orderedIds: number[]) => {
+    mutationFn: async ({ orderedIds, typeId }: { orderedIds: number[]; typeId: number }) => {
       await fetch('/api/admin/posts/reorder', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ orderedIds }),
+        body: JSON.stringify({ orderedIds, typeId }),
       }).then((res) => parseJsonResponse<{ success: boolean }>(res, false));
     },
-    onMutate: async (orderedIds) => {
+    onMutate: async ({ orderedIds, typeId }) => {
       await queryClient.cancelQueries({ queryKey: ['admin', 'posts'] });
       const previousPosts = queryClient.getQueryData<PostItem[]>(['admin', 'posts']) ?? [];
       if (previousPosts.length > 0) {
         const rank = new Map<number, number>(orderedIds.map((id, index) => [id, index]));
-        const nextPosts = [...previousPosts]
-          .sort((a, b) => (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER))
-          .map((post, index) => ({ ...post, sortOrder: index + 1 }));
+        const inScope = (post: PostItem) =>
+          typeId === ADMIN_REORDER_UNCATEGORIZED_TYPE_ID
+            ? post.types.length === 0
+            : post.types.some((t) => t.id === typeId);
+        const nextPosts = previousPosts.map((post) =>
+          inScope(post) && rank.has(post.id) ? { ...post, sortOrder: (rank.get(post.id) ?? 0) + 1 } : post,
+        );
         queryClient.setQueryData(['admin', 'posts'], nextPosts);
       }
       return { previousPosts };
     },
-    onError: (_error, _orderedIds, context) => {
+    onError: (_error, _variables, context) => {
       if (context?.previousPosts) {
         queryClient.setQueryData(['admin', 'posts'], context.previousPosts);
       }
@@ -222,19 +247,19 @@ export function useAdminConsole(initialTab: TabKey) {
     },
   });
 
-  const reorderPosts = async (orderedIds: number[]) => {
-    await reorderPostsMutation.mutateAsync(orderedIds);
+  const reorderPosts = async (orderedIds: number[], typeId: number) => {
+    await reorderPostsMutation.mutateAsync({ orderedIds, typeId });
   };
 
   const startEditPost = async (post: PostItem) => {
     // 列表已不带 content，编辑时按需向详情接口拉完整正文。
     setEditingPostId(post.id);
-    setEditPostTitle(post.title);
-    setEditPostType(post.type ?? '');
+    setEditPostTypeIds(post.types.map((t) => t.id));
     setEditPostIsHidden(post.isHidden);
     setEditPostExcerpt(post.excerpt ?? '');
     setEditPostCoverUrl(post.coverUrl ?? '');
     setEditPostContent('');
+    setEditPostContentEn('');
     const detail = await fetch(`/api/admin/posts/${post.id}`).then((res) => parseJsonResponse<PostDetail>(res, true));
     if (!detail) {
       throw new Error('未取到博文详情');
@@ -242,21 +267,21 @@ export function useAdminConsole(initialTab: TabKey) {
     // 用户可能在拉详情期间又点了别的，做下校验避免错填。
     setEditingPostId((current) => {
       if (current !== post.id) return current;
-      setEditPostTitle(detail.title);
-      setEditPostType(detail.type ?? '');
+      setEditPostTypeIds(detail.types.map((t) => t.id));
       setEditPostIsHidden(detail.isHidden);
       setEditPostExcerpt(detail.excerpt ?? '');
       setEditPostCoverUrl(detail.coverUrl ?? '');
       setEditPostContent(detail.content);
+      setEditPostContentEn(detail.contentEn ?? '');
       return current;
     });
   };
 
   const cancelEditPost = () => {
     setEditingPostId(null);
-    setEditPostTitle('');
     setEditPostContent('');
-    setEditPostType('');
+    setEditPostContentEn('');
+    setEditPostTypeIds([]);
     setEditPostIsHidden(false);
     setEditPostExcerpt('');
     setEditPostCoverUrl('');
@@ -341,6 +366,7 @@ export function useAdminConsole(initialTab: TabKey) {
     error,
     users,
     posts,
+    postTypes,
     photos,
     comments,
     userForm: {
@@ -355,12 +381,11 @@ export function useAdminConsole(initialTab: TabKey) {
     },
     postForm: {
       editingPostId,
-      editPostTitle,
-      setEditPostTitle,
       editPostContent,
       setEditPostContent,
-      editPostType,
-      setEditPostType,
+      editPostContentEn,
+      editPostTypeIds,
+      setEditPostTypeIds,
       editPostIsHidden,
       setEditPostIsHidden,
       editPostExcerpt,

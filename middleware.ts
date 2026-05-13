@@ -19,7 +19,36 @@ function applyCorsHeaders(response: NextResponse, request: NextRequest) {
   return response;
 }
 
+function redirectLegacyTopicPath(request: NextRequest): NextResponse | null {
+  const pathname = request.nextUrl.pathname;
+  const enPrefix = "/en/topic/";
+  const zhPrefix = "/topic/";
+  let rest: string;
+  let base: string;
+  if (pathname.startsWith(enPrefix)) {
+    rest = pathname.slice(enPrefix.length);
+    base = "/en/blog";
+  } else if (pathname.startsWith(zhPrefix)) {
+    rest = pathname.slice(zhPrefix.length);
+    base = "/blog";
+  } else {
+    return null;
+  }
+  const decoded = decodeURIComponent(rest);
+  const url = new URL(base, request.url);
+  if (decoded === "") {
+    url.searchParams.set("uncategorized", "1");
+  } else {
+    url.searchParams.set("type", decoded);
+  }
+  return NextResponse.redirect(url, 308);
+}
+
 export function middleware(request: NextRequest) {
+  const topicRedirect = redirectLegacyTopicPath(request);
+  if (topicRedirect) {
+    return topicRedirect;
+  }
   if (request.method === "OPTIONS") {
     return applyCorsHeaders(new NextResponse(null, { status: 204 }), request);
   }
@@ -27,6 +56,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/api/:path*", "/topic/:segment", "/en/topic/:segment"],
 };
-

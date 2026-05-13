@@ -1,7 +1,10 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { CommentsSection } from '@/components/admin/console/CommentsSection';
+import { HomeFeaturedSection } from '@/components/admin/console/HomeFeaturedSection';
 import { PhotosSection } from '@/components/admin/console/PhotosSection';
+import { PostTypesSection } from '@/components/admin/console/post-types/PostTypesSection';
 import { PostsSection } from '@/components/admin/console/PostsSection';
 import { UsersSection } from '@/components/admin/console/UsersSection';
 import { TabNav } from '@/components/admin/console/TabNav';
@@ -16,12 +19,18 @@ export function AdminConsole({
 }: {
   initialTab?: TabKey;
   showTabNav?: boolean;
-  /** 博文列表按类型筛选（null=全部）；与 `/admin/posts/type/...` 同步 */
+  /** 博文列表按类型筛选（null=全部）；与 `/admin/posts?type=` / `?uncategorized=1` 同步 */
   postsSelectedType?: string | null;
   /** 照片列表按类型筛选（null=全部）；与 `/admin/photos/type/...` 同步 */
   photosSelectedType?: string | null;
 }) {
+  const queryClient = useQueryClient();
   const consoleState = useAdminConsole(initialTab);
+
+  const invalidatePostTypes = () => {
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'post-types'] });
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -30,8 +39,17 @@ export function AdminConsole({
       {consoleState.error ? <p className="text-red-500">{consoleState.error}</p> : null}
 
       {consoleState.activeTab === 'posts' ? (
-        <PostsSection posts={consoleState.posts} form={consoleState.postForm} selectedType={postsSelectedType} />
+        <PostsSection
+          posts={consoleState.posts}
+          postTypes={consoleState.postTypes}
+          form={consoleState.postForm}
+          selectedType={postsSelectedType}
+        />
       ) : null}
+      {consoleState.activeTab === 'post-types' ? (
+        <PostTypesSection types={consoleState.postTypes} onInvalidate={invalidatePostTypes} />
+      ) : null}
+      {consoleState.activeTab === 'home' ? <HomeFeaturedSection /> : null}
       {consoleState.activeTab === 'photos' ? (
         <PhotosSection photos={consoleState.photos} form={consoleState.photoForm} selectedType={photosSelectedType} />
       ) : null}

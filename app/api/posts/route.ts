@@ -1,20 +1,40 @@
-import { desc } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
-import { postsTable } from '@/server/db/schema';
+import { postTypeAssignmentsTable, postTypesTable, postsTable } from '@/server/db/schema';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
 import { markdownToHTML } from '@/server/utils/markdown';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
+import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
+import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
 
 type CreatePostBody = {
   title?: unknown;
   content?: unknown;
-  type?: unknown;
+  typeIds?: unknown;
   isHidden?: unknown;
   isPinned?: unknown;
   coverUrl?: unknown;
   excerpt?: unknown;
 };
+
+function summarizeTypes(rows: PostTypeRow[]) {
+  return rows.map((t) => ({
+    id: t.id,
+    code: t.code,
+    nameZh: t.nameZh,
+    nameEn: t.nameEn,
+  }));
+}
+
+async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const rows = await db
+    .select({ id: postTypesTable.id })
+    .from(postTypesTable)
+    .where(inArray(postTypesTable.id, ids));
+  return rows.length === ids.length;
+}
 
 /**
  * 从 Markdown 内容推导文章标题（优先首个 H1）。
@@ -34,28 +54,52 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const includeHidden = searchParams.get('includeHidden') === 'true';
-    const type = (searchParams.get('type') ?? '').trim();
+    const typeCode = (searchParams.get('typeSlug') ?? searchParams.get('type') ?? '').trim();
+
+    let postIdFilter: number[] | null = null;
+    if (typeCode) {
+      const typeRow = await db.query.postTypesTable.findFirst({
+        where: (t, { eq: eqFn }) => eqFn(t.code, typeCode),
+      });
+      if (!typeRow) {
+        return NextResponse.json({ data: [] });
+      }
+      const links = await db
+        .select({ postId: postTypeAssignmentsTable.postId })
+        .from(postTypeAssignmentsTable)
+        .where(eq(postTypeAssignmentsTable.typeId, typeRow.id));
+      postIdFilter = links.map((l) => l.postId);
+      if (postIdFilter.length === 0) {
+        return NextResponse.json({ data: [] });
+      }
+    }
+
     const rows = await db.query.postsTable.findMany({
-      where: (posts, { and, eq }) => {
+      where: (posts, { and: andFn, eq: eqFn, inArray: inArr }) => {
         const conditions = [];
         if (!includeHidden) {
-          conditions.push(eq(posts.isHidden, false));
+          conditions.push(eqFn(posts.isHidden, false));
         }
-        if (type) {
-          conditions.push(eq(posts.type, type));
+        if (postIdFilter) {
+          conditions.push(inArr(posts.id, postIdFilter));
         }
         if (conditions.length === 0) return undefined;
         if (conditions.length === 1) return conditions[0];
-        return and(...conditions);
+        return andFn(...conditions);
       },
       orderBy: (posts, { asc: ascFn, desc: descFn }) => [ascFn(posts.sortOrder), descFn(posts.createdAt)],
     });
+
+    const typeMap = await loadTypesByPostIds(
+      db,
+      rows.map((item) => item.id),
+    );
 
     return NextResponse.json({
       data: rows.map((item) => ({
         id: item.id,
         title: item.title,
-        type: item.type,
+        types: summarizeTypes(typeMap.get(item.id) ?? []),
         isHidden: item.isHidden,
         isPinned: item.isPinned,
         excerpt: item.excerpt ?? '',
@@ -86,7 +130,7 @@ export async function POST(request: Request) {
     const contentType = request.headers.get('content-type') ?? '';
     let title = '';
     let markdownContent = '';
-    let type = '';
+    let typeIds: number[] = [];
     let isHidden = false;
     let isPinned = false;
     let inputCoverUrl = '';
@@ -95,7 +139,6 @@ export async function POST(request: Request) {
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       const titleRaw = formData.get('title');
-      const typeRaw = formData.get('type');
       const isHiddenRaw = formData.get('isHidden');
       const isPinnedRaw = formData.get('isPinned');
       const coverUrlRaw = formData.get('coverUrl');
@@ -104,13 +147,11 @@ export async function POST(request: Request) {
       const contentRaw = formData.get('content');
 
       title = typeof titleRaw === 'string' ? titleRaw.trim() : '';
-      type = typeof typeRaw === 'string' ? typeRaw : '';
       isHidden = isHiddenRaw === 'true';
       isPinned = isPinnedRaw === 'true';
       inputCoverUrl = typeof coverUrlRaw === 'string' ? coverUrlRaw.trim() : '';
       inputExcerpt = typeof excerptRaw === 'string' ? excerptRaw.trim() : '';
 
-      // multipart 里 content 可能被提交为空字符串；此时应回退读取文件内容。
       if (typeof contentRaw === 'string' && contentRaw.trim()) {
         markdownContent = contentRaw;
       } else if (fileRaw instanceof File) {
@@ -124,7 +165,12 @@ export async function POST(request: Request) {
       const body = (await request.json()) as CreatePostBody;
       title = typeof body.title === 'string' ? body.title.trim() : '';
       markdownContent = typeof body.content === 'string' ? body.content : '';
-      type = typeof body.type === 'string' ? body.type : '';
+      const parsed = parseTypeIdsField(body.typeIds);
+      if (parsed !== 'omit' && parsed.ok) {
+        typeIds = parsed.ids;
+      } else if (parsed !== 'omit') {
+        return NextResponse.json({ error: 'typeIds 无效' }, { status: 400 });
+      }
       isHidden = body.isHidden === true;
       isPinned = body.isPinned === true;
       inputCoverUrl = typeof body.coverUrl === 'string' ? body.coverUrl.trim() : '';
@@ -138,6 +184,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'content 不能为空' }, { status: 400 });
     }
 
+    if (!(await assertTypeIdsValid(typeIds))) {
+      return NextResponse.json({ error: '存在无效的类型 id' }, { status: 400 });
+    }
+
     const htmlContent = markdownToHTML(markdownContent);
     const metadata = derivePostMetadata({
       markdownContent,
@@ -148,7 +198,6 @@ export async function POST(request: Request) {
       .insert(postsTable)
       .values({
         title,
-        type,
         sortOrder:
           ((await db
             .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
@@ -166,7 +215,22 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    return NextResponse.json({ data: inserted[0] }, { status: 201 });
+    const row = inserted[0];
+    if (!row) {
+      return NextResponse.json({ error: '创建失败' }, { status: 500 });
+    }
+    await replacePostTypeAssignments(db, row.id, typeIds);
+    const typeMap = await loadTypesByPostIds(db, [row.id]);
+
+    return NextResponse.json(
+      {
+        data: {
+          ...row,
+          types: summarizeTypes(typeMap.get(row.id) ?? []),
+        },
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error('创建文章失败:', error);
     return NextResponse.json({ error: '创建文章失败' }, { status: 500 });

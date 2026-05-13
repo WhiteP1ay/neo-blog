@@ -12,8 +12,11 @@ export type AiPolishPreviewMessagePayload = {
   postId: number;
   beforeHtml: string;
   afterHtml: string;
+  afterHtmlEn: string | null;
   nextTitle: string;
+  nextTitleEn: string | null;
   excerpt: string;
+  excerptEn: string | null;
   coverUrl: string | null;
   diff: { unified: string; truncated: boolean };
 };

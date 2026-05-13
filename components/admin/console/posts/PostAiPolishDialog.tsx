@@ -89,7 +89,7 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
           <DialogDescription>
             {post ? `当前文章：${post.title}` : ''}
             点击开始后会在新窗口打开预览（行级 diff
-            与变更前后渲染）；确认无误后在预览窗内点「应用」写入数据库。本弹窗需手动关闭。
+            与变更前后编辑区）；含翻译时中、英分栏编辑。确认无误后在预览窗内点「应用」写入数据库。本弹窗需手动关闭。
           </DialogDescription>
         </DialogHeader>
 
@@ -114,9 +114,10 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
               onChange={(e) => setTranslateAppendEn(e.target.checked)}
             />
             <span className="text-sm leading-snug">
-              <span className="font-medium text-foreground">追加英文翻译</span>
+              <span className="font-medium text-foreground">翻译为英文（独立字段）</span>
               <span className="mt-1 block text-muted-foreground">
-                文末附英文与锚点；再次执行会先移除旧英文区块再生成。
+                写入 <code className="rounded bg-muted px-1">contentEn</code> /{' '}
+                <code className="rounded bg-muted px-1">titleEn</code>，不再拼在中文正文底部；再次执行会先剥离旧双语插入标记。
               </span>
             </span>
           </label>

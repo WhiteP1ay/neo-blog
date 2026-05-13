@@ -10,7 +10,9 @@
     "icons:pwa": "node scripts/gen-pwa-brand-icons.mjs",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
     "db:backfill-h1": "tsx scripts/backfill-post-h1.ts",
-    "db:init": "pnpm drizzle-kit push && pnpm db:seed-admin"
+    "db:init": "pnpm drizzle-kit push && pnpm db:seed-admin",
+    "db:migrate-bilingual": "tsx scripts/migrate-bilingual-post-columns.ts",
+    "db:clean-posts": "tsx scripts/clean-posts-table.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

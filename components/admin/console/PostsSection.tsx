@@ -2,19 +2,18 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import type { PostItem } from './types';
+import type { PostItem, PostTypeAdminRow } from './types';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
 import { PostAiPolishDialog } from './posts/PostAiPolishDialog';
 import { PostTable } from './posts/PostTable';
 
 type PostFormState = {
   editingPostId: number | null;
-  editPostTitle: string;
-  setEditPostTitle: (value: string) => void;
   editPostContent: string;
   setEditPostContent: (value: string) => void;
-  editPostType: string;
-  setEditPostType: (value: string) => void;
+  editPostContentEn: string;
+  editPostTypeIds: number[];
+  setEditPostTypeIds: (value: number[]) => void;
   editPostIsHidden: boolean;
   setEditPostIsHidden: (value: boolean) => void;
   editPostExcerpt: string;
@@ -26,15 +25,17 @@ type PostFormState = {
   deletePost: (id: number) => Promise<void>;
   startEditPost: (post: PostItem) => Promise<void>;
   cancelEditPost: () => void;
-  reorderPosts: (orderedIds: number[]) => Promise<void>;
+  reorderPosts: (orderedIds: number[], typeId: number) => Promise<void>;
 };
 
 export function PostsSection({
   posts,
+  postTypes,
   form,
   selectedType = null,
 }: {
   posts: PostItem[];
+  postTypes: PostTypeAdminRow[];
   form: PostFormState;
   /** 路径驱动的类型筛选，null 表示「全部」 */
   selectedType?: string | null;
@@ -85,7 +86,7 @@ export function PostsSection({
           />
         </div>
       </div>
-      <PostTable posts={posts} form={postTableForm} selectedType={selectedType} />
+      <PostTable posts={posts} typeCatalog={postTypes} form={postTableForm} selectedType={selectedType} />
 
       <PostAiPolishDialog
         post={aiPolishPost}
@@ -98,6 +99,7 @@ export function PostsSection({
       <ZenPostEditor
         mode="create"
         open={openZenCreate}
+        availableTypes={postTypes}
         onClose={() => setOpenZenCreate(false)}
         onCreated={invalidatePosts}
       />
@@ -106,10 +108,11 @@ export function PostsSection({
         <ZenPostEditor
           mode="edit"
           open={zenEditOpen}
+          availableTypes={postTypes}
           postId={form.editingPostId}
-          initialTitle={form.editPostTitle}
-          initialType={form.editPostType}
+          initialTypeIds={form.editPostTypeIds}
           initialContent={form.editPostContent}
+          initialContentEn={form.editPostContentEn}
           isHidden={form.editPostIsHidden}
           excerpt={form.editPostExcerpt}
           coverUrl={form.editPostCoverUrl}

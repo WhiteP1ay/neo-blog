@@ -1,12 +1,17 @@
 "use server";
 
 import { db } from "@/server/db/db";
-import { postsTable } from "@/server/db/schema";
-import { asc, desc, eq, ne } from "drizzle-orm";
+import {
+  postTypeAssignmentsTable,
+  postTypesTable,
+  postsTable,
+} from "@/server/db/schema";
+import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { getSession, requireAdminSession } from "@/server/utils/auth";
 import { highlightCodeBlocksInHtml } from "@/server/utils/highlight-code-blocks-in-html";
 import { markdownToHTML } from "@/server/utils/markdown";
 import { derivePostMetadata } from "@/server/utils/post-metadata";
+import { stripLeadingDecorationsFromFirstH1InHtml } from "@/server/utils/post-ai-translation-html";
 import {
   actionErr,
   actionOk,
@@ -16,8 +21,13 @@ import type {
   ActionResult,
   ActionVoidResult,
 } from "@/server/types/action-result";
-import type { HomeExplorerCategory, HomePostPreview } from "@/server/types/explorer";
+import type {
+  HomeExplorerCategory,
+  HomeFeaturedPost,
+  HomePostPreview,
+} from "@/server/types/explorer";
 import type { Post } from "@/server/types/models";
+import type { SiteLocale } from "@/lib/site-locale";
 
 /**
  * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
@@ -60,64 +70,149 @@ export async function getLatestPostsForHome(
 }
 
 /**
- * 未分类（无专题文章）+ 各可见专题及其文章列表
+ * 首页精选：管理员勾选的若干篇，按 homeSortOrder 升序，默认上限 5 篇。
  */
-export async function getHomeExplorerData(): Promise<
-  ActionResult<HomeExplorerCategory[]>
-> {
+export async function getHomeFeaturedPosts(
+  limit = 5,
+): Promise<ActionResult<HomeFeaturedPost[]>> {
   try {
-    const TYPE_BLACKLIST = new Set(["rei", "asuka"]);
-    const posts = await db
+    const rows = await db
       .select({
         id: postsTable.id,
         title: postsTable.title,
-        type: postsTable.type,
+        excerpt: postsTable.excerpt,
+        coverUrl: postsTable.coverUrl,
         createdAt: postsTable.createdAt,
-        isPinned: postsTable.isPinned,
+        titleEn: postsTable.titleEn,
+        excerptEn: postsTable.excerptEn,
       })
       .from(postsTable)
-      .where(ne(postsTable.isHidden, true))
-      .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt));
+      .where(
+        and(
+          eq(postsTable.homeFeatured, true),
+          ne(postsTable.isHidden, true),
+        ),
+      )
+      .orderBy(asc(postsTable.homeSortOrder), asc(postsTable.id))
+      .limit(limit);
+    return actionOk(rows);
+  } catch (error) {
+    console.error("获取首页精选失败:", error);
+    return actionErr("获取首页精选失败");
+  }
+}
 
-    const visiblePosts = posts.filter((post) => !TYPE_BLACKLIST.has(post.type));
-    const grouped = new Map<string, HomeExplorerCategory["posts"]>();
-    for (const post of visiblePosts) {
-      const key = post.type;
-      const current = grouped.get(key) ?? [];
-      current.push({
+/**
+ * 各可见专题及其文章列表（不再合成「全部」虚拟分类，
+ * 由前端选第一个分类作为默认）。
+ */
+export async function getHomeExplorerData(
+  locale: SiteLocale = "zh",
+): Promise<ActionResult<HomeExplorerCategory[]>> {
+  try {
+    const [publicTypes, postRows, suppressedPostIdsRows, assignmentRows] =
+      await Promise.all([
+        db
+          .select({
+            id: postTypesTable.id,
+            code: postTypesTable.code,
+            nameZh: postTypesTable.nameZh,
+            nameEn: postTypesTable.nameEn,
+            sortOrder: postTypesTable.sortOrder,
+          })
+          .from(postTypesTable)
+          .where(eq(postTypesTable.suppressLinkedPostsGlobally, false))
+          .orderBy(asc(postTypesTable.sortOrder), asc(postTypesTable.id)),
+        db
+          .select({
+            id: postsTable.id,
+            title: postsTable.title,
+            titleEn: postsTable.titleEn,
+            createdAt: postsTable.createdAt,
+            isPinned: postsTable.isPinned,
+            sortOrder: postsTable.sortOrder,
+          })
+          .from(postsTable)
+          .where(ne(postsTable.isHidden, true))
+          .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt)),
+        db
+          .selectDistinct({ postId: postTypeAssignmentsTable.postId })
+          .from(postTypeAssignmentsTable)
+          .innerJoin(
+            postTypesTable,
+            eq(postTypeAssignmentsTable.typeId, postTypesTable.id),
+          )
+          .where(eq(postTypesTable.suppressLinkedPostsGlobally, true)),
+        db
+          .select({
+            postId: postTypeAssignmentsTable.postId,
+            typeId: postTypeAssignmentsTable.typeId,
+          })
+          .from(postTypeAssignmentsTable),
+      ]);
+
+    const suppressedPostIds = new Set(
+      suppressedPostIdsRows.map((r) => r.postId),
+    );
+    const postsAllowed = postRows.filter((p) => !suppressedPostIds.has(p.id));
+
+    const assignmentsByPost = new Map<number, number[]>();
+    for (const row of assignmentRows) {
+      const list = assignmentsByPost.get(row.postId) ?? [];
+      list.push(row.typeId);
+      assignmentsByPost.set(row.postId, list);
+    }
+
+    const publicTypeIds = new Set(publicTypes.map((t) => t.id));
+    const typeLabel = (t: (typeof publicTypes)[number]) =>
+      locale === "en" ? t.nameEn : t.nameZh;
+
+    const categories: HomeExplorerCategory[] = [];
+    for (const t of publicTypes) {
+      const postsInType: HomeExplorerCategory["posts"] = [];
+      for (const post of postsAllowed) {
+        const links = assignmentsByPost.get(post.id);
+        if (!links?.includes(t.id)) continue;
+        postsInType.push({
+          id: post.id,
+          title: post.title,
+          titleEn: post.titleEn,
+          createdAt: post.createdAt,
+          isPinned: post.isPinned,
+        });
+      }
+      categories.push({
+        typeCode: t.code,
+        name: typeLabel(t),
+        isPinned: false,
+        sortOrder: t.sortOrder,
+        createdAt: null,
+        posts: postsInType,
+      });
+    }
+
+    const unnamed = locale === "en" ? "Unnamed" : "未命名";
+    const uncategorized: HomeExplorerCategory["posts"] = [];
+    for (const post of postsAllowed) {
+      const links = assignmentsByPost.get(post.id) ?? [];
+      const hasPublic = links.some((tid) => publicTypeIds.has(tid));
+      if (hasPublic) continue;
+      uncategorized.push({
         id: post.id,
         title: post.title,
+        titleEn: post.titleEn,
         createdAt: post.createdAt,
         isPinned: post.isPinned,
       });
-      grouped.set(key, current);
     }
-
-    const categories: HomeExplorerCategory[] = [
-      {
-        topicKey: "all",
-        name: "全部",
-        isPinned: false,
-        sortOrder: 0,
-        createdAt: null,
-        posts: visiblePosts.map((post) => ({
-          id: post.id,
-          title: post.title,
-          createdAt: post.createdAt,
-          isPinned: post.isPinned,
-        })),
-      },
-    ];
-
-    for (const [type, typePosts] of grouped) {
+    if (uncategorized.length > 0) {
       categories.push({
-        topicKey: type,
-        // 空字符串 type 使用更可读的展示名称。
-        name: type === '' ? '未命名' : type,
+        typeCode: '',
+        name: unnamed,
         isPinned: false,
-        sortOrder: 0,
+        sortOrder: 1_000_000,
         createdAt: null,
-        posts: typePosts,
+        posts: uncategorized,
       });
     }
 
@@ -228,7 +323,10 @@ export async function updatePost(
       return actionErr("文章不存在");
     }
 
-    const nextContent = data.content ?? existing.content;
+    const nextContent =
+      data.content !== undefined
+        ? stripLeadingDecorationsFromFirstH1InHtml(data.content)
+        : existing.content;
     const nextMarkdown = data.markdownContent ?? existing.markdownContent;
     const metadata = derivePostMetadata({
       markdownContent: nextMarkdown,
@@ -247,7 +345,7 @@ export async function updatePost(
     } = {};
 
     if (data.title !== undefined) updateData.title = data.title;
-    if (data.content !== undefined) updateData.content = data.content;
+    if (data.content !== undefined) updateData.content = nextContent;
     if (data.markdownContent !== undefined)
       updateData.markdownContent = data.markdownContent;
     updateData.coverUrl = metadata.coverUrl;

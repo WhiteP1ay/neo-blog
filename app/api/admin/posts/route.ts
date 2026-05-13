@@ -1,10 +1,18 @@
-import { asc, desc } from 'drizzle-orm';
+import { asc, desc, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
-import { postsTable } from '@/server/db/schema';
+import { postTypesTable, postsTable } from '@/server/db/schema';
 import { requireAdmin } from '@/server/utils/require-admin';
 import { markdownToHTML } from '@/server/utils/markdown';
+import { stripLeadingDecorationsFromFirstH1InHtml } from '@/server/utils/post-ai-translation-html';
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
+import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
+import {
+  loadTypesByPostIds,
+  replacePostTypeAssignments,
+  type PostTypeRow,
+} from '@/server/utils/post-type-assignments';
 
 type CreatePostBody = {
   title?: unknown;
@@ -12,11 +20,29 @@ type CreatePostBody = {
   markdownContent?: unknown;
   excerpt?: unknown;
   coverUrl?: unknown;
-  type?: unknown;
+  typeIds?: unknown;
   isHidden?: unknown;
   // mode=zen 时跳过封面/摘要自动派生，按调用方传值（通常为空）保存。
   mode?: unknown;
 };
+
+function summarizeTypes(rows: PostTypeRow[]) {
+  return rows.map((t) => ({
+    id: t.id,
+    code: t.code,
+    nameZh: t.nameZh,
+    nameEn: t.nameEn,
+  }));
+}
+
+async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
+  if (ids.length === 0) return true;
+  const rows = await db
+    .select({ id: postTypesTable.id })
+    .from(postTypesTable)
+    .where(inArray(postTypesTable.id, ids));
+  return rows.length === ids.length;
+}
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -24,13 +50,10 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
 
-  // 列表仅返回轻量元字段；正文 HTML/Markdown 体积可达数十 KB，
-  // 走代理/远程链路时拉全表会导致首屏 8-12s，编辑时再按 id 单独获取。
   const posts = await db
     .select({
       id: postsTable.id,
       title: postsTable.title,
-      type: postsTable.type,
       sortOrder: postsTable.sortOrder,
       isHidden: postsTable.isHidden,
       isPinned: postsTable.isPinned,
@@ -41,7 +64,18 @@ export async function GET() {
     })
     .from(postsTable)
     .orderBy(asc(postsTable.sortOrder), desc(postsTable.createdAt), asc(postsTable.id));
-  return NextResponse.json({ data: posts });
+
+  const typeMap = await loadTypesByPostIds(
+    db,
+    posts.map((p) => p.id),
+  );
+
+  return NextResponse.json({
+    data: posts.map((p) => ({
+      ...p,
+      types: summarizeTypes(typeMap.get(p.id) ?? []),
+    })),
+  });
 }
 
 export async function POST(request: Request) {
@@ -53,16 +87,15 @@ export async function POST(request: Request) {
   const contentType = request.headers.get('content-type') ?? '';
   let title = '';
   let markdownContent = '';
-  let type = '';
   let isHidden = false;
   let inputCoverUrl = '';
   let inputExcerpt = '';
   let mode: 'traditional' | 'zen' = 'traditional';
+  let typeIds: number[] = [];
 
   if (contentType.includes('multipart/form-data')) {
     const formData = await request.formData();
     const titleRaw = formData.get('title');
-    const typeRaw = formData.get('type');
     const isHiddenRaw = formData.get('isHidden');
     const coverUrlRaw = formData.get('coverUrl');
     const excerptRaw = formData.get('excerpt');
@@ -70,12 +103,10 @@ export async function POST(request: Request) {
     const contentRaw = formData.get('content');
 
     title = typeof titleRaw === 'string' ? titleRaw.trim() : '';
-    type = typeof typeRaw === 'string' ? typeRaw : '';
     isHidden = isHiddenRaw === 'true';
     inputCoverUrl = typeof coverUrlRaw === 'string' ? coverUrlRaw.trim() : '';
     inputExcerpt = typeof excerptRaw === 'string' ? excerptRaw.trim() : '';
 
-    // multipart 里 content 可能被提交为空字符串；此时应回退读取文件内容。
     if (typeof contentRaw === 'string' && contentRaw.trim()) {
       markdownContent = contentRaw;
     } else if (fileRaw instanceof File) {
@@ -90,19 +121,25 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CreatePostBody;
     title = typeof body.title === 'string' ? body.title.trim() : '';
     markdownContent = typeof body.content === 'string' ? body.content : '';
-    type = typeof body.type === 'string' ? body.type : '';
     isHidden = body.isHidden === true;
     inputCoverUrl = typeof body.coverUrl === 'string' ? body.coverUrl : '';
     inputExcerpt = typeof body.excerpt === 'string' ? body.excerpt : '';
     if (body.mode === 'zen') mode = 'zen';
+    const parsed = parseTypeIdsField(body.typeIds);
+    if (parsed !== 'omit' && parsed.ok) {
+      typeIds = parsed.ids;
+    } else if (parsed !== 'omit') {
+      return NextResponse.json({ error: 'typeIds 须为非负整数数组' }, { status: 400 });
+    }
   }
 
-  const content = markdownToHTML(markdownContent);
+  const content = stripLeadingDecorationsFromFirstH1InHtml(markdownToHTML(markdownContent));
   const metadata = derivePostMetadata({
     markdownContent,
     content,
   });
 
+  title = stripLeadingTypeLikePrefixes(title);
   if (!title) {
     return NextResponse.json({ error: '标题不能为空' }, { status: 400 });
   }
@@ -110,9 +147,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '内容不能为空' }, { status: 400 });
   }
 
-  // mode=zen 时默认不派生封面/摘要，按调用方传值（通常为空字符串）保存。
-  const finalExcerpt = mode === 'zen' ? inputExcerpt : (inputExcerpt || metadata.excerpt);
-  const finalCoverUrl = mode === 'zen' ? inputCoverUrl : (inputCoverUrl || metadata.coverUrl);
+  if (!(await assertTypeIdsValid(typeIds))) {
+    return NextResponse.json({ error: '存在无效的类型 id' }, { status: 400 });
+  }
+
+  const finalExcerpt = mode === 'zen' ? inputExcerpt : inputExcerpt || metadata.excerpt;
+  const finalCoverUrl = mode === 'zen' ? inputCoverUrl : inputCoverUrl || metadata.coverUrl;
 
   const created = await db
     .insert(postsTable)
@@ -122,9 +162,6 @@ export async function POST(request: Request) {
       markdownContent: markdownContent || null,
       excerpt: finalExcerpt,
       coverUrl: finalCoverUrl,
-      type,
-      // 让新文章天然落到列表最前：取当前最小 sortOrder 再 -1（无文章时回落到 0）。
-      // C 端排序为 sortOrder ASC, createdAt DESC，新文章自然在前，且不破坏已有手动顺序。
       sortOrder:
         ((await db
           .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
@@ -135,11 +172,9 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
     })
-    // 同 PUT，仅回元字段，省掉刚插入的整段 HTML 再回传一次。
     .returning({
       id: postsTable.id,
       title: postsTable.title,
-      type: postsTable.type,
       sortOrder: postsTable.sortOrder,
       isHidden: postsTable.isHidden,
       isPinned: postsTable.isPinned,
@@ -149,5 +184,18 @@ export async function POST(request: Request) {
       updatedAt: postsTable.updatedAt,
     });
 
-  return NextResponse.json({ data: created[0] });
+  const row = created[0];
+  if (!row) {
+    return NextResponse.json({ error: '创建失败' }, { status: 500 });
+  }
+
+  await replacePostTypeAssignments(db, row.id, typeIds);
+  const typeMap = await loadTypesByPostIds(db, [row.id]);
+
+  return NextResponse.json({
+    data: {
+      ...row,
+      types: summarizeTypes(typeMap.get(row.id) ?? []),
+    },
+  });
 }

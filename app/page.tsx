@@ -1,42 +1,32 @@
 import type { Metadata } from 'next';
-import { getHomeExplorerData } from '@/server/actions/posts';
+import { getHomeFeaturedPosts } from '@/server/actions/posts';
+import { HomeFeatured } from '@/components/site/HomeFeatured';
 import { SiteShell } from '@/components/site/SiteShell';
-import { PostList } from '@/app/(site)/blog/PostList';
+import { SiteWelcome } from '@/components/site/SiteWelcome';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'White Meta',
-  description: 'White Meta 白玩dev的个人网站',
+  description: 'White Meta 白玩dev 的个人网站',
   keywords: ['博客', '技术文章', '编程', '开发'],
   openGraph: {
     title: 'White Meta',
-    description: 'White Meta 白玩dev的个人网站',
+    description: 'White Meta 白玩dev 的个人网站',
     type: 'website',
   },
 };
 
 export default async function Home() {
-  const categories = await resolveHomeCategories();
-  if (!categories) {
-    return (
-      <SiteShell>
-        <p className="text-sm text-muted-foreground">加载列表失败，请稍后重试。</p>
-      </SiteShell>
-    );
-  }
+  const result = await getHomeFeaturedPosts(5);
+  const posts = result.success ? result.data : [];
 
   return (
     <SiteShell>
-      <PostList categories={categories} selectedTopicKey="all" />
+      <div className="mb-6 sm:mb-8">
+        <SiteWelcome />
+      </div>
+      <HomeFeatured posts={posts} />
     </SiteShell>
   );
-}
-
-async function resolveHomeCategories() {
-  const result = await getHomeExplorerData();
-  if (!result.success || result.data.length === 0) {
-    return null;
-  }
-  return result.data;
 }

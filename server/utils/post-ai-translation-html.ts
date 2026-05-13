@@ -1,5 +1,7 @@
 import { load } from 'cheerio';
 
+import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
+
 const WRAP_ID = '__neo_blog_ai_wrap__';
 
 /** 双语导航、H1 提示、英文区块（h2 及其后所有兄弟节点） */
@@ -35,6 +37,21 @@ export function stripTranslationArtifacts(html: string): string {
   root.find(`#${H1_EN_HINT_ID}`).remove();
   root.find(`#${EN_SECTION_WRAP_ID}`).remove();
   return unwrapHtml($);
+}
+
+/**
+ * 从仍嵌在中文正文里的旧版「英文包裹块」提取 HTML（去掉 h2「English」与首条 hr）。
+ */
+export function extractEnglishFragmentFromLegacyAppend(html: string): string | null {
+  if (!html.includes(EN_SECTION_WRAP_ID)) return null;
+  const $ = load(html, null, false);
+  const wrap = $(`#${EN_SECTION_WRAP_ID}`).first();
+  if (!wrap.length) return null;
+  const clone = wrap.clone();
+  clone.find(`#${EN_SECTION_H2_ID}`).remove();
+  clone.find('hr').first().remove();
+  const inner = clone.html()?.trim() ?? '';
+  return inner.length > 0 ? inner : null;
 }
 
 /**
@@ -85,4 +102,35 @@ export function extractFirstH1PlainText(html: string): string | null {
   h1.find(`#${H1_EN_HINT_ID}`).remove();
   const text = h1.text().replace(/\s+/g, ' ').trim();
   return text || null;
+}
+
+/**
+ * 去掉正文 HTML 中**第一个** `h1` 可见文本开头的 `【…】`、`[…]` 装饰（与 {@link stripLeadingTypeLikePrefixes} 一致）。
+ * 会暂时摘下 `#${H1_EN_HINT_ID}` 再计算纯文本，最后拼回，避免误伤「English below」提示。
+ */
+export function stripLeadingDecorationsFromFirstH1InHtml(html: string): string {
+  if (!html?.trim()) return html;
+  const $ = load(wrapHtml(html), null, false);
+  const root = $(`#${WRAP_ID}`);
+  const h1 = root.find('h1').first();
+  if (!h1.length) return html;
+
+  const hint = h1.find(`#${H1_EN_HINT_ID}`);
+  const hintClone = hint.clone();
+  hint.remove();
+  const plain = h1.text().replace(/\s+/g, ' ').trim();
+  if (!plain) {
+    h1.append(hintClone);
+    return unwrapHtml($);
+  }
+  const stripped = stripLeadingTypeLikePrefixes(plain);
+  if (!stripped.length || stripped === plain) {
+    h1.append(hintClone);
+    return unwrapHtml($);
+  }
+
+  h1.empty();
+  h1.text(stripped);
+  h1.append(hintClone);
+  return unwrapHtml($);
 }

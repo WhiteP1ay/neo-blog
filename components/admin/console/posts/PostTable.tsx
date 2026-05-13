@@ -7,29 +7,42 @@ import { Eye, GripVertical, Pencil, Sparkles, Trash2, Wrench } from 'lucide-reac
 import Link from 'next/link';
 import { useMemo } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { encodeTopicPathSegment } from '@/lib/url/segmentEncoding';
-import type { PostItem } from '../types';
+import { ADMIN_REORDER_UNCATEGORIZED_TYPE_ID } from '@/lib/admin-post-constants';
+import { adminPostsListPath } from '@/lib/blog-list-query';
+import type { PostItem, PostTypeAdminRow } from '../types';
 
 type PostTableProps = {
   posts: PostItem[];
-  /** 路径同步的类型筛选：null 或 undefined 表示显示全部 */
+  /** 全量类型目录（用于 Tab 顺序与 code→id）；与 `/api/admin/post-types` 一致 */
+  typeCatalog: PostTypeAdminRow[];
+  /** 路径同步的类型筛选：null 或 undefined 表示显示全部；空串表示未分类 */
   selectedType?: string | null;
   form: {
     togglePostHidden: (item: PostItem) => Promise<void>;
     deletePost: (id: number) => Promise<void>;
     startEditPost: (post: PostItem) => Promise<void>;
-    reorderPosts: (orderedIds: number[]) => Promise<void>;
+    reorderPosts: (orderedIds: number[], typeId: number) => Promise<void>;
     openAiPolish: (post: PostItem) => void;
   };
 };
-
-const ADMIN_POSTS_BASE = '/admin/posts';
 
 const iconBtnMobile =
   'inline-flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded border sm:min-h-0 sm:min-w-0 sm:px-2 sm:py-1';
 
 const filterLinkClass =
   'min-h-10 touch-manipulation rounded border px-3 py-2 text-sm leading-none hover:bg-muted sm:min-h-0 sm:px-2 sm:py-1';
+
+function postInSelectedBucket(post: PostItem, selectedCode: string): boolean {
+  if (selectedCode === '') {
+    return post.types.length === 0;
+  }
+  return post.types.some((t) => t.code === selectedCode);
+}
+
+function formatTypesCell(post: PostItem): string {
+  if (post.types.length === 0) return '(空)';
+  return post.types.map((t) => t.nameZh).join('、');
+}
 
 /** 移动端卡片内：前台显示 + 预览 + 编辑 + 删除 */
 function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps['form'] }) {
@@ -88,28 +101,55 @@ function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps[
   );
 }
 
-export function PostTable({ posts, form, selectedType = null }: PostTableProps) {
+export function PostTable({ posts, typeCatalog, form, selectedType = null }: PostTableProps) {
   const orderedPosts = useMemo(() => [...posts].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id), [posts]);
-  const types = useMemo(
-    () => Array.from(new Set(orderedPosts.map((post) => post.type))).sort((a, b) => a.localeCompare(b)),
-    [orderedPosts],
-  );
+
+  const codesInPosts = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of orderedPosts) {
+      for (const t of p.types) {
+        set.add(t.code);
+      }
+    }
+    return set;
+  }, [orderedPosts]);
+
+  const hasUncategorized = useMemo(() => orderedPosts.some((p) => p.types.length === 0), [orderedPosts]);
+
+  const filterTabs = useMemo(() => {
+    const rows = typeCatalog
+      .filter((t) => codesInPosts.has(t.code))
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id);
+    return rows;
+  }, [typeCatalog, codesInPosts]);
+
+  const reorderTypeId = useMemo(() => {
+    if (selectedType === null || selectedType === undefined) return null;
+    if (selectedType === '') return ADMIN_REORDER_UNCATEGORIZED_TYPE_ID;
+    const row = typeCatalog.find((t) => t.code === selectedType);
+    return row?.id ?? null;
+  }, [selectedType, typeCatalog]);
+
   const visiblePosts = useMemo(() => {
     if (selectedType === null || selectedType === undefined) return orderedPosts;
-    return orderedPosts.filter((post) => post.type === selectedType);
+    return orderedPosts.filter((post) => postInSelectedBucket(post, selectedType));
   }, [orderedPosts, selectedType]);
 
   const isFiltering = selectedType !== null && selectedType !== undefined;
+  const dragEnabled = isFiltering && reorderTypeId !== null;
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    if (isFiltering) return;
+    if (!dragEnabled || reorderTypeId === null) return;
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIndex = orderedPosts.findIndex((post) => post.id === Number(active.id));
-    const newIndex = orderedPosts.findIndex((post) => post.id === Number(over.id));
+    const oldIndex = visiblePosts.findIndex((post) => post.id === Number(active.id));
+    const newIndex = visiblePosts.findIndex((post) => post.id === Number(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
-    const moved = arrayMove(orderedPosts, oldIndex, newIndex);
-    await form.reorderPosts(moved.map((post) => post.id));
+    const moved = arrayMove(visiblePosts, oldIndex, newIndex);
+    await form.reorderPosts(
+      moved.map((post) => post.id),
+      reorderTypeId,
+    );
   };
 
   return (
@@ -117,31 +157,47 @@ export function PostTable({ posts, form, selectedType = null }: PostTableProps) 
       <div className="rounded border p-3">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Link
-            href={ADMIN_POSTS_BASE}
+            href={adminPostsListPath(null)}
             scroll={false}
             className={`${filterLinkClass} ${!isFiltering ? 'bg-muted font-medium' : ''}`}
             aria-current={!isFiltering ? 'page' : undefined}
           >
             全部
           </Link>
-          {types.map((type) => {
-            const active = isFiltering && selectedType === type;
+          {filterTabs.map((t) => {
+            const active = isFiltering && selectedType === t.code;
             return (
               <Link
-                key={type || '__empty'}
-                href={`${ADMIN_POSTS_BASE}/type/${encodeTopicPathSegment(type)}`}
+                key={t.code}
+                href={adminPostsListPath(t.code)}
                 scroll={false}
                 className={`${filterLinkClass} ${active ? 'bg-muted font-medium' : ''}`}
                 aria-current={active ? 'page' : undefined}
               >
-                {type || '(空)'}
+                {t.nameZh}
               </Link>
             );
           })}
+          {hasUncategorized ? (
+            <Link
+              key="__uncat"
+              href={adminPostsListPath('')}
+              scroll={false}
+              className={`${filterLinkClass} ${isFiltering && selectedType === '' ? 'bg-muted font-medium' : ''}`}
+              aria-current={isFiltering && selectedType === '' ? 'page' : undefined}
+            >
+              未分类
+            </Link>
+          ) : null}
         </div>
       </div>
 
-      {!isFiltering && visiblePosts.length > 1 ? (
+      {!isFiltering ? (
+        <p className="text-xs text-muted-foreground">
+          仅支持分类内拖拽排序，请先点击上方某个分类后再调整顺序。
+        </p>
+      ) : null}
+      {isFiltering && visiblePosts.length > 1 ? (
         <p className="text-xs text-muted-foreground md:hidden">调整排序请在平板或电脑上使用左侧拖拽手柄。</p>
       ) : null}
 
@@ -151,7 +207,7 @@ export function PostTable({ posts, form, selectedType = null }: PostTableProps) 
             <div className="min-w-0 space-y-1">
               <p className="wrap-break-word font-medium leading-snug">{post.title}</p>
               <p className="text-xs text-muted-foreground">
-                ID {post.id} · {post.type || '(空)'} · {post.isHidden ? '隐藏' : '显示'}
+                ID {post.id} · {formatTypesCell(post)} · {post.isHidden ? '隐藏' : '显示'}
               </p>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -181,7 +237,7 @@ export function PostTable({ posts, form, selectedType = null }: PostTableProps) 
             <SortableContext items={visiblePosts.map((post) => post.id)} strategy={verticalListSortingStrategy}>
               <tbody>
                 {visiblePosts.map((post) => (
-                  <SortablePostRow key={post.id} post={post} form={form} dragDisabled={isFiltering} />
+                  <SortablePostRow key={post.id} post={post} form={form} dragDisabled={!dragEnabled} />
                 ))}
               </tbody>
             </SortableContext>
@@ -220,15 +276,17 @@ function SortablePostRow({
           {...attributes}
           {...listeners}
           disabled={dragDisabled}
-          title={dragDisabled ? '筛选状态下暂不可拖拽排序' : '拖拽排序'}
-          aria-label={dragDisabled ? '筛选状态下暂不可拖拽排序' : '拖拽排序'}
+          title={dragDisabled ? '请先选中某个分类后再调整顺序' : '拖拽排序（同分类内）'}
+          aria-label={dragDisabled ? '请先选中某个分类后再调整顺序' : '拖拽排序（同分类内）'}
         >
           <GripVertical className="h-4 w-4" />
         </button>
       </td>
       <td className="px-3 py-2">{post.id}</td>
       <td className="px-3 py-2">{post.title}</td>
-      <td className="px-3 py-2">{post.type || '(空)'}</td>
+      <td className="max-w-[12rem] truncate px-3 py-2" title={formatTypesCell(post)}>
+        {formatTypesCell(post)}
+      </td>
       <td className="px-3 py-2">
         <Switch
           id={switchId}
