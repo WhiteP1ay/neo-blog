@@ -34,6 +34,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const polishCn = (body as { polishCn?: unknown }).polishCn === true;
   const translateAppendEn = (body as { translateAppendEn?: unknown }).translateAppendEn === true;
+  const wantsStream = (body as { stream?: unknown }).stream === true;
 
   if (!polishCn && !translateAppendEn) {
     return NextResponse.json({ error: '请至少选择 polishCn 或 translateAppendEn 中的一项' }, { status: 400 });
@@ -57,8 +58,76 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 120_000);
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => abortController.abort(), 120_000);
+  const clearAbortTimeout = () => clearTimeout(timeout);
+
+  if (wantsStream) {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(streamController) {
+        try {
+          const preview = await computeAiPolishPreview({
+            sourceHtml,
+            titleFallback: post.title,
+            polishCn,
+            translateAppendEn,
+            signal: abortController.signal,
+            onPhase: (step) => {
+              streamController.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: 'phase', step })}\n\n`),
+              );
+            },
+          });
+          streamController.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                type: 'done',
+                data: {
+                  postId,
+                  beforeHtml: preview.beforeHtml,
+                  afterHtml: preview.afterHtml,
+                  nextTitle: preview.nextTitle,
+                  excerpt: preview.excerpt,
+                  coverUrl: preview.coverUrl,
+                  diff: preview.diff,
+                },
+              })}\n\n`,
+            ),
+          );
+        } catch (e) {
+          const isAbort = e instanceof Error && e.name === 'AbortError';
+          const msg = isAbort ? '请求超时，请稍后重试' : e instanceof Error ? e.message : '未知错误';
+          if (!isAbort) {
+            console.error('[ai-polish-preview stream]', e);
+          }
+          try {
+            streamController.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ type: 'error', message: msg })}\n\n`),
+            );
+          } catch {
+            /* ignore */
+          }
+        } finally {
+          clearAbortTimeout();
+          try {
+            streamController.close();
+          } catch {
+            /* ignore */
+          }
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      },
+    });
+  }
 
   try {
     const preview = await computeAiPolishPreview({
@@ -66,7 +135,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       titleFallback: post.title,
       polishCn,
       translateAppendEn,
-      signal: controller.signal,
+      signal: abortController.signal,
     });
 
     return NextResponse.json({
@@ -88,6 +157,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error('[ai-polish-preview]', e);
     return NextResponse.json({ error: msg }, { status: 500 });
   } finally {
-    clearTimeout(timeout);
+    clearAbortTimeout();
   }
 }

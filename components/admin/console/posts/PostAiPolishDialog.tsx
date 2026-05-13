@@ -13,24 +13,8 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/Toast';
 import type { PostItem } from '../types';
-import {
-  AI_POLISH_APPLIED_MESSAGE_TYPE,
-  AI_POLISH_PREVIEW_MESSAGE_TYPE,
-  type AiPolishPreviewMessagePayload,
-} from '@/lib/ai-polish-messages';
-
-type PreviewApiPayload = {
-  data?: {
-    postId: number;
-    beforeHtml: string;
-    afterHtml: string;
-    nextTitle: string;
-    excerpt: string;
-    coverUrl: string | null;
-    diff: { unified: string; truncated: boolean };
-  };
-  error?: string;
-};
+import { AI_POLISH_APPLIED_MESSAGE_TYPE } from '@/lib/ai-polish-messages';
+import { AI_POLISH_JOB_STORAGE_KEY, type AiPolishJobPayload } from '@/lib/ai-polish-job';
 
 type PostAiPolishDialogProps = {
   post: PostItem | null;
@@ -46,7 +30,6 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
   const { showToast } = useToast();
   const [polishCn, setPolishCn] = useState(true);
   const [translateAppendEn, setTranslateAppendEn] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (open && post) {
@@ -66,10 +49,23 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
     return () => window.removeEventListener('message', onApplied);
   }, [queryClient]);
 
-  const handleStart = async () => {
-    if (!post || loading) return;
+  const handleStart = () => {
+    if (!post) return;
     if (!polishCn && !translateAppendEn) {
       showToast('请至少选择一项操作', 'error');
+      return;
+    }
+
+    const job: AiPolishJobPayload = {
+      postId: post.id,
+      polishCn,
+      translateAppendEn,
+      createdAt: Date.now(),
+    };
+    try {
+      sessionStorage.setItem(AI_POLISH_JOB_STORAGE_KEY, JSON.stringify(job));
+    } catch {
+      showToast('无法写入预览任务，请检查浏览器是否禁用存储', 'error');
       return;
     }
 
@@ -80,69 +76,14 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/posts/${post.id}/ai-polish/preview`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ polishCn, translateAppendEn }),
-      });
-      const payload = (await res.json()) as PreviewApiPayload;
-      if (!res.ok) {
-        throw new Error(payload.error ?? '预览生成失败');
-      }
-      if (!payload.data) {
-        throw new Error('响应数据缺失');
-      }
-
-      const msg: AiPolishPreviewMessagePayload = {
-        type: AI_POLISH_PREVIEW_MESSAGE_TYPE,
-        postId: payload.data.postId,
-        beforeHtml: payload.data.beforeHtml,
-        afterHtml: payload.data.afterHtml,
-        nextTitle: payload.data.nextTitle,
-        excerpt: payload.data.excerpt,
-        coverUrl: payload.data.coverUrl,
-        diff: payload.data.diff,
-      };
-      const sendPayload = () => {
-        try {
-          child.postMessage(msg, window.location.origin);
-        } catch {
-          showToast('无法推送预览到子窗口', 'error');
-        }
-      };
-      child.addEventListener('load', sendPayload, { once: true });
-      window.setTimeout(sendPayload, 1200);
-      showToast('预览已发送到新窗口，请在预览窗内确认后点「应用」', 'success');
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : '预览失败', 'error');
-      try {
-        child.close();
-      } catch {
-        /* ignore */
-      }
-    } finally {
-      setLoading(false);
-    }
+    showToast('已打开预览窗口，正在生成…', 'success');
   };
 
-  const canStart = Boolean(post) && (polishCn || translateAppendEn) && !loading;
+  const canStart = Boolean(post) && (polishCn || translateAppendEn);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={!loading}
-        onInteractOutside={(e) => {
-          if (loading) e.preventDefault();
-        }}
-        onPointerDownOutside={(e) => {
-          if (loading) e.preventDefault();
-        }}
-        onEscapeKeyDown={(e) => {
-          if (loading) e.preventDefault();
-        }}
-      >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>AI 润色</DialogTitle>
           <DialogDescription>
@@ -159,7 +100,6 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
               className="mt-1"
               checked={polishCn}
               onChange={(e) => setPolishCn(e.target.checked)}
-              disabled={loading}
             />
             <span className="text-sm leading-snug">
               <span className="font-medium text-foreground">中文润色</span>
@@ -172,7 +112,6 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
               className="mt-1"
               checked={translateAppendEn}
               onChange={(e) => setTranslateAppendEn(e.target.checked)}
-              disabled={loading}
             />
             <span className="text-sm leading-snug">
               <span className="font-medium text-foreground">追加英文翻译</span>
@@ -184,11 +123,11 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             关闭
           </Button>
-          <Button type="button" onClick={() => void handleStart()} disabled={!canStart}>
-            {loading ? '生成预览中…' : '开始'}
+          <Button type="button" onClick={handleStart} disabled={!canStart}>
+            开始
           </Button>
         </DialogFooter>
       </DialogContent>

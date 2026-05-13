@@ -11,6 +11,19 @@ import {
 export const MAX_AI_POLISH_HTML_CHARS = 120_000;
 export const MAX_AI_POLISH_DIFF_CHARS = 64 * 1024;
 
+/** 供 SSE / UI 展示的阶段标识 */
+export type AiPolishPhaseStep =
+  | 'started'
+  | 'stripped'
+  | 'polish_start'
+  | 'polish_done'
+  | 'translate_start'
+  | 'translate_done'
+  | 'assemble_start'
+  | 'assemble_done'
+  | 'diff_start'
+  | 'diff_done';
+
 function stripModelCodeFences(text: string): string {
   let s = text.trim();
   if (s.startsWith('```')) {
@@ -81,6 +94,8 @@ export type AiPolishPreviewInput = {
   polishCn: boolean;
   translateAppendEn: boolean;
   signal: AbortSignal;
+  /** 各阶段回调，供 SSE 打点 */
+  onPhase?: (step: AiPolishPhaseStep) => void;
 };
 
 export type AiPolishPreviewResult = {
@@ -96,20 +111,31 @@ export type AiPolishPreviewResult = {
  * 仅计算 AI 润色结果，不写数据库。
  */
 export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promise<AiPolishPreviewResult> {
-  const { sourceHtml, titleFallback, polishCn, translateAppendEn, signal } = input;
+  const { sourceHtml, titleFallback, polishCn, translateAppendEn, signal, onPhase } = input;
   const beforeHtml = sourceHtml;
 
   let nextContent: string;
 
   if (translateAppendEn) {
+    onPhase?.('started');
     let zh = stripTranslationArtifacts(sourceHtml);
+    onPhase?.('stripped');
     if (polishCn) {
+      onPhase?.('polish_start');
       zh = await runPolish(zh, signal);
+      onPhase?.('polish_done');
     }
+    onPhase?.('translate_start');
     const englishFragment = await runTranslate(zh, signal);
+    onPhase?.('translate_done');
+    onPhase?.('assemble_start');
     nextContent = appendEnglishSection(zh, englishFragment);
+    onPhase?.('assemble_done');
   } else {
+    onPhase?.('started');
+    onPhase?.('polish_start');
     nextContent = await runPolish(sourceHtml, signal);
+    onPhase?.('polish_done');
   }
 
   if (!nextContent.trim()) {
@@ -127,7 +153,9 @@ export async function computeAiPolishPreview(input: AiPolishPreviewInput): Promi
     markdownContent: null,
   });
 
+  onPhase?.('diff_start');
   const diff = buildAiPolishHtmlDiff(beforeHtml, nextContent);
+  onPhase?.('diff_done');
 
   return {
     beforeHtml,
