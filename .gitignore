@@ -45,7 +45,7 @@ next-env.d.ts
 .cursor/next-dev-restart.log
 .cursor/.last-next-restart-at
 
-# playwright-cli 本地控制台日志与 page 快照（勿提交）
+# playwright-cli 本地控制台日志与 page 快照（勿提交） 本地控制台日志与 page 快照（勿提交）
 .playwright-cli/
 
 # Playwright Test（@playwright/test）

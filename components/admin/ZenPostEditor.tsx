@@ -10,6 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 
+/** create 模式下占位，避免每次渲染 `[]` 新引用触发 sync effect 死循环 */
+const EMPTY_POST_TYPE_IDS: number[] = [];
+
 /**
  * 从 HTML 字符串里取第一个 h1 的纯文本（去掉嵌套标签）。
  */
@@ -135,7 +138,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   const editPostId = props.mode === 'edit' ? props.postId : null;
   const editInitialContent = props.mode === 'edit' ? props.initialContent : '';
   const editInitialContentEn = props.mode === 'edit' ? props.initialContentEn : '';
-  const editInitialTypeIds = props.mode === 'edit' ? props.initialTypeIds : [];
+  const editInitialTypeIds = props.mode === 'edit' ? props.initialTypeIds : EMPTY_POST_TYPE_IDS;
   const editSourceHidden = props.mode === 'edit' ? props.isHidden : false;
 
   useEffect(() => {

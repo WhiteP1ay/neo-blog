@@ -1,0 +1,2 @@
+# Git push 前运行 Playwright E2E（与 package.json 中 test:e2e 一致）
+pnpm test:e2e
