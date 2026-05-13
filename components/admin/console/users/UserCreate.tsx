@@ -28,7 +28,12 @@ export function UserCreate({ open, onClose, form }: UserCreateProps) {
           </button>
         </div>
         <div className="space-y-2">
-          <input className="w-full rounded border px-2 py-1" placeholder="用户名" value={form.newUserName} onChange={(e) => form.setNewUserName(e.target.value)} />
+          <input
+            className="w-full rounded border px-2 py-1"
+            placeholder="用户名"
+            value={form.newUserName}
+            onChange={(e) => form.setNewUserName(e.target.value)}
+          />
           <input
             className="w-full rounded border px-2 py-1"
             placeholder="密码（至少8位）"
@@ -37,7 +42,11 @@ export function UserCreate({ open, onClose, form }: UserCreateProps) {
             onChange={(e) => form.setNewUserPassword(e.target.value)}
           />
           <label className="inline-flex items-center gap-1">
-            <input type="checkbox" checked={form.newUserIsAdmin} onChange={(e) => form.setNewUserIsAdmin(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={form.newUserIsAdmin}
+              onChange={(e) => form.setNewUserIsAdmin(e.target.checked)}
+            />
             管理员
           </label>
           <button

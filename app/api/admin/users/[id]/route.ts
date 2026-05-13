@@ -55,17 +55,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     updatePayload.password = await hashPassword(body.password);
   }
 
-  const updated = await db
-    .update(usersTable)
-    .set(updatePayload)
-    .where(eq(usersTable.id, userId))
-    .returning({
-      id: usersTable.id,
-      name: usersTable.name,
-      isAdmin: usersTable.isAdmin,
-      createdAt: usersTable.createdAt,
-      updatedAt: usersTable.updatedAt,
-    });
+  const updated = await db.update(usersTable).set(updatePayload).where(eq(usersTable.id, userId)).returning({
+    id: usersTable.id,
+    name: usersTable.name,
+    isAdmin: usersTable.isAdmin,
+    createdAt: usersTable.createdAt,
+    updatedAt: usersTable.updatedAt,
+  });
 
   if (!updated[0]) {
     return NextResponse.json({ error: '用户不存在' }, { status: 404 });
@@ -93,22 +89,14 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
 
   const deleted = await db
     .delete(usersTable)
-    .where(
-      and(
-        eq(usersTable.id, userId),
-        eq(usersTable.id, auth.session.userId),
-      ),
-    )
+    .where(and(eq(usersTable.id, userId), eq(usersTable.id, auth.session.userId)))
     .returning({ id: usersTable.id });
 
   if (deleted[0]) {
     return NextResponse.json({ error: '不能删除当前登录用户' }, { status: 400 });
   }
 
-  const targetDeleted = await db
-    .delete(usersTable)
-    .where(eq(usersTable.id, userId))
-    .returning({ id: usersTable.id });
+  const targetDeleted = await db.delete(usersTable).where(eq(usersTable.id, userId)).returning({ id: usersTable.id });
   if (!targetDeleted[0]) {
     return NextResponse.json({ error: '用户不存在' }, { status: 404 });
   }

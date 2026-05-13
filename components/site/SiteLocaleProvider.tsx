@@ -12,10 +12,7 @@ const SiteLocaleContext = createContext<SiteLocaleContextValue | null>(null);
 
 export function SiteLocaleProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? '/';
-  const value = useMemo<SiteLocaleContextValue>(
-    () => ({ locale: localeFromPathname(pathname) }),
-    [pathname],
-  );
+  const value = useMemo<SiteLocaleContextValue>(() => ({ locale: localeFromPathname(pathname) }), [pathname]);
   return <SiteLocaleContext.Provider value={value}>{children}</SiteLocaleContext.Provider>;
 }
 

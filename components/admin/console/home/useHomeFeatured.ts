@@ -2,19 +2,9 @@
 
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { parseAdminJsonResponse } from '@/lib/admin-json';
 import { useToast } from '@/components/Toast';
 import type { HomeFeaturedItem, PostItem } from '../types';
-
-type ApiPayload<T> = { data?: T; error?: string; success?: boolean };
-
-async function parseResponse<T>(response: Response, requireData = true): Promise<T | null> {
-  const payload = (await response.json()) as ApiPayload<T>;
-  if (!response.ok) throw new Error(payload.error ?? '请求失败');
-  if (payload.data !== undefined) return payload.data;
-  if (payload.success === true) return null;
-  if (requireData) throw new Error('响应数据缺失');
-  return null;
-}
 
 type FeaturedResponseItem = HomeFeaturedItem & {
   isHidden: boolean;
@@ -37,13 +27,14 @@ export function useHomeFeatured() {
         queryKey: ['admin', 'home', 'featured'] as const,
         queryFn: async () =>
           (await fetch('/api/admin/home/featured').then((res) =>
-            parseResponse<FeaturedResponseItem[]>(res, true),
-          )) ?? [],
+            parseAdminJsonResponse<FeaturedResponseItem[]>(res, true),
+          )) ??
+          [],
       },
       {
         queryKey: ['admin', 'posts'] as const,
         queryFn: async () =>
-          (await fetch('/api/admin/posts').then((res) => parseResponse<PostItem[]>(res, true))) ?? [],
+          (await fetch('/api/admin/posts').then((res) => parseAdminJsonResponse<PostItem[]>(res, true))) ?? [],
       },
     ],
   });
@@ -86,13 +77,52 @@ export function useHomeFeatured() {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ homeFeatured: nextFeatured }),
-      }).then((res) => parseResponse<{ success: boolean }>(res, false));
+      }).then((res) => parseAdminJsonResponse<{ success: boolean }>(res, false));
     },
-    onSuccess: () => {
-      invalidate();
+    onMutate: async ({ id, featured: nextFeatured }) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'home', 'featured'] });
+      const prevFeatured = queryClient.getQueryData<FeaturedResponseItem[]>(['admin', 'home', 'featured']) ?? [];
+
+      if (!nextFeatured) {
+        queryClient.setQueryData(
+          ['admin', 'home', 'featured'],
+          prevFeatured.filter((r) => r.id !== id),
+        );
+        return { prevFeatured };
+      }
+
+      const posts = queryClient.getQueryData<PostItem[]>(['admin', 'posts']) ?? [];
+      const post = posts.find((p) => p.id === id);
+      if (!post) {
+        return { prevFeatured };
+      }
+
+      const maxOrder = prevFeatured.reduce((m, r) => Math.max(m, r.homeSortOrder ?? 0), 0);
+      const row: FeaturedResponseItem = {
+        id: post.id,
+        title: post.title,
+        types: post.types,
+        excerpt: post.excerpt,
+        coverUrl: post.coverUrl,
+        isHidden: post.isHidden,
+        homeFeatured: true,
+        homeSortOrder: maxOrder + 1,
+      };
+      queryClient.setQueryData(
+        ['admin', 'home', 'featured'],
+        [...prevFeatured, row].sort((a, b) => a.homeSortOrder - b.homeSortOrder),
+      );
+      return { prevFeatured };
     },
-    onError: (err) => {
+    onError: (err, _vars, context) => {
+      if (context?.prevFeatured) {
+        queryClient.setQueryData(['admin', 'home', 'featured'], context.prevFeatured);
+      }
       showToast(err instanceof Error ? err.message : '更新失败', 'error');
+    },
+    onSettled: () => {
+      invalidate();
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
     },
   });
 
@@ -102,7 +132,7 @@ export function useHomeFeatured() {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ orderedIds }),
-      }).then((res) => parseResponse<{ success: boolean }>(res, false));
+      }).then((res) => parseAdminJsonResponse<{ success: boolean }>(res, false));
     },
     onMutate: async (orderedIds) => {
       await queryClient.cancelQueries({ queryKey: ['admin', 'home', 'featured'] });
@@ -110,10 +140,7 @@ export function useHomeFeatured() {
       if (previous.length > 0) {
         const rank = new Map(orderedIds.map((id, idx) => [id, idx]));
         const next = [...previous]
-          .sort(
-            (a, b) =>
-              (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER),
-          )
+          .sort((a, b) => (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER))
           .map((row, idx) => ({ ...row, homeSortOrder: idx + 1 }));
         queryClient.setQueryData(['admin', 'home', 'featured'], next);
       }

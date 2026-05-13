@@ -66,9 +66,7 @@ function SortableFeaturedRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-stretch gap-2 rounded-md border bg-card ${
-        isDragging ? 'opacity-70 shadow-md' : ''
-      }`}
+      className={`flex items-stretch gap-2 rounded-md border bg-card ${isDragging ? 'opacity-70 shadow-md' : ''}`}
     >
       <button
         type="button"
@@ -87,9 +85,7 @@ function SortableFeaturedRow({
           </span>
           <span className="truncate">{item.title}</span>
         </p>
-        {item.excerpt ? (
-          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{item.excerpt}</p>
-        ) : null}
+        {item.excerpt ? <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{item.excerpt}</p> : null}
       </div>
       <button
         type="button"

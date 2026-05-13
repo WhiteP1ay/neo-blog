@@ -37,7 +37,10 @@ export function LoginForm() {
 
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         {error ? (
-          <p role="alert" className="border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          <p
+            role="alert"
+            className="border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300"
+          >
             {error}
           </p>
         ) : null}
@@ -72,18 +75,15 @@ export function LoginForm() {
           />
         </div>
 
-        <div className='flex justify-end'>
+        <div className="flex justify-end">
           <Button variant="outline" asChild>
             <Link href="/">返回首页</Link>
           </Button>
-          <Button className='ml-4' type="submit" disabled={loading}>
+          <Button className="ml-4" type="submit" disabled={loading}>
             {loading ? '登录中...' : '登录'}
           </Button>
         </div>
-
-
       </form>
-
     </section>
   );
 }

@@ -55,9 +55,7 @@ export function PostList({ categories, selectedTypeCode }: PostListProps) {
         })}
       </nav>
       {posts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {locale === 'en' ? 'No posts in this topic yet.' : '暂无内容'}
-        </p>
+        <p className="text-sm text-muted-foreground">{locale === 'en' ? 'No posts in this topic yet.' : '暂无内容'}</p>
       ) : (
         <ul className="space-y-2">
           {posts.map((post) => (

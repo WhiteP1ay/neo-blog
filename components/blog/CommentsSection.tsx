@@ -47,7 +47,6 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       return;
     }
 
-
     try {
       const result = await createComment({
         targetType: 'post',
@@ -59,13 +58,10 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
       });
 
       if (result.success) {
-
-
         setFormData({ author: '', email: '', content: '' });
         setReplyingTo(null);
         await loadComments();
       } else {
-
         showToast(`评论提交失败: ${result.error}`, 'error');
       }
     } catch (error) {
@@ -75,23 +71,19 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     }
   };
 
-  const handleReply = useCallback(
-    (commentId: number, author: string) => {
-
-      setReplyingTo(commentId);
-      setFormData((prev) => ({
-        ...prev,
-        content: `@${author} `,
-      }));
-      setTimeout(() => {
-        formRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }, 100);
-    },
-    [],
-  );
+  const handleReply = useCallback((commentId: number, author: string) => {
+    setReplyingTo(commentId);
+    setFormData((prev) => ({
+      ...prev,
+      content: `@${author} `,
+    }));
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }, 100);
+  }, []);
 
   if (isChecking) {
     return null;
@@ -176,4 +168,3 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
     </section>
   );
 }
-

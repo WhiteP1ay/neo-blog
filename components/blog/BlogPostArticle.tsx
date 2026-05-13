@@ -35,8 +35,7 @@ export async function BlogPostArticle({ post, locale }: BlogPostArticleProps) {
     dateModified: modifiedTime,
   });
 
-  const backLabel =
-    locale === 'en' ? 'Back to topics' : '返回文章列表';
+  const backLabel = locale === 'en' ? 'Back to topics' : '返回文章列表';
   const listHref = pathWithLocale('/blog', locale);
 
   const fallbackBanner =

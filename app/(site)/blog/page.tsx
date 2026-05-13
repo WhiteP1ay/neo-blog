@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { BlogListPage, blogListPageTitle } from '@/components/site/BlogListPage';
+import { BlogListPage } from '@/components/site/BlogListPage';
+import { generateBlogListMetadata } from '@/lib/app-pages/site-blog-pages';
 
 export const revalidate = 60;
 
@@ -8,18 +9,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const sp = await searchParams;
-  const title = await blogListPageTitle('zh', sp);
-  return {
-    title,
-    description: 'White Meta 博客 - 技术文章和编程分享',
-    keywords: ['博客', '技术文章', '编程', '开发'],
-    openGraph: {
-      title: 'White Meta 博客',
-      description: '技术文章和编程分享',
-      type: 'website',
-    },
-  };
+  return generateBlogListMetadata(searchParams, 'zh');
 }
 
 /**

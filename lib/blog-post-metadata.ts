@@ -6,10 +6,7 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
-export function buildBlogPostMetadata(
-  post: Post,
-  options: { locale: SiteLocale; postId: number },
-): Metadata {
+export function buildBlogPostMetadata(post: Post, options: { locale: SiteLocale; postId: number }): Metadata {
   const { locale, postId } = options;
   const hasEnBody = Boolean(post.contentEn?.trim());
   const headline =
@@ -19,11 +16,12 @@ export function buildBlogPostMetadata(
         ? post.title
         : post.title;
 
-  const bodyHtml =
-    locale === 'en' && hasEnBody ? (post.contentEn as string) : post.content;
+  const bodyHtml = locale === 'en' && hasEnBody ? (post.contentEn as string) : post.content;
   const textContent = stripHtml(bodyHtml);
   const description =
-    textContent.length > 150 ? `${textContent.substring(0, 150)}...` : textContent || (locale === 'en' ? 'Read more' : '阅读更多内容');
+    textContent.length > 150
+      ? `${textContent.substring(0, 150)}...`
+      : textContent || (locale === 'en' ? 'Read more' : '阅读更多内容');
 
   const publishedTime = post.createdAt ? new Date(post.createdAt).toISOString() : undefined;
   const modifiedTime = post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined;
@@ -34,10 +32,7 @@ export function buildBlogPostMetadata(
   return {
     title: headline,
     description,
-    keywords:
-      locale === 'en'
-        ? [headline, 'blog', 'technical writing']
-        : [headline, '博客', '技术文章'],
+    keywords: locale === 'en' ? [headline, 'blog', 'technical writing'] : [headline, '博客', '技术文章'],
     authors: [{ name: 'whitePlay' }],
     openGraph: {
       title: headline,

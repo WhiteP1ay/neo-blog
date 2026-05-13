@@ -1,10 +1,7 @@
 import { eq, inArray } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import * as schema from '@/server/db/schema';
-import {
-  postTypeAssignmentsTable,
-  postTypesTable,
-} from '@/server/db/schema';
+import type * as schema from '@/server/db/schema';
+import { postTypeAssignmentsTable, postTypesTable } from '@/server/db/schema';
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -20,29 +17,18 @@ export type PostTypeRow = {
 /**
  * 用新的 typeId 列表完全替换某篇文章的类型关联（幂等）。
  */
-export async function replacePostTypeAssignments(
-  db: Db,
-  postId: number,
-  typeIds: number[],
-): Promise<void> {
+export async function replacePostTypeAssignments(db: Db, postId: number, typeIds: number[]): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx
-      .delete(postTypeAssignmentsTable)
-      .where(eq(postTypeAssignmentsTable.postId, postId));
+    await tx.delete(postTypeAssignmentsTable).where(eq(postTypeAssignmentsTable.postId, postId));
     if (typeIds.length === 0) return;
-    await tx.insert(postTypeAssignmentsTable).values(
-      typeIds.map((typeId) => ({ postId, typeId })),
-    );
+    await tx.insert(postTypeAssignmentsTable).values(typeIds.map((typeId) => ({ postId, typeId })));
   });
 }
 
 /**
  * 批量查询：postId -> 该文关联的类型（按 sortOrder、id 排序）。
  */
-export async function loadTypesByPostIds(
-  db: Db,
-  postIds: number[],
-): Promise<Map<number, PostTypeRow[]>> {
+export async function loadTypesByPostIds(db: Db, postIds: number[]): Promise<Map<number, PostTypeRow[]>> {
   const map = new Map<number, PostTypeRow[]>();
   if (postIds.length === 0) return map;
 

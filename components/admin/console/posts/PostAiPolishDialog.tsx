@@ -117,7 +117,8 @@ export function PostAiPolishDialog({ post, open, onOpenChange }: PostAiPolishDia
               <span className="font-medium text-foreground">翻译为英文（独立字段）</span>
               <span className="mt-1 block text-muted-foreground">
                 写入 <code className="rounded bg-muted px-1">contentEn</code> /{' '}
-                <code className="rounded bg-muted px-1">titleEn</code>，不再拼在中文正文底部；再次执行会先剥离旧双语插入标记。
+                <code className="rounded bg-muted px-1">titleEn</code>
+                ，不再拼在中文正文底部；再次执行会先剥离旧双语插入标记。
               </span>
             </span>
           </label>

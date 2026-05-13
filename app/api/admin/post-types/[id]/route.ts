@@ -88,11 +88,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 
   try {
-    const updated = await db
-      .update(postTypesTable)
-      .set(patch)
-      .where(eq(postTypesTable.id, typeId))
-      .returning();
+    const updated = await db.update(postTypesTable).set(patch).where(eq(postTypesTable.id, typeId)).returning();
     if (!updated[0]) {
       return NextResponse.json({ error: '类型不存在' }, { status: 404 });
     }
@@ -122,7 +118,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: '仍有文章关联该类型，无法删除' }, { status: 400 });
   }
 
-  const deleted = await db.delete(postTypesTable).where(eq(postTypesTable.id, typeId)).returning({ id: postTypesTable.id });
+  const deleted = await db
+    .delete(postTypesTable)
+    .where(eq(postTypesTable.id, typeId))
+    .returning({ id: postTypesTable.id });
   if (!deleted[0]) {
     return NextResponse.json({ error: '类型不存在' }, { status: 404 });
   }

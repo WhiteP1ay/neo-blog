@@ -1,48 +1,20 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getPostById, getPosts } from '@/server/actions/posts';
-import { buildBlogPostMetadata } from '@/lib/blog-post-metadata';
+import {
+  generateBlogPostMetadata,
+  generateBlogPostStaticParams,
+  loadBlogPostForArticle,
+} from '@/lib/app-pages/site-blog-pages';
 import { BlogPostArticle } from '@/components/blog/BlogPostArticle';
 
-export async function generateStaticParams() {
-  const result = await getPosts();
-  const posts = result.success && result.data ? result.data : [];
-
-  return posts.map((post) => ({
-    id: post.id.toString(),
-  }));
-}
+export const generateStaticParams = generateBlogPostStaticParams;
 
 export const revalidate = 60;
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const postId = parseInt(id, 10);
-
-  if (Number.isNaN(postId)) {
-    return {};
-  }
-
-  const result = await getPostById(postId, false);
-  if (!result.success || !result.data) {
-    return {};
-  }
-
-  return buildBlogPostMetadata(result.data, { locale: 'zh', postId });
+export function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  return generateBlogPostMetadata(params, 'zh');
 }
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const postId = parseInt(id, 10);
-
-  if (Number.isNaN(postId)) {
-    notFound();
-  }
-
-  const result = await getPostById(postId, false);
-  if (!result.success || !result.data) {
-    notFound();
-  }
-
-  return <BlogPostArticle post={result.data} locale="zh" />;
+  const post = await loadBlogPostForArticle(params);
+  return <BlogPostArticle post={post} locale="zh" />;
 }

@@ -34,8 +34,7 @@ function tryGetSecretKeyBytes(): Uint8Array | null {
 }
 
 /** 登录失败时向用户展示的 JWT 密钥配置说明（密码已通过校验但无法签发 Cookie 时使用） */
-export const JWT_SECRET_SETUP_USER_MESSAGE =
-  '无法完成登录 setup error';
+export const JWT_SECRET_SETUP_USER_MESSAGE = '无法完成登录 setup error';
 
 export function isJwtSecretConfigurationError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('AUTH_JWT_SECRET');
@@ -131,9 +130,7 @@ export const getSession = cache(async (): Promise<AuthSession | null> => {
 });
 
 /** 管理类操作：已登录且 isAdmin */
-export type RequireAdminResult =
-  | { ok: true; session: AuthSession }
-  | { ok: false; error: string };
+export type RequireAdminResult = { ok: true; session: AuthSession } | { ok: false; error: string };
 
 export function requireAdminSession(session: AuthSession | null): RequireAdminResult {
   if (!session) {

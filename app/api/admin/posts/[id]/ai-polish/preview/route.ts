@@ -74,9 +74,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             translateAppendEn,
             signal: abortController.signal,
             onPhase: (step) => {
-              streamController.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: 'phase', step })}\n\n`),
-              );
+              streamController.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'phase', step })}\n\n`));
             },
           });
           streamController.enqueue(
@@ -105,9 +103,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             console.error('[ai-polish-preview stream]', e);
           }
           try {
-            streamController.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ type: 'error', message: msg })}\n\n`),
-            );
+            streamController.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: msg })}\n\n`));
           } catch {
             /* ignore */
           }

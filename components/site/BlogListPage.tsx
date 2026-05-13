@@ -9,15 +9,9 @@ import { PostList } from '@/app/(site)/blog/PostList';
 type SearchParamsInput = Record<string, string | string[] | undefined>;
 
 /**
- * 博客列表（按类型 query 筛选）；与 `(site)` 布局配合，不再包一层 SiteShell。
+ * 博客列表（按类型 query 筛选）；与 `(site)` 布局配合。
  */
-export async function BlogListPage({
-  locale,
-  searchParams,
-}: {
-  locale: SiteLocale;
-  searchParams: SearchParamsInput;
-}) {
+export async function BlogListPage({ locale, searchParams }: { locale: SiteLocale; searchParams: SearchParamsInput }) {
   const explorerLocale = locale === 'en' ? 'en' : 'zh';
   const result = await getHomeExplorerData(explorerLocale);
   if (!result.success || !result.data?.length) {
@@ -42,10 +36,7 @@ export async function BlogListPage({
   );
 }
 
-export async function blogListPageTitle(
-  locale: SiteLocale,
-  searchParams: SearchParamsInput,
-): Promise<string> {
+export async function blogListPageTitle(locale: SiteLocale, searchParams: SearchParamsInput): Promise<string> {
   const explorerLocale = locale === 'en' ? 'en' : 'zh';
   const result = await getHomeExplorerData(explorerLocale);
   if (!result.success || !result.data?.length) {

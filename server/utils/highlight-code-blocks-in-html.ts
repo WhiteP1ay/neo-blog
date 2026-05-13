@@ -3,8 +3,7 @@ import type { BundledLanguage } from 'shiki';
 import { shikiHighlighterReady } from '@/server/utils/shiki-highlighter';
 
 /** 与正文 prose 排版协调：not-prose 会丢掉 typography 的 pre 外边距，故用 my-* 显式留白 */
-const PRE_LAYOUT_CLASS =
-  'not-prose relative my-6 overflow-x-auto rounded-lg border border-border/60 sm:my-8';
+const PRE_LAYOUT_CLASS = 'not-prose relative my-6 overflow-x-auto rounded-lg border border-border/60 sm:my-8';
 
 /** marked 常用 language-xxx / TipTap 等可能用 lang-xxx */
 const LANG_CLASS_RE = /(?:^|\s)(?:language|lang)-([\w-+]+)/;

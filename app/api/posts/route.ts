@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
 import { postTypeAssignmentsTable, postTypesTable, postsTable } from '@/server/db/schema';
@@ -29,10 +29,7 @@ function summarizeTypes(rows: PostTypeRow[]) {
 
 async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
   if (ids.length === 0) return true;
-  const rows = await db
-    .select({ id: postTypesTable.id })
-    .from(postTypesTable)
-    .where(inArray(postTypesTable.id, ids));
+  const rows = await db.select({ id: postTypesTable.id }).from(postTypesTable).where(inArray(postTypesTable.id, ids));
   return rows.length === ids.length;
 }
 
@@ -120,10 +117,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {
@@ -199,11 +193,13 @@ export async function POST(request: Request) {
       .values({
         title,
         sortOrder:
-          ((await db
-            .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
-            .from(postsTable)
-            .orderBy(desc(postsTable.sortOrder))
-            .limit(1))[0]?.sortOrder ?? 0) + 1,
+          ((
+            await db
+              .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
+              .from(postsTable)
+              .orderBy(desc(postsTable.sortOrder))
+              .limit(1)
+          )[0]?.sortOrder ?? 0) + 1,
         isHidden,
         isPinned,
         content: htmlContent,

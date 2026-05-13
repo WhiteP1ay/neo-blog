@@ -16,9 +16,7 @@ function parsePositiveIntEnv(name: string, fallback: number): number {
 
   const parsedValue = Number.parseInt(rawValue, 10);
   if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
-    console.warn(
-      `⚠️ 环境变量 ${name}=${rawValue} 无效，已回退默认值 ${fallback}`,
-    );
+    console.warn(`⚠️ 环境变量 ${name}=${rawValue} 无效，已回退默认值 ${fallback}`);
     return fallback;
   }
   return parsedValue;
@@ -82,7 +80,7 @@ function printConnectionError(
       '3D000': '数据库不存在，请先创建数据库',
       '57P03': '数据库正在启动中，请稍后重试',
       '53300': '连接数已满，请降低连接池大小或使用 Supabase Pooler 连接串',
-      'XX000': '可能是 SSL 或网络中断问题，请检查 Supabase 连接串和 SSL 配置',
+      XX000: '可能是 SSL 或网络中断问题，请检查 Supabase 连接串和 SSL 配置',
     };
     if (errorMessages[err.code]) {
       console.error('   说明:', errorMessages[err.code]);
@@ -114,10 +112,7 @@ function createDatabasePool() {
   try {
     const maxConnections = parsePositiveIntEnv('DB_POOL_MAX', 5);
     const idleTimeoutMillis = parsePositiveIntEnv('DB_IDLE_TIMEOUT_MS', 30000);
-    const connectionTimeoutMillis = parsePositiveIntEnv(
-      'DB_CONNECT_TIMEOUT_MS',
-      10000,
-    );
+    const connectionTimeoutMillis = parsePositiveIntEnv('DB_CONNECT_TIMEOUT_MS', 10000);
     const ssl = resolveSslConfig();
 
     const pool = new Pool({

@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function EnAboutPage() {
   return (
-    <div className="retro-content max-w-prose" lang="en">
-      <AboutPageContent />
+    <div className="retro-content max-w-prose">
+      <AboutPageContent locale="en" />
     </div>
   );
 }

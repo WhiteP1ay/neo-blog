@@ -43,11 +43,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (typeof body.type === 'string') updatePayload.type = body.type;
   if (typeof body.isHidden === 'boolean') updatePayload.isHidden = body.isHidden;
 
-  const updated = await db
-    .update(photosTable)
-    .set(updatePayload)
-    .where(eq(photosTable.id, photoId))
-    .returning();
+  const updated = await db.update(photosTable).set(updatePayload).where(eq(photosTable.id, photoId)).returning();
 
   if (!updated[0]) {
     return NextResponse.json({ error: '照片不存在' }, { status: 404 });
@@ -67,14 +63,9 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     return NextResponse.json({ error: '无效照片ID' }, { status: 400 });
   }
 
-  await db
-    .delete(commentsTable)
-    .where(and(eq(commentsTable.targetType, 'photo'), eq(commentsTable.targetId, photoId)));
+  await db.delete(commentsTable).where(and(eq(commentsTable.targetType, 'photo'), eq(commentsTable.targetId, photoId)));
 
-  const deleted = await db
-    .delete(photosTable)
-    .where(eq(photosTable.id, photoId))
-    .returning({ id: photosTable.id });
+  const deleted = await db.delete(photosTable).where(eq(photosTable.id, photoId)).returning({ id: photosTable.id });
   if (!deleted[0]) {
     return NextResponse.json({ error: '照片不存在' }, { status: 404 });
   }

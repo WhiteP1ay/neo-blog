@@ -18,9 +18,7 @@ export function HomeFeaturedSection() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold">首页精选</h2>
-          <p className="text-xs text-muted-foreground">
-            首页将展示这里的前 {SOFT_LIMIT} 篇，按当前顺序排列。
-          </p>
+          <p className="text-xs text-muted-foreground">首页将展示这里的前 {SOFT_LIMIT} 篇，按当前顺序排列。</p>
         </div>
         <HomeFeaturedAddDialog candidates={candidates} onAdd={addFeatured} />
       </div>

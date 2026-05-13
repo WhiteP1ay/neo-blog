@@ -1,4 +1,4 @@
-import { asc, desc, eq } from 'drizzle-orm';
+import { asc, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
@@ -28,10 +28,7 @@ export async function GET() {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
 
-  const rows = await db
-    .select()
-    .from(postTypesTable)
-    .orderBy(asc(postTypesTable.sortOrder), asc(postTypesTable.id));
+  const rows = await db.select().from(postTypesTable).orderBy(asc(postTypesTable.sortOrder), asc(postTypesTable.id));
   return NextResponse.json({ data: rows });
 }
 

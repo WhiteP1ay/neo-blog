@@ -23,12 +23,7 @@ async function postInReorderScope(postId: number, typeId: number): Promise<boole
   const [row] = await db
     .select({ postId: postTypeAssignmentsTable.postId })
     .from(postTypeAssignmentsTable)
-    .where(
-      and(
-        eq(postTypeAssignmentsTable.postId, postId),
-        eq(postTypeAssignmentsTable.typeId, typeId),
-      ),
-    )
+    .where(and(eq(postTypeAssignmentsTable.postId, postId), eq(postTypeAssignmentsTable.typeId, typeId)))
     .limit(1);
   return row !== undefined;
 }

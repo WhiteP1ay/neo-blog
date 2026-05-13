@@ -2,8 +2,7 @@
 
 import { useEffect } from 'react';
 
-const BTN_CLASS =
-  'hljs-copy-button cursor-pointer pointer-events-auto absolute right-2 top-2 z-10 rounded-md';
+const BTN_CLASS = 'hljs-copy-button cursor-pointer pointer-events-auto absolute right-2 top-2 z-10 rounded-md';
 
 function attachCopyButton(pre: HTMLPreElement) {
   pre.querySelectorAll('.hljs-copy-button').forEach((n) => {

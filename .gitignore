@@ -48,5 +48,11 @@ next-env.d.ts
 # playwright-cli 本地控制台日志与 page 快照（勿提交）
 .playwright-cli/
 
+# Playwright Test（@playwright/test）
+/playwright-report/
+/test-results/
+/blob-report/
+/playwright/.auth/
+
 # 本地调试导出的页面快照（勿提交）
 /admin-home-after-add.yml

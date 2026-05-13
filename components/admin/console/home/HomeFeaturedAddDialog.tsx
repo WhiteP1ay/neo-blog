@@ -79,9 +79,7 @@ export function HomeFeaturedAddDialog({ candidates, onAdd }: HomeFeaturedAddDial
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.types.length > 0
-                        ? `类型：${item.types.map((t) => t.nameZh).join('、')}`
-                        : '未分类'}
+                      {item.types.length > 0 ? `类型：${item.types.map((t) => t.nameZh).join('、')}` : '未分类'}
                       {item.excerpt ? ` · ${item.excerpt}` : ''}
                     </p>
                   </div>

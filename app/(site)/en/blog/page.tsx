@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { BlogListPage, blogListPageTitle } from '@/components/site/BlogListPage';
+import { BlogListPage } from '@/components/site/BlogListPage';
+import { generateBlogListMetadata } from '@/lib/app-pages/site-blog-pages';
 
 export const revalidate = 60;
 
@@ -8,18 +9,7 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
-  const sp = await searchParams;
-  const title = await blogListPageTitle('en', sp);
-  return {
-    title,
-    description: 'White Meta — technical writing and programming notes',
-    keywords: ['blog', 'engineering'],
-    openGraph: {
-      title: 'White Meta Blog',
-      description: 'Technical writing and programming notes',
-      type: 'website',
-    },
-  };
+  return generateBlogListMetadata(searchParams, 'en');
 }
 
 export default async function EnBlogPage({

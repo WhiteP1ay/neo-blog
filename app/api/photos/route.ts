@@ -49,10 +49,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {

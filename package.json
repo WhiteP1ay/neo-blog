@@ -7,12 +7,13 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome lint --write",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "icons:pwa": "node scripts/gen-pwa-brand-icons.mjs",
     "db:seed-admin": "tsx scripts/seed-admin.ts",
     "db:backfill-h1": "tsx scripts/backfill-post-h1.ts",
     "db:init": "pnpm drizzle-kit push && pnpm db:seed-admin",
-    "db:migrate-bilingual": "tsx scripts/migrate-bilingual-post-columns.ts",
-    "db:clean-posts": "tsx scripts/clean-posts-table.ts"
+    "db:strip-title-prefixes": "tsx scripts/strip-post-title-type-prefixes.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -73,6 +74,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.4",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4",
     "@types/ali-oss": "^6.23.3",
     "@types/node": "^20",

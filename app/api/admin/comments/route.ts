@@ -52,11 +52,12 @@ export async function GET(request: Request) {
     }
   }
 
-  const whereExpr = targetType && targetId
-    ? and(eq(commentsTable.targetType, targetType), eq(commentsTable.targetId, targetId))
-    : targetType
-      ? eq(commentsTable.targetType, targetType)
-      : undefined;
+  const whereExpr =
+    targetType && targetId
+      ? and(eq(commentsTable.targetType, targetType), eq(commentsTable.targetId, targetId))
+      : targetType
+        ? eq(commentsTable.targetType, targetType)
+        : undefined;
 
   const comments = whereExpr
     ? await db.select().from(commentsTable).where(whereExpr).orderBy(asc(commentsTable.id))

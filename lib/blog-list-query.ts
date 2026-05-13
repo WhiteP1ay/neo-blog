@@ -34,9 +34,7 @@ export function defaultBlogListPath(categories: HomeExplorerCategory[]): string 
   return publicBlogListPath(first.typeCode);
 }
 
-export type BlogListSearchResolved =
-  | { kind: 'redirect'; path: string }
-  | { kind: 'ok'; selectedTypeCode: string };
+export type BlogListSearchResolved = { kind: 'redirect'; path: string } | { kind: 'ok'; selectedTypeCode: string };
 
 /**
  * 根据 URL 查询串解析当前应展示的分类；无效组合时返回应重定向到的列表路径。

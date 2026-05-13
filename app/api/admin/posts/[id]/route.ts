@@ -36,10 +36,7 @@ function summarizeTypes(rows: PostTypeRow[]) {
 
 async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
   if (ids.length === 0) return true;
-  const rows = await db
-    .select({ id: postTypesTable.id })
-    .from(postTypesTable)
-    .where(inArray(postTypesTable.id, ids));
+  const rows = await db.select({ id: postTypesTable.id }).from(postTypesTable).where(inArray(postTypesTable.id, ids));
   return rows.length === ids.length;
 }
 

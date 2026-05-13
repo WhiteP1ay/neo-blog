@@ -10,4 +10,3 @@ type SiteThemeSwitcherProps = {
 export function SiteThemeSwitcher({ className }: SiteThemeSwitcherProps) {
   return <ThemeSwitcher className={className} />;
 }
-

@@ -23,13 +23,8 @@ export function SiteHeaderLangSwitch() {
   const enHref = pathWithLocale(basePath, 'en');
 
   return (
-    <div
-      className="flex items-center gap-1.5"
-      aria-label={locale === 'en' ? 'Site language' : '站点语言'}
-    >
-      <span className="hidden text-xs text-muted-foreground sm:inline">
-        {locale === 'en' ? 'Language' : '语言'}
-      </span>
+    <div className="flex items-center gap-1.5" aria-label={locale === 'en' ? 'Site language' : '站点语言'}>
+      <span className="hidden text-xs text-muted-foreground sm:inline">{locale === 'en' ? 'Language' : '语言'}</span>
       <div className="flex items-center gap-0.5 rounded-md border border-border/80 bg-muted/30 p-0.5">
         <Link
           href={zhHref}

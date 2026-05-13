@@ -37,9 +37,17 @@ export function Toaster({ ...props }: ToasterProps) {
       duration={3800}
       closeButton
       icons={{
-        success: <CheckCircle2 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden strokeWidth={2} />,
+        success: (
+          <CheckCircle2
+            className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+            aria-hidden
+            strokeWidth={2}
+          />
+        ),
         info: <Info className="text-primary size-4 shrink-0" aria-hidden strokeWidth={2} />,
-        warning: <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden strokeWidth={2} />,
+        warning: (
+          <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden strokeWidth={2} />
+        ),
         error: <AlertCircle className="text-destructive size-4 shrink-0" aria-hidden strokeWidth={2} />,
       }}
       toastOptions={{

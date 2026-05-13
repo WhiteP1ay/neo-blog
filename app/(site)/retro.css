@@ -24,13 +24,13 @@
 }
 
 .retro-badge-row span::before {
-  content: '[';
+  content: "[";
   margin-right: 0.2rem;
   color: color-mix(in oklab, var(--foreground) 45%, transparent);
 }
 
 .retro-badge-row span::after {
-  content: ']';
+  content: "]";
   margin-left: 0.2rem;
   color: color-mix(in oklab, var(--foreground) 45%, transparent);
 }
@@ -42,7 +42,7 @@
 }
 
 .site-hr::after {
-  content: '---*---';
+  content: "---*---";
   display: block;
   margin-top: 8px;
   text-align: center;

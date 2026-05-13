@@ -1,12 +1,13 @@
 /**
  * 博文表清洗：拆旧版内嵌英文 → 补中文摘要 → 全量中文润色（DeepSeek）→ 补英文正文/标题/摘要。
  *
- * 用法：
- *   pnpm db:clean-posts
- *   pnpm db:clean-posts --dry-run
- *   pnpm db:clean-posts --limit 5
- *   pnpm db:clean-posts --ids 1,2,44
- *   pnpm db:clean-posts --delay-ms 800
+ * 【高风险 / 非日常】会改库并调用外部 API。已移出 `package.json` 快捷命令，避免误触。
+ * 若确需执行：
+ *   pnpm tsx scripts/archive/clean-posts-table.ts
+ *   pnpm tsx scripts/archive/clean-posts-table.ts --dry-run
+ *   pnpm tsx scripts/archive/clean-posts-table.ts --limit 5
+ *   pnpm tsx scripts/archive/clean-posts-table.ts --ids 1,2,44
+ *   pnpm tsx scripts/archive/clean-posts-table.ts --delay-ms 800
  *
  * 依赖：DATABASE_URL、DEEPSEEK_API_KEY（非 dry-run 时必填）。
  */

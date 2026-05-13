@@ -51,4 +51,3 @@ export function derivePostMetadata(input: {
   const excerpt = plain.slice(0, excerptLength);
   return { coverUrl, excerpt };
 }
-

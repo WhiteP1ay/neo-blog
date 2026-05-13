@@ -3,41 +3,29 @@
 import { DndContext, type DragEndEvent, closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { parseAdminJsonResponse, requireAdminOkResponse } from '@/lib/admin-json';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { PostTypeAdminRow } from '../types';
 
 type PostTypesSectionProps = {
   types: PostTypeAdminRow[];
-  onInvalidate: () => void;
 };
 
-async function parseJson<T>(res: Response): Promise<T> {
-  const payload = (await res.json()) as { data?: T; error?: string; success?: boolean };
-  if (!res.ok) throw new Error(payload.error ?? '请求失败');
-  if (payload.data === undefined) throw new Error('响应数据缺失');
-  return payload.data;
-}
-
-async function requireOk(res: Response): Promise<void> {
-  const payload = (await res.json()) as { error?: string; success?: boolean };
-  if (!res.ok) throw new Error(payload.error ?? '请求失败');
+function invalidatePostTypesAndPosts(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: ['admin', 'post-types'] });
+  void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
 }
 
 /**
  * 类型管理：拖拽排序、行内编辑、创建、删除（仍有文章关联时禁止删）。
  */
-export function PostTypesSection({ types, onInvalidate }: PostTypesSectionProps) {
+export function PostTypesSection({ types }: PostTypesSectionProps) {
+  const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [createOpen, setCreateOpen] = useState(false);
   const [newCode, setNewCode] = useState('');
@@ -45,17 +33,68 @@ export function PostTypesSection({ types, onInvalidate }: PostTypesSectionProps)
   const [newNameEn, setNewNameEn] = useState('');
   const [creating, setCreating] = useState(false);
 
-  const handleReorder = useCallback(
-    async (orderedIds: number[]) => {
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedIds: number[]) => {
       await fetch('/api/admin/post-types/reorder', {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ orderedIds }),
-      }).then((r) => requireOk(r));
-      onInvalidate();
+      }).then((r) => requireAdminOkResponse(r));
     },
-    [onInvalidate],
-  );
+    onMutate: async (orderedIds) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'post-types'] });
+      const previous = queryClient.getQueryData<PostTypeAdminRow[]>(['admin', 'post-types']) ?? [];
+      if (previous.length > 0) {
+        const rank = new Map(orderedIds.map((id, idx) => [id, idx]));
+        const next = [...previous]
+          .sort((a, b) => (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER))
+          .map((row, idx) => ({ ...row, sortOrder: idx + 1 }));
+        queryClient.setQueryData(['admin', 'post-types'], next);
+      }
+      return { previous };
+    },
+    onError: (err, _ids, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['admin', 'post-types'], context.previous);
+      }
+      showToast(err instanceof Error ? err.message : '排序失败', 'error');
+    },
+    onSettled: () => {
+      invalidatePostTypesAndPosts(queryClient);
+    },
+  });
+
+  const deleteTypeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await fetch(`/api/admin/post-types/${id}`, { method: 'DELETE' }).then((r) => {
+        if (!r.ok) {
+          return r.json().then((j) => Promise.reject(new Error((j as { error?: string }).error ?? '删除失败')));
+        }
+        return r.json();
+      });
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['admin', 'post-types'] });
+      const previous = queryClient.getQueryData<PostTypeAdminRow[]>(['admin', 'post-types']) ?? [];
+      queryClient.setQueryData(
+        ['admin', 'post-types'],
+        previous.filter((t) => t.id !== id),
+      );
+      return { previous };
+    },
+    onError: (err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['admin', 'post-types'], context.previous);
+      }
+      showToast(err instanceof Error ? err.message : '删除失败', 'error');
+    },
+    onSuccess: () => {
+      showToast('已删除', 'success');
+    },
+    onSettled: () => {
+      invalidatePostTypesAndPosts(queryClient);
+    },
+  });
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -65,10 +104,10 @@ export function PostTypesSection({ types, onInvalidate }: PostTypesSectionProps)
     if (oldIndex < 0 || newIndex < 0) return;
     const moved = arrayMove(types, oldIndex, newIndex);
     try {
-      await handleReorder(moved.map((t) => t.id));
+      await reorderMutation.mutateAsync(moved.map((t) => t.id));
       showToast('已更新排序', 'success');
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : '排序失败', 'error');
+    } catch {
+      /* onError 已 toast */
     }
   };
 
@@ -86,13 +125,13 @@ export function PostTypesSection({ types, onInvalidate }: PostTypesSectionProps)
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ code, nameZh, nameEn }),
-      }).then((r) => parseJson(r));
+      }).then((r) => parseAdminJsonResponse<PostTypeAdminRow>(r, true));
       showToast('已创建类型', 'success');
       setCreateOpen(false);
       setNewCode('');
       setNewNameZh('');
       setNewNameEn('');
-      onInvalidate();
+      invalidatePostTypesAndPosts(queryClient);
     } catch (e) {
       showToast(e instanceof Error ? e.message : '创建失败', 'error');
     } finally {
@@ -170,7 +209,13 @@ export function PostTypesSection({ types, onInvalidate }: PostTypesSectionProps)
           <SortableContext items={types.map((t) => t.id)} strategy={verticalListSortingStrategy}>
             <ul className="space-y-2">
               {types.map((row) => (
-                <SortableTypeRow key={row.id} row={row} onInvalidate={onInvalidate} showToast={showToast} />
+                <SortableTypeRow
+                  key={row.id}
+                  row={row}
+                  onInvalidate={() => invalidatePostTypesAndPosts(queryClient)}
+                  showToast={showToast}
+                  onDeleteType={(id) => deleteTypeMutation.mutateAsync(id)}
+                />
               ))}
             </ul>
           </SortableContext>
@@ -184,10 +229,12 @@ function SortableTypeRow({
   row,
   onInvalidate,
   showToast,
+  onDeleteType,
 }: {
   row: PostTypeAdminRow;
   onInvalidate: () => void;
   showToast: (msg: string, variant: 'success' | 'error') => void;
+  onDeleteType: (id: number) => Promise<unknown>;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -216,7 +263,7 @@ function SortableTypeRow({
           nameEn: nameEn.trim(),
           suppressLinkedPostsGlobally: suppress,
         }),
-      }).then((r) => parseJson(r));
+      }).then((r) => parseAdminJsonResponse<PostTypeAdminRow>(r, true));
       showToast('已保存', 'success');
       onInvalidate();
     } catch (e) {
@@ -229,14 +276,9 @@ function SortableTypeRow({
   const remove = async () => {
     if (!window.confirm(`确定删除类型「${row.code}」？`)) return;
     try {
-      await fetch(`/api/admin/post-types/${row.id}`, { method: 'DELETE' }).then((r) => {
-        if (!r.ok) return r.json().then((j) => Promise.reject(new Error((j as { error?: string }).error)));
-        return r.json();
-      });
-      showToast('已删除', 'success');
-      onInvalidate();
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : '删除失败', 'error');
+      await onDeleteType(row.id);
+    } catch {
+      /* deleteTypeMutation onError */
     }
   };
 

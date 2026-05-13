@@ -2,7 +2,8 @@
  * 将旧版「中文正文底部拼接英文」迁移为 posts.contentEn / titleEn / excerptEn，
  * 并用 stripTranslationArtifacts 清洗中文 content。
  *
- * 用法：pnpm db:migrate-bilingual
+ * 【一次性迁移】假定已在目标库执行完毕；勿在新库盲目重跑。
+ * 若确需重放：`pnpm tsx scripts/archive/migrate-bilingual-post-columns.ts`
  */
 import 'dotenv/config';
 import { eq, sql } from 'drizzle-orm';

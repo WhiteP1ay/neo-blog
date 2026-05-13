@@ -16,9 +16,7 @@ export function CommentItem({ comment, onReply }: CommentItemProps) {
         <div className="min-w-0 flex-1">
           <span className="text-foreground text-sm font-semibold sm:text-base">{comment.author}</span>
           {comment.email ? (
-            <span className="text-muted-foreground ml-1 break-all text-xs sm:ml-2 sm:text-sm">
-              ({comment.email})
-            </span>
+            <span className="text-muted-foreground ml-1 break-all text-xs sm:ml-2 sm:text-sm">({comment.email})</span>
           ) : null}
         </div>
         <span className="text-muted-foreground shrink-0 whitespace-nowrap text-xs sm:text-sm">
@@ -42,4 +40,3 @@ export function CommentItem({ comment, onReply }: CommentItemProps) {
     </div>
   );
 }
-

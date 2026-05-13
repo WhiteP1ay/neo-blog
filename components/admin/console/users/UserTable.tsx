@@ -8,8 +8,7 @@ type UserTableProps = {
 };
 
 /** 表格与移动端卡片共用的删除按钮样式 */
-const deleteBtnClass =
-  'min-h-10 touch-manipulation rounded border px-3 py-2 text-sm sm:min-h-0 sm:px-2 sm:py-1';
+const deleteBtnClass = 'min-h-10 touch-manipulation rounded border px-3 py-2 text-sm sm:min-h-0 sm:px-2 sm:py-1';
 
 export function UserTable({ users, deleteUser }: UserTableProps) {
   return (

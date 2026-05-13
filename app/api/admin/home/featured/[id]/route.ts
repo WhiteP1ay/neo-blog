@@ -21,10 +21,7 @@ function parseId(raw: string): number | null {
  * 切换某文章是否上首页精选。
  * 加入时把 `homeSortOrder` 置为当前最大值 + 1，确保排到末尾；移除时不改顺序值。
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin();
   if (!auth.ok) {
     return NextResponse.json({ error: '无权限' }, { status: 403 });

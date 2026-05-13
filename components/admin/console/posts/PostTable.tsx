@@ -193,9 +193,7 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
       </div>
 
       {!isFiltering ? (
-        <p className="text-xs text-muted-foreground">
-          仅支持分类内拖拽排序，请先点击上方某个分类后再调整顺序。
-        </p>
+        <p className="text-xs text-muted-foreground">仅支持分类内拖拽排序，请先点击上方某个分类后再调整顺序。</p>
       ) : null}
       {isFiltering && visiblePosts.length > 1 ? (
         <p className="text-xs text-muted-foreground md:hidden">调整排序请在平板或电脑上使用左侧拖拽手柄。</p>

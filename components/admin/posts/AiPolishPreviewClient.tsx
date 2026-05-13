@@ -296,7 +296,7 @@ export function AiPolishPreviewClient({ postId }: { postId: number }) {
     } finally {
       setApplying(false);
     }
-  }, [applying, draftAfterHtml, draftAfterHtmlEn, postId, showToast, state.status]);
+  }, [applying, draftAfterHtml, draftAfterHtmlEn, postId, showToast, state.status, state.status === 'ready' ? state.payload.afterHtmlEn : null]);
 
   const onResizePointerDown = useCallback(
     (e: React.PointerEvent<HTMLElement>) => {

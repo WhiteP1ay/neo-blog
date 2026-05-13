@@ -31,10 +31,7 @@ function summarizeTypes(rows: PostTypeRow[]) {
 
 async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
   if (ids.length === 0) return true;
-  const rows = await db
-    .select({ id: postTypesTable.id })
-    .from(postTypesTable)
-    .where(inArray(postTypesTable.id, ids));
+  const rows = await db.select({ id: postTypesTable.id }).from(postTypesTable).where(inArray(postTypesTable.id, ids));
   return rows.length === ids.length;
 }
 
@@ -71,10 +68,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {
@@ -112,14 +106,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updatePayload.title = title;
     }
 
-    const nextMarkdown =
-      typeof body.content === 'string' ? body.content : current.markdownContent ?? null;
-    const nextHtmlRaw =
-      typeof body.content === 'string' ? markdownToHTML(body.content) : current.content;
+    const nextMarkdown = typeof body.content === 'string' ? body.content : (current.markdownContent ?? null);
+    const nextHtmlRaw = typeof body.content === 'string' ? markdownToHTML(body.content) : current.content;
     const nextHtml =
-      typeof body.content === 'string'
-        ? stripLeadingDecorationsFromFirstH1InHtml(nextHtmlRaw)
-        : nextHtmlRaw;
+      typeof body.content === 'string' ? stripLeadingDecorationsFromFirstH1InHtml(nextHtmlRaw) : nextHtmlRaw;
     if (typeof body.content === 'string') {
       if (!body.content.trim()) {
         return NextResponse.json({ error: 'content 不能为空' }, { status: 400 });
@@ -159,11 +149,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: '未提供可更新字段' }, { status: 400 });
     }
 
-    const updated = await db
-      .update(postsTable)
-      .set(updatePayload)
-      .where(eq(postsTable.id, postId))
-      .returning();
+    const updated = await db.update(postsTable).set(updatePayload).where(eq(postsTable.id, postId)).returning();
 
     if (!updated[0]) {
       return NextResponse.json({ error: '文章不存在' }, { status: 404 });
@@ -195,10 +181,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {
@@ -208,10 +191,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       return NextResponse.json({ error: '无效的文章 ID' }, { status: 400 });
     }
 
-    const deleted = await db
-      .delete(postsTable)
-      .where(eq(postsTable.id, postId))
-      .returning({ id: postsTable.id });
+    const deleted = await db.delete(postsTable).where(eq(postsTable.id, postId)).returning({ id: postsTable.id });
     if (!deleted[0]) {
       return NextResponse.json({ error: '文章不存在' }, { status: 404 });
     }

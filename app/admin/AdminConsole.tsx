@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { CommentsSection } from '@/components/admin/console/CommentsSection';
 import { HomeFeaturedSection } from '@/components/admin/console/HomeFeaturedSection';
 import { PhotosSection } from '@/components/admin/console/PhotosSection';
@@ -24,13 +23,7 @@ export function AdminConsole({
   /** 照片列表按类型筛选（null=全部）；与 `/admin/photos/type/...` 同步 */
   photosSelectedType?: string | null;
 }) {
-  const queryClient = useQueryClient();
   const consoleState = useAdminConsole(initialTab);
-
-  const invalidatePostTypes = () => {
-    void queryClient.invalidateQueries({ queryKey: ['admin', 'post-types'] });
-    void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
-  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
@@ -46,15 +39,17 @@ export function AdminConsole({
           selectedType={postsSelectedType}
         />
       ) : null}
-      {consoleState.activeTab === 'post-types' ? (
-        <PostTypesSection types={consoleState.postTypes} onInvalidate={invalidatePostTypes} />
-      ) : null}
+      {consoleState.activeTab === 'post-types' ? <PostTypesSection types={consoleState.postTypes} /> : null}
       {consoleState.activeTab === 'home' ? <HomeFeaturedSection /> : null}
       {consoleState.activeTab === 'photos' ? (
         <PhotosSection photos={consoleState.photos} form={consoleState.photoForm} selectedType={photosSelectedType} />
       ) : null}
-      {consoleState.activeTab === 'users' ? <UsersSection users={consoleState.users} form={consoleState.userForm} /> : null}
-      {consoleState.activeTab === 'comments' ? <CommentsSection comments={consoleState.comments} form={consoleState.commentForm} /> : null}
+      {consoleState.activeTab === 'users' ? (
+        <UsersSection users={consoleState.users} form={consoleState.userForm} />
+      ) : null}
+      {consoleState.activeTab === 'comments' ? (
+        <CommentsSection comments={consoleState.comments} form={consoleState.commentForm} />
+      ) : null}
     </div>
   );
 }

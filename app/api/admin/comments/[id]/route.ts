@@ -39,11 +39,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   if (typeof body.email === 'string') updatePayload.email = body.email.trim();
   if (typeof body.content === 'string') updatePayload.content = body.content.trim();
 
-  const updated = await db
-    .update(commentsTable)
-    .set(updatePayload)
-    .where(eq(commentsTable.id, commentId))
-    .returning();
+  const updated = await db.update(commentsTable).set(updatePayload).where(eq(commentsTable.id, commentId)).returning();
   if (!updated[0]) {
     return NextResponse.json({ error: '评论不存在' }, { status: 404 });
   }

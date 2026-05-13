@@ -45,10 +45,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {
@@ -87,11 +84,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: '未提供可更新字段' }, { status: 400 });
     }
 
-    const updated = await db
-      .update(photosTable)
-      .set(updatePayload)
-      .where(eq(photosTable.id, photoId))
-      .returning();
+    const updated = await db.update(photosTable).set(updatePayload).where(eq(photosTable.id, photoId)).returning();
     if (!updated[0]) {
       return NextResponse.json({ error: 'photo 不存在' }, { status: 404 });
     }
@@ -106,10 +99,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const gate = requireAdminSession(await getSession());
   if (!gate.ok) {
-    return NextResponse.json(
-      { error: gate.error },
-      { status: gate.error === '未登录' ? 401 : 403 },
-    );
+    return NextResponse.json({ error: gate.error }, { status: gate.error === '未登录' ? 401 : 403 });
   }
 
   try {
@@ -119,10 +109,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       return NextResponse.json({ error: '无效 photo ID' }, { status: 400 });
     }
 
-    const deleted = await db
-      .delete(photosTable)
-      .where(eq(photosTable.id, photoId))
-      .returning({ id: photosTable.id });
+    const deleted = await db.delete(photosTable).where(eq(photosTable.id, photoId)).returning({ id: photosTable.id });
     if (!deleted[0]) {
       return NextResponse.json({ error: 'photo 不存在' }, { status: 404 });
     }

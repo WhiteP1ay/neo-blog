@@ -5,7 +5,10 @@ import { postsTable } from '@/server/db/schema';
 import { MAX_AI_POLISH_HTML_CHARS } from '@/server/utils/post-ai-polish-compute';
 import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
-import { extractFirstH1PlainText, stripLeadingDecorationsFromFirstH1InHtml } from '@/server/utils/post-ai-translation-html';
+import {
+  extractFirstH1PlainText,
+  stripLeadingDecorationsFromFirstH1InHtml,
+} from '@/server/utils/post-ai-translation-html';
 import { requireAdmin } from '@/server/utils/require-admin';
 import { loadTypesByPostIds, type PostTypeRow } from '@/server/utils/post-type-assignments';
 

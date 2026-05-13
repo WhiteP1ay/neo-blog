@@ -30,13 +30,32 @@ export function CommentCreate({ open, onClose, form }: CommentCreateProps) {
           </button>
         </div>
         <div className="space-y-2">
-          <select className="rounded border px-2 py-1" value={form.commentTargetType} onChange={(e) => form.setCommentTargetType(e.target.value as 'post' | 'photo')}>
+          <select
+            className="rounded border px-2 py-1"
+            value={form.commentTargetType}
+            onChange={(e) => form.setCommentTargetType(e.target.value as 'post' | 'photo')}
+          >
             <option value="post">post</option>
             <option value="photo">photo</option>
           </select>
-          <input className="w-full rounded border px-2 py-1" placeholder="targetId" value={form.commentTargetId} onChange={(e) => form.setCommentTargetId(e.target.value)} />
-          <input className="w-full rounded border px-2 py-1" placeholder="作者" value={form.commentAuthor} onChange={(e) => form.setCommentAuthor(e.target.value)} />
-          <textarea className="h-20 w-full rounded border px-2 py-1" placeholder="评论内容" value={form.commentContent} onChange={(e) => form.setCommentContent(e.target.value)} />
+          <input
+            className="w-full rounded border px-2 py-1"
+            placeholder="targetId"
+            value={form.commentTargetId}
+            onChange={(e) => form.setCommentTargetId(e.target.value)}
+          />
+          <input
+            className="w-full rounded border px-2 py-1"
+            placeholder="作者"
+            value={form.commentAuthor}
+            onChange={(e) => form.setCommentAuthor(e.target.value)}
+          />
+          <textarea
+            className="h-20 w-full rounded border px-2 py-1"
+            placeholder="评论内容"
+            value={form.commentContent}
+            onChange={(e) => form.setCommentContent(e.target.value)}
+          />
           <button
             className="rounded border px-3 py-1"
             type="button"

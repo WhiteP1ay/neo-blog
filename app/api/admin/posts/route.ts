@@ -8,11 +8,7 @@ import { stripLeadingDecorationsFromFirstH1InHtml } from '@/server/utils/post-ai
 import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
 import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
-import {
-  loadTypesByPostIds,
-  replacePostTypeAssignments,
-  type PostTypeRow,
-} from '@/server/utils/post-type-assignments';
+import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
 
 type CreatePostBody = {
   title?: unknown;
@@ -37,10 +33,7 @@ function summarizeTypes(rows: PostTypeRow[]) {
 
 async function assertTypeIdsValid(ids: number[]): Promise<boolean> {
   if (ids.length === 0) return true;
-  const rows = await db
-    .select({ id: postTypesTable.id })
-    .from(postTypesTable)
-    .where(inArray(postTypesTable.id, ids));
+  const rows = await db.select({ id: postTypesTable.id }).from(postTypesTable).where(inArray(postTypesTable.id, ids));
   return rows.length === ids.length;
 }
 
@@ -163,11 +156,13 @@ export async function POST(request: Request) {
       excerpt: finalExcerpt,
       coverUrl: finalCoverUrl,
       sortOrder:
-        ((await db
-          .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
-          .from(postsTable)
-          .orderBy(asc(postsTable.sortOrder))
-          .limit(1))[0]?.sortOrder ?? 1) - 1,
+        ((
+          await db
+            .select({ id: postsTable.id, sortOrder: postsTable.sortOrder })
+            .from(postsTable)
+            .orderBy(asc(postsTable.sortOrder))
+            .limit(1)
+        )[0]?.sortOrder ?? 1) - 1,
       isHidden,
       createdAt: new Date(),
       updatedAt: new Date(),

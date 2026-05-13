@@ -14,17 +14,21 @@ import { relations } from 'drizzle-orm';
 /**
  * 用户表
  */
-export const usersTable = pgTable('users', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar({ length: 255 }).notNull(),
-  password: varchar({ length: 255 }).notNull(),
-  isAdmin: boolean().notNull().default(false),
-  isVip: boolean().notNull().default(false),
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-}, (table) => ({
-  nameUniqueIndex: uniqueIndex('users_name_unique_idx').on(table.name),
-}));
+export const usersTable = pgTable(
+  'users',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: varchar({ length: 255 }).notNull(),
+    password: varchar({ length: 255 }).notNull(),
+    isAdmin: boolean().notNull().default(false),
+    isVip: boolean().notNull().default(false),
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => ({
+    nameUniqueIndex: uniqueIndex('users_name_unique_idx').on(table.name),
+  }),
+);
 
 /**
  * 文章表
@@ -109,21 +113,25 @@ export const photosTable = pgTable('photos', {
 /**
  * 评论表
  */
-export const commentsTable = pgTable('comments', {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  targetType: varchar({ length: 16 }).notNull(), // post | photo
-  targetId: integer().notNull(),
-  parentId: integer(), // 回复的父评论ID，null表示顶级评论
-  author: varchar({ length: 255 }).notNull(), // 评论者昵称
-  email: varchar({ length: 255 }), // 邮箱（可选）
-  content: text().notNull(),
-  ip: varchar({ length: 45 }), // 存储IP地址
-  createdAt: timestamp().notNull().defaultNow(),
-  updatedAt: timestamp().notNull().defaultNow(),
-}, (table) => ({
-  targetIndex: index('comments_target_idx').on(table.targetType, table.targetId),
-  parentIndex: index('comments_parent_idx').on(table.parentId),
-}));
+export const commentsTable = pgTable(
+  'comments',
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    targetType: varchar({ length: 16 }).notNull(), // post | photo
+    targetId: integer().notNull(),
+    parentId: integer(), // 回复的父评论ID，null表示顶级评论
+    author: varchar({ length: 255 }).notNull(), // 评论者昵称
+    email: varchar({ length: 255 }), // 邮箱（可选）
+    content: text().notNull(),
+    ip: varchar({ length: 45 }), // 存储IP地址
+    createdAt: timestamp().notNull().defaultNow(),
+    updatedAt: timestamp().notNull().defaultNow(),
+  },
+  (table) => ({
+    targetIndex: index('comments_target_idx').on(table.targetType, table.targetId),
+    parentIndex: index('comments_parent_idx').on(table.parentId),
+  }),
+);
 
 export const postsRelations = relations(postsTable, ({ many }) => ({
   typeAssignments: many(postTypeAssignmentsTable),
@@ -133,16 +141,13 @@ export const postTypesRelations = relations(postTypesTable, ({ many }) => ({
   assignments: many(postTypeAssignmentsTable),
 }));
 
-export const postTypeAssignmentsRelations = relations(
-  postTypeAssignmentsTable,
-  ({ one }) => ({
-    post: one(postsTable, {
-      fields: [postTypeAssignmentsTable.postId],
-      references: [postsTable.id],
-    }),
-    type: one(postTypesTable, {
-      fields: [postTypeAssignmentsTable.typeId],
-      references: [postTypesTable.id],
-    }),
+export const postTypeAssignmentsRelations = relations(postTypeAssignmentsTable, ({ one }) => ({
+  post: one(postsTable, {
+    fields: [postTypeAssignmentsTable.postId],
+    references: [postsTable.id],
   }),
-);
+  type: one(postTypesTable, {
+    fields: [postTypeAssignmentsTable.typeId],
+    references: [postTypesTable.id],
+  }),
+}));

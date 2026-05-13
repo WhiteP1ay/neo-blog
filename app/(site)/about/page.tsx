@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="retro-content max-w-prose">
-      <AboutPageContent />
+      <AboutPageContent locale="zh" />
     </div>
   );
 }
