@@ -5,7 +5,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAdminJsonResponse, requireAdminOkResponse } from '@/lib/admin-json';
 import { useToast } from '@/components/Toast';
 import { Button } from '@/components/ui/button';
@@ -243,6 +243,16 @@ function SortableTypeRow({
   const [code, setCode] = useState(row.code);
   const [suppress, setSuppress] = useState(row.suppressLinkedPostsGlobally);
   const [saving, setSaving] = useState(false);
+  const saveInFlightRef = useRef(false);
+
+  const isDirty = useMemo(
+    () =>
+      code.trim() !== row.code.trim() ||
+      nameZh.trim() !== row.nameZh.trim() ||
+      nameEn.trim() !== row.nameEn.trim() ||
+      suppress !== row.suppressLinkedPostsGlobally,
+    [code, nameZh, nameEn, suppress, row.code, row.nameZh, row.nameEn, row.suppressLinkedPostsGlobally],
+  );
 
   useEffect(() => {
     setNameZh(row.nameZh);
@@ -251,16 +261,31 @@ function SortableTypeRow({
     setSuppress(row.suppressLinkedPostsGlobally);
   }, [row.nameZh, row.nameEn, row.code, row.suppressLinkedPostsGlobally]);
 
-  const save = async () => {
+  const saveIfDirty = useCallback(async () => {
+    if (saveInFlightRef.current) return;
+    const codeT = code.trim();
+    const nameZhT = nameZh.trim();
+    const nameEnT = nameEn.trim();
+    const dirty =
+      codeT !== row.code.trim() ||
+      nameZhT !== row.nameZh.trim() ||
+      nameEnT !== row.nameEn.trim() ||
+      suppress !== row.suppressLinkedPostsGlobally;
+    if (!dirty) return;
+    if (!codeT || !nameZhT || !nameEnT) {
+      showToast('类型码与中英文名不能为空', 'error');
+      return;
+    }
+    saveInFlightRef.current = true;
     setSaving(true);
     try {
       await fetch(`/api/admin/post-types/${row.id}`, {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          code: code.trim(),
-          nameZh: nameZh.trim(),
-          nameEn: nameEn.trim(),
+          code: codeT,
+          nameZh: nameZhT,
+          nameEn: nameEnT,
           suppressLinkedPostsGlobally: suppress,
         }),
       }).then((r) => parseAdminJsonResponse<PostTypeAdminRow>(r, true));
@@ -269,9 +294,31 @@ function SortableTypeRow({
     } catch (e) {
       showToast(e instanceof Error ? e.message : '保存失败', 'error');
     } finally {
+      saveInFlightRef.current = false;
       setSaving(false);
     }
-  };
+  }, [
+    code,
+    nameZh,
+    nameEn,
+    suppress,
+    row.code,
+    row.nameZh,
+    row.nameEn,
+    row.suppressLinkedPostsGlobally,
+    row.id,
+    showToast,
+    onInvalidate,
+  ]);
+
+  const handleRowBlur = useCallback(
+    (e: React.FocusEvent<HTMLLIElement>) => {
+      const next = e.relatedTarget;
+      if (next instanceof Node && e.currentTarget.contains(next)) return;
+      void saveIfDirty();
+    },
+    [saveIfDirty],
+  );
 
   const remove = async () => {
     if (!window.confirm(`确定删除类型「${row.code}」？`)) return;
@@ -282,17 +329,29 @@ function SortableTypeRow({
     }
   };
 
+  const rowDirtyClass =
+    isDirty && !isDragging
+      ? 'border-amber-500/50 bg-amber-500/[0.06] ring-1 ring-amber-500/35 dark:bg-amber-500/10'
+      : '';
+
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex flex-col gap-2 rounded-md border bg-card p-3 sm:flex-row sm:items-end ${isDragging ? 'opacity-70 shadow-md' : ''}`}
+      tabIndex={-1}
+      aria-busy={saving}
+      onBlur={handleRowBlur}
+      className={`flex flex-col gap-2 rounded-md border bg-card p-3 sm:flex-row sm:items-end ${isDragging ? 'opacity-70 shadow-md' : ''} ${rowDirtyClass}`}
     >
+      <span className="sr-only" aria-live="polite">
+        {isDirty ? '本行有未保存的修改，移出焦点将自动保存。' : ''}
+      </span>
       <button
         type="button"
         {...attributes}
         {...listeners}
-        className="cursor-grab touch-none self-start rounded border bg-muted/40 px-2 py-2 text-muted-foreground active:cursor-grabbing sm:self-end"
+        disabled={saving}
+        className="cursor-grab touch-none self-start rounded border bg-muted/40 px-2 py-2 text-muted-foreground active:cursor-grabbing enabled:hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-40 sm:self-end"
         aria-label="拖拽排序"
         title="拖拽排序"
       >
@@ -303,41 +362,56 @@ function SortableTypeRow({
           <span className="text-xs font-medium text-muted-foreground">类型码</span>
           <input
             value={code}
+            readOnly={saving}
             onChange={(e) => setCode(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none read-only:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <div className="space-y-1">
           <span className="text-xs font-medium text-muted-foreground">中文名</span>
           <input
             value={nameZh}
+            readOnly={saving}
             onChange={(e) => setNameZh(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none read-only:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <div className="space-y-1">
           <span className="text-xs font-medium text-muted-foreground">英文名</span>
           <input
             value={nameEn}
+            readOnly={saving}
             onChange={(e) => setNameEn(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none read-only:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-3 sm:pb-0.5">
+        {isDirty ? <span className="text-xs font-medium text-amber-700 dark:text-amber-400">未保存</span> : null}
         <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
             className="h-4 w-4 rounded border border-input"
             checked={suppress}
+            disabled={saving}
             onChange={(e) => setSuppress(e.target.checked)}
           />
           全站隐藏关联文章
         </label>
-        <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => void save()}>
-          {saving ? '保存中…' : '保存'}
-        </Button>
-        <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => void remove()}>
+        {isDirty || saving ? (
+          <Button type="button" size="sm" variant="secondary" disabled={saving} onClick={() => void saveIfDirty()}>
+            {saving ? '保存中…' : '保存'}
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          className="text-destructive"
+          disabled={saving}
+          aria-label="删除类型"
+          onClick={() => void remove()}
+        >
           <Trash2 className="h-4 w-4" aria-hidden />
         </Button>
       </div>

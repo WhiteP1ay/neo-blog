@@ -107,4 +107,47 @@ test.describe('管理后台', () => {
     expect(res?.ok()).toBeTruthy();
     await expect(page.getByRole('heading', { name: '类型管理' })).toBeVisible();
   });
+
+  test('类型管理：失焦自动保存', async ({ page }) => {
+    const res = await page.goto('/admin/post-types');
+    expect(res?.ok()).toBeTruthy();
+    const slug = `${Date.now()}`;
+    const code = `e2e-blur-${slug}`;
+    const nameZh = `E2E中文${slug}`;
+    const nameEn = `E2E EN ${slug}`;
+
+    await page.getByRole('button', { name: '新建类型' }).click();
+    await page.locator('#pt-code').fill(code);
+    await page.locator('#pt-nz').fill(nameZh);
+    await page.locator('#pt-ne').fill(nameEn);
+    const createWait = page.waitForResponse(
+      (r) =>
+        r.request().method() === 'POST' &&
+        r.url().includes('/api/admin/post-types') &&
+        !r.url().includes('reorder') &&
+        r.ok(),
+    );
+    await page.getByRole('button', { name: '创建' }).click();
+    await createWait;
+
+    const section = page.locator('section').filter({ has: page.getByRole('heading', { name: '类型管理' }) });
+    const row = section.locator('ul > li').last();
+    await expect(row.locator('input').first()).toHaveValue(code, { timeout: 15_000 });
+
+    const nameZhInput = row.locator('input').nth(1);
+    await nameZhInput.fill(`${nameZh}-edited`);
+
+    const putWait = page.waitForResponse(
+      (r) => r.request().method() === 'PUT' && /\/api\/admin\/post-types\/\d+$/.test(r.url()) && r.ok(),
+    );
+    await page.getByRole('heading', { name: '类型管理' }).click();
+    await putWait;
+
+    page.once('dialog', (d) => d.accept());
+    const deleteWait = page.waitForResponse(
+      (r) => r.request().method() === 'DELETE' && /\/api\/admin\/post-types\/\d+$/.test(r.url()) && r.ok(),
+    );
+    await row.getByRole('button', { name: '删除类型' }).click();
+    await deleteWait;
+  });
 });
