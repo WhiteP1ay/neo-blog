@@ -13,20 +13,39 @@ test.describe('C 端前台', () => {
     await expect(page.locator('main')).toBeVisible();
   });
 
-  test('关于页（中文）', async ({ page }) => {
+  test('关于页（中文）：可访问且展示公众号二维码', async ({ page, request }) => {
     const res = await page.goto('/about');
     expect(res?.ok()).toBeTruthy();
     await expect(page.getByRole('heading', { name: '关于本站' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '微信公众号' })).toBeVisible();
+
+    const qr = page.getByRole('img', { name: '微信公众号二维码，使用微信扫一扫关注' });
+    await expect(qr).toBeVisible();
+    await expect(qr).toHaveAttribute('src', /wxqr/i);
+
+    const asset = await request.get('/wxqr.jpg');
+    expect(asset.ok()).toBeTruthy();
+    expect(asset.headers()['content-type'] ?? '').toMatch(/jpeg|jpe|octet-stream/i);
   });
 
-  test('英文首页与关于', async ({ page }) => {
-    let res = await page.goto('/en');
+  test('英文首页可访问', async ({ page }) => {
+    const res = await page.goto('/en');
     expect(res?.ok()).toBeTruthy();
     await expect(page.locator('main')).toBeVisible();
+  });
 
-    res = await page.goto('/en/about');
+  test('关于页（英文）：可访问且展示公众号二维码', async ({ page, request }) => {
+    const res = await page.goto('/en/about');
     expect(res?.ok()).toBeTruthy();
     await expect(page.getByRole('heading', { name: 'About this site' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'WeChat official account' })).toBeVisible();
+
+    const qr = page.getByRole('img', { name: 'WeChat public account QR code — scan to follow' });
+    await expect(qr).toBeVisible();
+    await expect(qr).toHaveAttribute('src', /wxqr/i);
+
+    const asset = await request.get('/wxqr.jpg');
+    expect(asset.ok()).toBeTruthy();
   });
 
   test('英文博客列表', async ({ page }) => {
