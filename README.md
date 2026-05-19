@@ -10,6 +10,7 @@
 - 🎨 **极简设计** - 清爽简洁的界面，专注于内容展示
 - 🔐 **后台管理** - 附带有文章管理和数据统计后台
 - 📱 **响应式设计** - 适配桌面和移动设备
+- 🔍 **中文全文搜索** - 基于 PostgreSQL zhparser 分词检索
 
 ## 📦 安装
 
@@ -76,10 +77,18 @@ npm run dev
 
 ### 使用 Docker Compose（推荐）
 
-项目包含 `compose.yml` 文件，可以快速启动数据库和管理工具：
+项目包含 `compose.yml` 文件，可以快速启动数据库和管理工具。
+
+数据库镜像内置 **zhparser** 中文分词（见 `docker/postgres/`），用于文章全文搜索。
 
 ```bash
-docker compose up -d
+docker compose up -d --build
+```
+
+首次启用搜索迁移后，为已有文章建立索引：
+
+```bash
+pnpm db:reindex-search
 ```
 
 ### 构建镜像
@@ -163,6 +172,12 @@ docker run -d -p 3000:3000 \
 - 支持下载 Markdown
 - 修改内容仅支持重新上传
 - 文章的评论可以管理
+
+### 文章搜索
+
+- 首页搜索框或访问 `/search?q=关键词`
+- API：`GET /api/search?q=关键词`
+- 生产环境需使用带 zhparser 的 Postgres；若使用私有部署仓库 `base-config`，见 [docs/base-config.md](./docs/base-config.md)
 
 ### 访问统计
 

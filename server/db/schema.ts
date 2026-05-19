@@ -1,4 +1,18 @@
-import { integer, pgTable, timestamp, varchar, text, boolean } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+  boolean,
+  customType,
+} from "drizzle-orm/pg-core";
+
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 /**
  * 用户表
@@ -20,6 +34,8 @@ export const postsTable = pgTable("posts", {
   content: text().notNull(), // 存储解析后的HTML
   markdownContent: text(), // 存储原始Markdown（可选，用于下载）
   isPinned: boolean().notNull().default(false), // 是否置顶
+  plainBody: text(), // 检索用纯文本（由 markdown 提取）
+  searchVector: tsvector(), // zhparser 全文检索向量
   createdAt: timestamp(), // 创建时间（可为空）
   updatedAt: timestamp(), // 修改时间（可为空）
 });

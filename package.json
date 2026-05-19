@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:reindex-search": "tsx scripts/reindex-search.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
