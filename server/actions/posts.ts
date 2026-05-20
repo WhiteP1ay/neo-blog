@@ -3,7 +3,7 @@
 import { cache } from 'react';
 import { db } from '@/server/db/db';
 import { postTypeAssignmentsTable, postTypesTable, postsTable } from '@/server/db/schema';
-import { and, asc, desc, eq, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ne, sql } from 'drizzle-orm';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { highlightCodeBlocksInHtml } from '@/server/utils/highlight-code-blocks-in-html';
 import { markdownToHTML } from '@/server/utils/markdown';
@@ -14,6 +14,19 @@ import type { ActionResult, ActionVoidResult } from '@/server/types/action-resul
 import type { HomeExplorerCategory, HomeFeaturedPost, HomePostPreview } from '@/server/types/explorer';
 import type { Post } from '@/server/types/models';
 import type { SiteLocale } from '@/lib/site-locale';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
+
+export type SearchPostResult = {
+  id: number;
+  title: string;
+  isPinned: boolean;
+  createdAt: Date | null;
+  snippet: string | null;
+  rank: number;
+};
+
+const MAX_SEARCH_QUERY_LENGTH = 100;
+const DEFAULT_SEARCH_LIMIT = 20;
 
 /**
  * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
@@ -224,6 +237,73 @@ export async function getPostById(id: number, highlightCode = false): Promise<Ac
 }
 
 /**
+ * Server Action: 中文全文搜索（zhparser，仅公开文章）
+ */
+export async function searchPosts(
+  query: string,
+  options?: { limit?: number; offset?: number },
+): Promise<ActionResult<SearchPostResult[]>> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return actionOk([]);
+  }
+  if (trimmed.length > MAX_SEARCH_QUERY_LENGTH) {
+    return actionErr('搜索关键词过长');
+  }
+
+  const limit = Math.min(options?.limit ?? DEFAULT_SEARCH_LIMIT, 50);
+  const offset = Math.max(options?.offset ?? 0, 0);
+
+  try {
+    const result = await db.execute<{
+      id: number;
+      title: string;
+      isPinned: boolean;
+      createdAt: Date | null;
+      snippet: string | null;
+      rank: number;
+    }>(sql`
+      SELECT
+        p.id,
+        p.title,
+        p."isPinned",
+        p."createdAt",
+        ts_rank(p."searchVector", query) AS rank,
+        ts_headline(
+          'chinese',
+          COALESCE(p."plainBody", ''),
+          query,
+          'MaxWords=60, MinWords=10, StartSel=<mark>, StopSel=</mark>'
+        ) AS snippet
+      FROM ${postsTable} p,
+           plainto_tsquery('chinese', ${trimmed}) query
+      WHERE p."searchVector" @@ query
+        AND p."isHidden" = false
+      ORDER BY p."isPinned" DESC, rank DESC, p."createdAt" DESC NULLS LAST
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+
+    const rows = result.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      isPinned: row.isPinned,
+      createdAt: row.createdAt,
+      snippet: row.snippet,
+      rank: Number(row.rank),
+    }));
+
+    return actionOk(rows);
+  } catch (error) {
+    console.error('搜索文章失败:', error);
+    const message =
+      error instanceof Error && error.message.includes('zhparser')
+        ? '数据库未启用 zhparser 扩展，请使用带 zhparser 的 Postgres 镜像'
+        : '搜索失败';
+    return actionErr(message);
+  }
+}
+
+/**
  * Server Action: 创建文章
  */
 export async function createPost(data: {
@@ -241,6 +321,7 @@ export async function createPost(data: {
       markdownContent: data.markdownContent ?? null,
       content: data.content,
     });
+    const searchIndex = buildPostSearchIndexFields(data.title, data.markdownContent);
     const result = await db
       .insert(postsTable)
       .values({
@@ -260,6 +341,8 @@ export async function createPost(data: {
         markdownContent: data.markdownContent || null,
         coverUrl: metadata.coverUrl,
         excerpt: metadata.excerpt,
+        plainBody: searchIndex.plainBody,
+        searchVector: searchIndex.searchVector,
       })
       .returning();
     return actionOk(result[0]);
@@ -310,6 +393,8 @@ export async function updatePost(
       markdownContent?: string | null;
       coverUrl?: string | null;
       excerpt?: string;
+      plainBody?: string;
+      searchVector?: ReturnType<typeof buildPostSearchIndexFields>['searchVector'];
       isPinned?: boolean;
       createdAt?: Date | null;
       updatedAt?: Date | null;
@@ -330,6 +415,15 @@ export async function updatePost(
       updateData.updatedAt = data.updatedAt;
     } else if (data.title !== undefined || data.content !== undefined || data.isPinned !== undefined) {
       updateData.updatedAt = new Date();
+    }
+
+    if (data.title !== undefined || data.markdownContent !== undefined) {
+      const title = data.title ?? existing.title;
+      const markdown =
+        data.markdownContent !== undefined ? data.markdownContent : existing.markdownContent;
+      const searchIndex = buildPostSearchIndexFields(title, markdown);
+      updateData.plainBody = searchIndex.plainBody;
+      updateData.searchVector = searchIndex.searchVector;
     }
 
     const result = await db.update(postsTable).set(updateData).where(eq(postsTable.id, id)).returning();

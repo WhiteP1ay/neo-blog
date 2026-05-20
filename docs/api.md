@@ -10,6 +10,41 @@
 
 ---
 
+## 0. 公开搜索
+
+### 0.1 搜索文章（全文检索，zhparser）
+
+- **Method**: `GET`
+- **Path**: `/api/search`
+- **Query**:
+  - `q`（必填）：搜索关键词，最长 100 字符
+  - `limit`（可选）：返回条数，默认 20，最大 50
+  - `offset`（可选）：偏移，默认 0
+
+- **Success (200)**:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "文章标题",
+      "isPinned": false,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "snippet": "…<mark>关键词</mark>…",
+      "rank": 0.12
+    }
+  ]
+}
+```
+
+- **Errors**:
+  - `400`: `{ "error": "缺少参数 q" }` / `{ "error": "搜索关键词过长" }` / zhparser 未启用时的提示
+
+- **说明**: 仅返回 `isHidden=false` 的公开文章；数据库需安装 zhparser 并执行迁移 `0005_post_search_zhparser`。
+
+---
+
 ## 1. 认证接口
 
 ### 1.1 登录

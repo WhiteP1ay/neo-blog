@@ -7,6 +7,7 @@ import { markdownToHTML } from '@/server/utils/markdown';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
 import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
 
 type CreatePostBody = {
   title?: unknown;
@@ -188,6 +189,7 @@ export async function POST(request: Request) {
       content: htmlContent,
     });
 
+    const searchIndex = buildPostSearchIndexFields(title, markdownContent);
     const inserted = await db
       .insert(postsTable)
       .values({
@@ -206,6 +208,8 @@ export async function POST(request: Request) {
         markdownContent,
         coverUrl: inputCoverUrl || metadata.coverUrl,
         excerpt: inputExcerpt || metadata.excerpt,
+        plainBody: searchIndex.plainBody,
+        searchVector: searchIndex.searchVector,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

@@ -1,4 +1,4 @@
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, type SQL } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '@/server/db/db';
 import { postTypesTable, postsTable } from '@/server/db/schema';
@@ -9,6 +9,7 @@ import { derivePostMetadata } from '@/server/utils/post-metadata';
 import { getSession, requireAdminSession } from '@/server/utils/auth';
 import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
 import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
 
 type UpdatePostBody = {
   title?: unknown;
@@ -94,7 +95,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: '文章不存在' }, { status: 404 });
     }
 
-    const updatePayload: Partial<typeof postsTable.$inferInsert> = {
+    const updatePayload: Omit<Partial<typeof postsTable.$inferInsert>, 'searchVector'> & {
+      searchVector?: SQL;
+    } = {
       updatedAt: new Date(),
     };
 
@@ -141,6 +144,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
     if (body.excerpt === undefined) {
       updatePayload.excerpt = metadata.excerpt;
+    }
+
+    if (typeof body.title === 'string' || typeof body.content === 'string') {
+      const title = updatePayload.title ?? current.title;
+      const searchIndex = buildPostSearchIndexFields(title, nextMarkdown);
+      updatePayload.plainBody = searchIndex.plainBody;
+      updatePayload.searchVector = searchIndex.searchVector;
     }
 
     const willUpdateAssignments = typeIdsParsed !== 'omit';

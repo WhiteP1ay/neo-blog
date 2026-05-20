@@ -11,6 +11,7 @@ import {
 import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
 import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
 import { requireAdmin } from '@/server/utils/require-admin';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
 
 type UpdatePostBody = {
   title?: unknown;
@@ -169,6 +170,23 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (!hasManualCover) {
       updatePayload.coverUrl = metadata.coverUrl;
     }
+  }
+
+  if (typeof body.title === 'string' || hasContentUpdate || hasMarkdownUpdate) {
+    const existing = await db.query.postsTable.findFirst({
+      where: (posts, { eq: eqFn }) => eqFn(posts.id, postId),
+    });
+    if (!existing) {
+      return NextResponse.json({ error: '博文不存在' }, { status: 404 });
+    }
+    const title =
+      typeof body.title === 'string' ? (updatePayload.title as string) : existing.title;
+    const markdown = hasMarkdownUpdate
+      ? (body.markdownContent as string)
+      : existing.markdownContent;
+    const searchIndex = buildPostSearchIndexFields(title, markdown);
+    updatePayload.plainBody = searchIndex.plainBody;
+    updatePayload.searchVector = searchIndex.searchVector;
   }
 
   // returning 仅回元字段，避免把刚保存的整段 HTML 再回传前端浪费一次 RTT。

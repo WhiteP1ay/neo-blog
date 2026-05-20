@@ -1,5 +1,6 @@
 import {
   boolean,
+  customType,
   index,
   integer,
   pgTable,
@@ -10,6 +11,12 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
+
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 /**
  * 用户表
@@ -51,6 +58,8 @@ export const postsTable = pgTable('posts', {
   isPinned: boolean().notNull().default(false), // 是否置顶
   homeFeatured: boolean().notNull().default(false), // 是否上首页精选
   homeSortOrder: integer().notNull().default(0), // 首页精选内顺序（升序）
+  plainBody: text(), // 检索用纯文本（由 markdown 提取）
+  searchVector: tsvector(), // zhparser 全文检索向量
   createdAt: timestamp(), // 创建时间（可为空）
   updatedAt: timestamp(), // 修改时间（可为空）
 });

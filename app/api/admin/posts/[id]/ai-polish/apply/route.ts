@@ -10,6 +10,7 @@ import {
   stripLeadingDecorationsFromFirstH1InHtml,
 } from '@/server/utils/post-ai-translation-html';
 import { requireAdmin } from '@/server/utils/require-admin';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
 import { loadTypesByPostIds, type PostTypeRow } from '@/server/utils/post-type-assignments';
 
 function summarizeTypes(rows: PostTypeRow[]) {
@@ -131,7 +132,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     updateValues.titleEn = nextTitleEn;
   }
 
-  const updated = await db.update(postsTable).set(updateValues).where(eq(postsTable.id, postId)).returning({
+  const searchIndex = buildPostSearchIndexFields(nextTitle, post.markdownContent);
+  const updated = await db
+    .update(postsTable)
+    .set({
+      ...updateValues,
+      plainBody: searchIndex.plainBody,
+      searchVector: searchIndex.searchVector,
+    })
+    .where(eq(postsTable.id, postId))
+    .returning({
     id: postsTable.id,
     title: postsTable.title,
     titleEn: postsTable.titleEn,

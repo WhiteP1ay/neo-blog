@@ -4,6 +4,7 @@ import { DocContainer } from './DocContainer';
 import { SiteHeaderAuthNav } from './SiteHeaderAuthNav';
 import { SiteHeaderLangSwitch } from './SiteHeaderLangSwitch';
 import { SiteLogoLink } from './SiteLogoLink';
+import { SiteHeaderSearchLink } from './SiteHeaderSearchLink';
 
 const navLinkClass =
   'cursor-pointer rounded-md px-2 py-1 text-sm text-muted-foreground motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background';
@@ -24,6 +25,7 @@ export function SiteHeader() {
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 lg:pt-0.5">
             <nav aria-label="主导航" className="flex flex-wrap items-center gap-1">
               <SiteHeaderAuthNav navLinkClass={navLinkClass} navButtonClass={navButtonClass} />
+              <SiteHeaderSearchLink className={navLinkClass} />
               <Link href="/admin" className={navLinkClass}>
                 Admin
               </Link>

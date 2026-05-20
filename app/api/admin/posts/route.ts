@@ -9,6 +9,7 @@ import { stripLeadingTypeLikePrefixes } from '@/lib/strip-post-title-prefixes';
 import { derivePostMetadata } from '@/server/utils/post-metadata';
 import { parseTypeIdsField } from '@/server/utils/parse-type-ids';
 import { loadTypesByPostIds, replacePostTypeAssignments, type PostTypeRow } from '@/server/utils/post-type-assignments';
+import { buildPostSearchIndexFields } from '@/server/utils/post-search-index';
 
 type CreatePostBody = {
   title?: unknown;
@@ -147,6 +148,7 @@ export async function POST(request: Request) {
   const finalExcerpt = mode === 'zen' ? inputExcerpt : inputExcerpt || metadata.excerpt;
   const finalCoverUrl = mode === 'zen' ? inputCoverUrl : inputCoverUrl || metadata.coverUrl;
 
+  const searchIndex = buildPostSearchIndexFields(title, markdownContent);
   const created = await db
     .insert(postsTable)
     .values({
@@ -155,6 +157,8 @@ export async function POST(request: Request) {
       markdownContent: markdownContent || null,
       excerpt: finalExcerpt,
       coverUrl: finalCoverUrl,
+      plainBody: searchIndex.plainBody,
+      searchVector: searchIndex.searchVector,
       sortOrder:
         ((
           await db
