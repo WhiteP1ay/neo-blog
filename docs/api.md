@@ -41,7 +41,7 @@
 - **Errors**:
   - `400`: `{ "error": "缺少参数 q" }` / `{ "error": "搜索关键词过长" }` / zhparser 未启用时的提示
 
-- **说明**: 仅返回 `isHidden=false` 的公开文章；数据库需安装 zhparser 并执行迁移 `0005_post_search_zhparser`。
+- **说明**: 仅返回 `isHidden=false` 的公开文章；数据库需安装 zhparser 并执行迁移 `0005_post_search_zhparser`。前台站点通过顶部放大镜或 **⌘K / Ctrl+K** 打开的搜索弹层请求此接口（不再提供独立 `/search` 页面）。
 
 ---
 

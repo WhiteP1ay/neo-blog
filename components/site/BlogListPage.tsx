@@ -4,7 +4,6 @@ import { pathWithLocale } from '@/lib/site-locale';
 import { resolveBlogListSearch } from '@/lib/blog-list-query';
 import { getHomeExplorerData } from '@/server/actions/posts';
 import { SiteWelcome } from '@/components/site/SiteWelcome';
-import { SearchForm } from '@/components/site/SearchForm';
 import { PostList } from '@/app/(site)/blog/PostList';
 
 type SearchParamsInput = Record<string, string | string[] | undefined>;
@@ -31,7 +30,6 @@ export async function BlogListPage({ locale, searchParams }: { locale: SiteLocal
     <>
       <div className="mb-6 sm:mb-8 space-y-6">
         <SiteWelcome />
-        <SearchForm locale={locale} />
       </div>
       <PostList categories={categories} selectedTypeCode={resolved.selectedTypeCode} />
     </>

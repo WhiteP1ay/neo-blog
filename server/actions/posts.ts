@@ -28,6 +28,28 @@ export type SearchPostResult = {
 const MAX_SEARCH_QUERY_LENGTH = 100;
 const DEFAULT_SEARCH_LIMIT = 20;
 
+/** 从 Drizzle 包装的异常中取出底层 node-postgres 错误（若有） */
+function unwrapPgCause(err: unknown): { code?: string; message: string } | null {
+  let cur: unknown = err;
+  for (let i = 0; i < 8 && cur != null; i++) {
+    if (typeof cur === 'object' && cur !== null && 'code' in cur && 'message' in cur) {
+      const o = cur as { code?: unknown; message?: unknown };
+      if (typeof o.message === 'string') {
+        return {
+          code: typeof o.code === 'string' ? o.code : undefined,
+          message: o.message,
+        };
+      }
+    }
+    if (typeof cur === 'object' && cur !== null && 'cause' in cur) {
+      cur = (cur as { cause: unknown }).cause;
+      continue;
+    }
+    break;
+  }
+  return null;
+}
+
 /**
  * Server Action: 获取所有文章列表（置顶文章在前，然后按创建时间倒序）
  */
@@ -268,16 +290,16 @@ export async function searchPosts(
         p.title,
         p."isPinned",
         p."createdAt",
-        ts_rank(p."searchVector", query) AS rank,
+        ts_rank(p."searchVector", search_q.tsq) AS rank,
         ts_headline(
           'chinese',
           COALESCE(p."plainBody", ''),
-          query,
+          search_q.tsq,
           'MaxWords=60, MinWords=10, StartSel=<mark>, StopSel=</mark>'
         ) AS snippet
       FROM ${postsTable} p,
-           plainto_tsquery('chinese', ${trimmed}) query
-      WHERE p."searchVector" @@ query
+           plainto_tsquery('chinese', ${trimmed}) AS search_q(tsq)
+      WHERE p."searchVector" @@ search_q.tsq
         AND p."isHidden" = false
       ORDER BY p."isPinned" DESC, rank DESC, p."createdAt" DESC NULLS LAST
       LIMIT ${limit} OFFSET ${offset}
@@ -295,8 +317,14 @@ export async function searchPosts(
     return actionOk(rows);
   } catch (error) {
     console.error('搜索文章失败:', error);
-    const message =
-      error instanceof Error && error.message.includes('zhparser')
+    const pg = unwrapPgCause(error);
+    const msg = pg?.message ?? '';
+    const isMissingChineseConfig =
+      msg.includes('文本搜寻配置') && msg.includes('chinese') ||
+      /text search configuration.*chinese.*does not exist/i.test(msg);
+    const message = isMissingChineseConfig
+      ? '数据库未配置全文检索 chinese（需 zhparser 与迁移，参见 docs/base-config.md）'
+      : msg.includes('zhparser') || msg.includes('extension "zhparser"')
         ? '数据库未启用 zhparser 扩展，请使用带 zhparser 的 Postgres 镜像'
         : '搜索失败';
     return actionErr(message);
