@@ -2,6 +2,7 @@
 
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { BlogPostNavLink } from '@/components/blog/BlogPostNavLink';
 import { AdminPostEditEntry } from '@/components/admin/AdminPostEditEntry';
 import { Button } from '@/components/ui/button';
 import { useIsAdmin } from '@/hooks/admin/useIsAdmin';
@@ -74,9 +75,10 @@ export function HomeFeatured({ posts }: HomeFeaturedProps) {
             key={post.id}
             className="group relative overflow-hidden rounded-xl border border-border bg-card motion-safe:transition-colors motion-safe:duration-200 hover:border-foreground/30 hover:bg-accent/40"
           >
-            <Link
+            <BlogPostNavLink
               href={pathWithLocale(`/blog/${post.id}`, locale)}
               className="block px-4 py-4 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background sm:px-5 sm:py-5 cursor-pointer"
+              innerClassName="block"
             >
               <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground sm:text-lg">
                 {featuredListTitle(post, locale)}
@@ -91,7 +93,7 @@ export function HomeFeatured({ posts }: HomeFeaturedProps) {
                   {formatDate(post.createdAt)}
                 </time>
               ) : null}
-            </Link>
+            </BlogPostNavLink>
             {isAdmin ? (
               <div className="pointer-events-none absolute right-3 top-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
                 <div className="pointer-events-auto">

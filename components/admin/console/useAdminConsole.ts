@@ -1,12 +1,12 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAdminConsoleMutations } from '@/hooks/admin/useAdminConsoleMutations';
 import { useAdminConsoleQueries } from '@/hooks/admin/useAdminConsoleQueries';
 import { parseAdminJsonResponse } from '@/lib/admin-json';
 import { useToast } from '@/components/Toast';
-import type { PostDetail, PostItem, TabKey } from './types';
+import type { PostItem, TabKey } from './types';
 
 /**
  * 将 AdminConsole 的数据获取、表单状态、增删改操作集中到 hook。
@@ -21,17 +21,6 @@ export function useAdminConsole(initialTab: TabKey) {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
 
-  const [editingPostId, setEditingPostId] = useState<number | null>(null);
-  const [editPostContent, setEditPostContent] = useState('');
-  const [editPostContentEn, setEditPostContentEn] = useState('');
-  const [editPostTypeIds, setEditPostTypeIds] = useState<number[]>([]);
-  const [editPostIsHidden, setEditPostIsHidden] = useState(false);
-  const [editPostExcerpt, setEditPostExcerpt] = useState('');
-  const [editPostCoverUrl, setEditPostCoverUrl] = useState('');
-
-  const editingPostIdRef = useRef<number | null>(null);
-  editingPostIdRef.current = editingPostId;
-
   const [newPhotoTitle, setNewPhotoTitle] = useState('');
   const [newPhotoDesc, setNewPhotoDesc] = useState('');
   const [newPhotoType, setNewPhotoType] = useState('');
@@ -43,17 +32,7 @@ export function useAdminConsole(initialTab: TabKey) {
   const [commentAuthor, setCommentAuthor] = useState('');
   const [commentContent, setCommentContent] = useState('');
 
-  const clearEditingPost = useCallback(() => {
-    setEditingPostId(null);
-    setEditPostContent('');
-    setEditPostContentEn('');
-    setEditPostTypeIds([]);
-    setEditPostIsHidden(false);
-    setEditPostExcerpt('');
-    setEditPostCoverUrl('');
-  }, []);
-
-  const mutations = useAdminConsoleMutations({ editingPostIdRef, clearEditingPost });
+  const mutations = useAdminConsoleMutations();
 
   const invalidateInBackground = useCallback(
     (key: ReadonlyArray<unknown>) => {
@@ -95,36 +74,6 @@ export function useAdminConsole(initialTab: TabKey) {
     } catch (error) {
       showToast(error instanceof Error ? error.message : '上传失败', 'error');
     }
-  };
-
-  const startEditPost = async (post: PostItem) => {
-    setEditingPostId(post.id);
-    setEditPostTypeIds(post.types.map((t) => t.id));
-    setEditPostIsHidden(post.isHidden);
-    setEditPostExcerpt(post.excerpt ?? '');
-    setEditPostCoverUrl(post.coverUrl ?? '');
-    setEditPostContent('');
-    setEditPostContentEn('');
-    const detail = await fetch(`/api/admin/posts/${post.id}`).then((res) =>
-      parseAdminJsonResponse<PostDetail>(res, true),
-    );
-    if (!detail) {
-      throw new Error('未取到博文详情');
-    }
-    setEditingPostId((current) => {
-      if (current !== post.id) return current;
-      setEditPostTypeIds(detail.types.map((t) => t.id));
-      setEditPostIsHidden(detail.isHidden);
-      setEditPostExcerpt(detail.excerpt ?? '');
-      setEditPostCoverUrl(detail.coverUrl ?? '');
-      setEditPostContent(detail.content);
-      setEditPostContentEn(detail.contentEn ?? '');
-      return current;
-    });
-  };
-
-  const cancelEditPost = () => {
-    clearEditingPost();
   };
 
   const createPhoto = async () => {
@@ -196,23 +145,9 @@ export function useAdminConsole(initialTab: TabKey) {
       deleteUser: mutations.deleteUser,
     },
     postForm: {
-      editingPostId,
-      editPostContent,
-      setEditPostContent,
-      editPostContentEn,
-      editPostTypeIds,
-      setEditPostTypeIds,
-      editPostIsHidden,
-      setEditPostIsHidden,
-      editPostExcerpt,
-      setEditPostExcerpt,
-      editPostCoverUrl,
-      setEditPostCoverUrl,
       uploadPostFile,
       togglePostHidden: mutations.togglePostHidden,
       deletePost: mutations.deletePost,
-      startEditPost,
-      cancelEditPost,
       reorderPosts: mutations.reorderPosts,
     },
     photoForm: {

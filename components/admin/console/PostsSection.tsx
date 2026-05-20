@@ -8,23 +8,9 @@ import { PostAiPolishDialog } from './posts/PostAiPolishDialog';
 import { PostTable } from './posts/PostTable';
 
 type PostFormState = {
-  editingPostId: number | null;
-  editPostContent: string;
-  setEditPostContent: (value: string) => void;
-  editPostContentEn: string;
-  editPostTypeIds: number[];
-  setEditPostTypeIds: (value: number[]) => void;
-  editPostIsHidden: boolean;
-  setEditPostIsHidden: (value: boolean) => void;
-  editPostExcerpt: string;
-  setEditPostExcerpt: (value: string) => void;
-  editPostCoverUrl: string;
-  setEditPostCoverUrl: (value: string) => void;
   uploadPostFile: (file: File) => Promise<void>;
   togglePostHidden: (item: PostItem) => Promise<void>;
   deletePost: (id: number) => Promise<void>;
-  startEditPost: (post: PostItem) => Promise<void>;
-  cancelEditPost: () => void;
   reorderPosts: (orderedIds: number[], typeId: number) => Promise<void>;
 };
 
@@ -44,8 +30,6 @@ export function PostsSection({
   const [openZenCreate, setOpenZenCreate] = useState(false);
   const [aiPolishPost, setAiPolishPost] = useState<PostItem | null>(null);
   const mdFileInputRef = useRef<HTMLInputElement>(null);
-
-  const zenEditOpen = form.editingPostId !== null;
 
   const invalidatePosts = () => {
     void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
@@ -103,27 +87,6 @@ export function PostsSection({
         onClose={() => setOpenZenCreate(false)}
         onCreated={invalidatePosts}
       />
-
-      {zenEditOpen && form.editingPostId !== null ? (
-        <ZenPostEditor
-          mode="edit"
-          open={zenEditOpen}
-          availableTypes={postTypes}
-          postId={form.editingPostId}
-          initialTypeIds={form.editPostTypeIds}
-          initialContent={form.editPostContent}
-          initialContentEn={form.editPostContentEn}
-          isHidden={form.editPostIsHidden}
-          excerpt={form.editPostExcerpt}
-          coverUrl={form.editPostCoverUrl}
-          onClose={form.cancelEditPost}
-          onSaved={invalidatePosts}
-          onDeleted={() => {
-            form.cancelEditPost();
-            invalidatePosts();
-          }}
-        />
-      ) : null}
     </section>
   );
 }

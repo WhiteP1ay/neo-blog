@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ZenPostEditor } from '@/components/admin/ZenPostEditor';
@@ -8,13 +9,13 @@ import type { PostDetail, PostTypeAdminRow } from '@/components/admin/console/ty
 export default function AdminPostZenEditPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const rawId = params.id;
   const postId = typeof rawId === 'string' ? Number.parseInt(rawId, 10) : Number.NaN;
 
   const [detail, setDetail] = useState<PostDetail | null>(null);
   const [postTypes, setPostTypes] = useState<PostTypeAdminRow[]>([]);
   const [error, setError] = useState('');
-  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     if (!Number.isFinite(postId) || postId <= 0) {
@@ -67,7 +68,8 @@ export default function AdminPostZenEditPage() {
   return (
     <ZenPostEditor
       mode="edit"
-      open={open}
+      presentation="page"
+      open
       postId={postId}
       availableTypes={postTypes}
       initialTypeIds={detail.types.map((t) => t.id)}
@@ -76,17 +78,12 @@ export default function AdminPostZenEditPage() {
       isHidden={detail.isHidden}
       excerpt={detail.excerpt ?? ''}
       coverUrl={detail.coverUrl ?? ''}
-      onClose={() => {
-        setOpen(false);
-        router.push('/admin/posts');
-      }}
+      onClose={() => router.push('/admin/posts')}
       onSaved={() => {
         router.refresh();
+        void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
       }}
-      onDeleted={() => {
-        setOpen(false);
-        router.push('/admin/posts');
-      }}
+      onDeleted={() => router.push('/admin/posts')}
     />
   );
 }

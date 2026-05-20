@@ -20,7 +20,6 @@ type PostTableProps = {
   form: {
     togglePostHidden: (item: PostItem) => Promise<void>;
     deletePost: (id: number) => Promise<void>;
-    startEditPost: (post: PostItem) => Promise<void>;
     reorderPosts: (orderedIds: number[], typeId: number) => Promise<void>;
     openAiPolish: (post: PostItem) => void;
   };
@@ -79,15 +78,9 @@ function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps[
       >
         <Sparkles className="h-4 w-4" />
       </button>
-      <button
-        className={iconBtnMobile}
-        type="button"
-        onClick={() => void form.startEditPost(post)}
-        aria-label="编辑"
-        title="编辑"
-      >
+      <Link className={iconBtnMobile} href={`/admin/posts/${post.id}/edit`} aria-label="编辑" title="编辑">
         <Pencil className="h-4 w-4" />
-      </button>
+      </Link>
       <button
         className={iconBtnMobile}
         type="button"
@@ -314,15 +307,14 @@ function SortablePostRow({
           >
             <Sparkles className="h-4 w-4" />
           </button>
-          <button
-            className="rounded border px-2 py-1"
-            type="button"
-            onClick={() => void form.startEditPost(post)}
+          <Link
+            className="inline-flex items-center justify-center rounded border px-2 py-1"
+            href={`/admin/posts/${post.id}/edit`}
             aria-label="编辑"
             title="编辑"
           >
             <Pencil className="h-4 w-4" />
-          </button>
+          </Link>
           <button
             className="rounded border px-2 py-1"
             type="button"

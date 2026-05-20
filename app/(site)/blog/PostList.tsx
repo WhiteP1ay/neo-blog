@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { HomeExplorerCategory, HomeExplorerPostPreview } from '@/server/types/explorer';
 import Link from 'next/link';
+import { BlogPostNavLink } from '@/components/blog/BlogPostNavLink';
 import { AdminPostEditEntry } from '@/components/admin/AdminPostEditEntry';
 import { Button } from '@/components/ui/button';
 import { useIsAdmin } from '@/hooks/admin/useIsAdmin';
@@ -63,12 +64,13 @@ export function PostList({ categories, selectedTypeCode }: PostListProps) {
               key={post.id}
               className="group flex items-stretch overflow-hidden rounded-lg border border-border/80 bg-card motion-safe:transition-colors motion-safe:duration-200 hover:bg-accent/40"
             >
-              <Link
+              <BlogPostNavLink
                 href={pathWithLocale(`/blog/${post.id}`, locale)}
                 className="flex min-w-0 flex-1 items-center px-4 py-3 text-sm text-foreground outline-none focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background cursor-pointer"
+                innerClassName="flex min-w-0 flex-1 items-center"
               >
                 <span className="min-w-0 truncate">{postListTitle(post, locale)}</span>
-              </Link>
+              </BlogPostNavLink>
               {isAdmin ? (
                 <div className="flex shrink-0 items-center border-l border-border/60 bg-card px-2 group-hover:bg-transparent motion-safe:transition-colors motion-safe:duration-200">
                   <AdminPostEditEntry

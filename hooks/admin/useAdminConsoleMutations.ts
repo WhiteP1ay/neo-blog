@@ -1,7 +1,6 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { RefObject } from 'react';
 import { parseAdminJsonResponse } from '@/lib/admin-json';
 import { ADMIN_REORDER_UNCATEGORIZED_TYPE_ID } from '@/lib/admin-post-constants';
 import { useToast } from '@/components/Toast';
@@ -35,15 +34,10 @@ type UploadPhotoPayload = {
   isHidden: boolean;
 };
 
-type UseAdminConsoleMutationsOptions = {
-  editingPostIdRef: RefObject<number | null>;
-  clearEditingPost: () => void;
-};
-
 /**
  * 管理控制台列表相关的 mutation（乐观更新 + 精准失效）。
  */
-export function useAdminConsoleMutations({ editingPostIdRef, clearEditingPost }: UseAdminConsoleMutationsOptions) {
+export function useAdminConsoleMutations() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
@@ -129,11 +123,6 @@ export function useAdminConsoleMutations({ editingPostIdRef, clearEditingPost }:
         queryClient.setQueryData(['admin', 'posts'], context.previousPosts);
       }
       showToast(err instanceof Error ? err.message : '删除失败', 'error');
-    },
-    onSuccess: (_data, id) => {
-      if (editingPostIdRef.current === id) {
-        clearEditingPost();
-      }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'posts'] });
@@ -332,8 +321,7 @@ export function useAdminConsoleMutations({ editingPostIdRef, clearEditingPost }:
 
   return {
     togglePostHidden: (item: PostItem) => togglePostHiddenMutation.mutateAsync(item),
-    reorderPosts: (orderedIds: number[], typeId: number) =>
-      reorderPostsMutation.mutateAsync({ orderedIds, typeId }),
+    reorderPosts: (orderedIds: number[], typeId: number) => reorderPostsMutation.mutateAsync({ orderedIds, typeId }),
     deletePost: (id: number) => deletePostMutation.mutateAsync(id),
     deleteUser: (id: number) => deleteUserMutation.mutateAsync(id),
     deletePhoto: (id: number) => deletePhotoMutation.mutateAsync(id),

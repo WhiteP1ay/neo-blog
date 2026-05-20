@@ -49,6 +49,8 @@ type ZenPostEditorProps =
       onSaved?: () => void;
       onDeleted?: () => void;
       availableTypes: PostTypeAdminRow[];
+      /** modal：portal 全屏遮罩；page：嵌入路由（如 `/admin/posts/[id]/edit`），保存后不自动关闭 */
+      presentation?: 'modal' | 'page';
     };
 
 const iconHeaderBtnClass =
@@ -112,8 +114,8 @@ function TypeMultiSelect({
 }
 
 /**
- * 全屏沉浸式编辑器：复用 RichTextEditor；顶栏为前台显示、删除（仅编辑）、保存、关闭。
- * 文章类型多选紧挨「中文正文 / English」标签下方（新建模式在正文编辑器上方）；
+ * 沉浸式编辑器：复用 RichTextEditor；顶栏为前台显示、删除（仅编辑）、保存、关闭。
+ * `presentation="page"` 时嵌入路由，不使用 portal / body 滚动锁；新建仍默认全屏 overlay。
  * 保存时标题取自正文首个 H1 的纯文本并去掉开头的 `【…】`、`[…]` 装饰前缀（类型仅由多选提交，不从 H1 解析）。
  */
 export function ZenPostEditor(props: ZenPostEditorProps) {
@@ -128,6 +130,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
 
   const availableTypes = props.availableTypes;
+  const isPagePresentation = props.mode === 'edit' && props.presentation === 'page';
 
   useLayoutEffect(() => {
     setPortalTarget(document.body);
@@ -166,7 +169,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
   }, [open, editPostId, editSourceHidden]);
 
   useEffect(() => {
-    if (!props.open || !portalTarget) return;
+    if (!props.open || !portalTarget || isPagePresentation) return;
     const html = document.documentElement;
     const body = document.body;
     const prevHtmlOverflow = html.style.overflow;
@@ -183,7 +186,7 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
       body.style.overflow = prevBodyOverflow;
       body.style.paddingRight = prevBodyPaddingRight;
     };
-  }, [props.open, portalTarget]);
+  }, [props.open, portalTarget, isPagePresentation]);
 
   const busy = submitting || deleting;
 
@@ -241,7 +244,9 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
         }
         showToast('已保存', 'success');
         props.onSaved?.();
-        props.onClose();
+        if (!(props.mode === 'edit' && props.presentation === 'page')) {
+          props.onClose();
+        }
       }
     } catch (error) {
       showToast(error instanceof Error ? error.message : '操作失败', 'error');
@@ -270,13 +275,19 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     }
   }, [busy, props, showToast]);
 
-  if (!props.open || !portalTarget) return null;
+  if (!props.open) return null;
 
   const isEdit = props.mode === 'edit';
-  const editorMinHeightClassName = 'min-h-[calc(100svh_-_6rem_+_80vh)]';
+  const editorMinHeightClassName = isPagePresentation
+    ? 'min-h-[calc(100dvh-14rem_+_50vh)]'
+    : 'min-h-[calc(100svh_-_6rem_+_80vh)]';
+
+  const shellClass = isPagePresentation
+    ? 'flex min-h-[calc(100dvh-10rem)] flex-col overflow-hidden rounded-lg border bg-background'
+    : 'fixed inset-0 z-50 flex flex-col overflow-hidden bg-background';
 
   const overlay = (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background">
+    <div className={shellClass}>
       <header className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-b px-4 py-3 sm:px-6">
         <div className="flex flex-wrap items-center justify-end gap-3">
           <div className="flex items-center gap-2">
@@ -316,8 +327,8 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
             onClick={props.onClose}
             disabled={busy}
             className="inline-flex h-9 w-9 touch-manipulation items-center justify-center rounded border text-muted-foreground hover:bg-muted disabled:opacity-60 sm:h-7 sm:w-7"
-            aria-label="关闭"
-            title="关闭"
+            aria-label={isPagePresentation ? '返回博文列表' : '关闭'}
+            title={isPagePresentation ? '返回博文列表' : '关闭'}
           >
             <X className="h-4 w-4" />
           </button>
@@ -379,5 +390,9 @@ export function ZenPostEditor(props: ZenPostEditorProps) {
     </div>
   );
 
+  if (isPagePresentation) {
+    return overlay;
+  }
+  if (!portalTarget) return null;
   return createPortal(overlay, portalTarget);
 }

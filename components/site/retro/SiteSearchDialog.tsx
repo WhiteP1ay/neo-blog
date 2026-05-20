@@ -1,8 +1,9 @@
 'use client';
 
 import { Search } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { BlogPostNavLink } from '@/components/blog/BlogPostNavLink';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { SiteLocale } from '@/lib/site-locale';
 import { localeFromPathname, pathWithLocale } from '@/lib/site-locale';
@@ -28,8 +29,6 @@ const DEBOUNCE_MS = 300;
 export function SiteSearchDialog({ navButtonClass }: SiteSearchDialogProps) {
   const pathname = usePathname() ?? '/';
   const locale: SiteLocale = localeFromPathname(pathname);
-  const router = useRouter();
-
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
@@ -132,17 +131,6 @@ export function SiteSearchDialog({ navButtonClass }: SiteSearchDialogProps) {
     };
   }, [open, trimmed]);
 
-  const goToPost = useCallback(
-    (id: number) => {
-      router.push(pathWithLocale(`/blog/${id}`, locale));
-      setOpen(false);
-      setQuery('');
-      setHits([]);
-      setError(null);
-    },
-    [router, locale],
-  );
-
   useEffect(() => {
     if (!open) {
       setQuery('');
@@ -199,10 +187,16 @@ export function SiteSearchDialog({ navButtonClass }: SiteSearchDialogProps) {
             <div className="space-y-1">
               {hits.map((post) => (
                 <div key={post.id}>
-                  <button
-                    type="button"
-                    className="w-full rounded-md border border-transparent px-2 py-2.5 text-left hover:border-border hover:bg-accent/50 motion-safe:transition-colors"
-                    onClick={() => goToPost(post.id)}
+                  <BlogPostNavLink
+                    href={pathWithLocale(`/blog/${post.id}`, locale)}
+                    className="block w-full rounded-md border border-transparent px-2 py-2.5 text-left text-foreground outline-none hover:border-border hover:bg-accent/50 motion-safe:transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+                    innerClassName="block w-full"
+                    onNavigate={() => {
+                      setOpen(false);
+                      setQuery('');
+                      setHits([]);
+                      setError(null);
+                    }}
                   >
                     <div className="flex items-start gap-2">
                       <span className="flex-1 text-sm font-semibold text-foreground">{post.title}</span>
@@ -231,7 +225,7 @@ export function SiteSearchDialog({ navButtonClass }: SiteSearchDialogProps) {
                         })}
                       </time>
                     )}
-                  </button>
+                  </BlogPostNavLink>
                 </div>
               ))}
             </div>
