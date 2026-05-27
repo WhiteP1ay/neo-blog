@@ -6,10 +6,14 @@ type AdminJsonPayload<T> = {
   error?: string;
 };
 
-async function parseJson<T>(response: { ok: () => boolean; json: () => Promise<unknown> }): Promise<T> {
+async function parseJson<T>(response: {
+  ok: () => boolean;
+  status: () => number;
+  json: () => Promise<unknown>;
+}): Promise<T> {
   const payload = (await response.json()) as AdminJsonPayload<T>;
   if (!response.ok()) {
-    throw new Error(payload.error ?? `请求失败（${response.status?.() ?? 'unknown'}）`);
+    throw new Error(payload.error ?? `请求失败（${response.status()}）`);
   }
   if (payload.data === undefined) {
     throw new Error('响应 data 缺失');
