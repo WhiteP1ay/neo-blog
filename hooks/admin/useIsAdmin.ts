@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { fetchAuthMeCached } from '@/hooks/admin/auth-me';
 
 /**
  * 客户端轻量 session 探针：从 /api/auth/me 判断当前请求者是否为管理员。
@@ -12,15 +13,9 @@ export function useIsAdmin(): boolean {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/auth/me', { credentials: 'same-origin' })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const payload = (await response.json()) as { isAdmin?: boolean };
-        if (!cancelled) setIsAdmin(payload.isAdmin === true);
-      })
-      .catch(() => {
-        // 静默失败：未登录 / 网络异常 都视作非管理员，不影响 c 端浏览。
-      });
+    fetchAuthMeCached().then((result) => {
+      if (!cancelled) setIsAdmin(result.isAdmin);
+    });
     return () => {
       cancelled = true;
     };

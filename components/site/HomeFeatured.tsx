@@ -2,28 +2,16 @@
 
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { BlogPostNavLink } from '@/components/blog/BlogPostNavLink';
-import { AdminPostEditEntry } from '@/components/admin/AdminPostEditEntry';
+import { BlogPostListCard } from '@/components/blog/BlogPostListCard';
 import { Button } from '@/components/ui/button';
 import { useIsAdmin } from '@/hooks/admin/useIsAdmin';
 import type { HomeFeaturedPost } from '@/server/types/explorer';
 import { useSiteLocale } from '@/components/site/SiteLocaleProvider';
 import { pathWithLocale } from '@/lib/site-locale';
-import { featuredExcerpt, featuredListTitle } from '@/lib/post-display-i18n';
 
 type HomeFeaturedProps = {
   posts: HomeFeaturedPost[];
 };
-
-function formatDate(value: Date | string | null): string {
-  if (!value) return '';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
 
 /**
  * 首页精选区：管理员手动挑选的 5 篇文章卡片 + 「查看更多文章」CTA。
@@ -71,37 +59,7 @@ export function HomeFeatured({ posts }: HomeFeaturedProps) {
     <section className="space-y-8">
       <ul className="grid grid-cols-1 gap-3 sm:gap-4">
         {posts.map((post) => (
-          <li
-            key={post.id}
-            className="group relative overflow-hidden rounded-xl border border-border bg-card motion-safe:transition-colors motion-safe:duration-200 hover:border-foreground/30 hover:bg-accent/40"
-          >
-            <BlogPostNavLink
-              href={pathWithLocale(`/blog/${post.id}`, locale)}
-              className="block px-4 py-4 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background sm:px-5 sm:py-5 cursor-pointer"
-              innerClassName="block"
-            >
-              <h3 className="line-clamp-2 text-base font-semibold tracking-tight text-foreground sm:text-lg">
-                {featuredListTitle(post, locale)}
-              </h3>
-              {featuredExcerpt(post, locale) ? (
-                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                  {featuredExcerpt(post, locale)}
-                </p>
-              ) : null}
-              {post.createdAt ? (
-                <time className="mt-3 block text-xs tabular-nums text-muted-foreground">
-                  {formatDate(post.createdAt)}
-                </time>
-              ) : null}
-            </BlogPostNavLink>
-            {isAdmin ? (
-              <div className="pointer-events-none absolute right-3 top-3 opacity-0 transition-opacity duration-200 group-hover:opacity-100 focus-within:opacity-100">
-                <div className="pointer-events-auto">
-                  <AdminPostEditEntry postId={post.id} />
-                </div>
-              </div>
-            ) : null}
-          </li>
+          <BlogPostListCard key={post.id} post={post} />
         ))}
       </ul>
 

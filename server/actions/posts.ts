@@ -134,6 +134,8 @@ export async function getHomeExplorerData(locale: SiteLocale = 'zh'): Promise<Ac
           id: postsTable.id,
           title: postsTable.title,
           titleEn: postsTable.titleEn,
+          excerpt: postsTable.excerpt,
+          excerptEn: postsTable.excerptEn,
           createdAt: postsTable.createdAt,
           isPinned: postsTable.isPinned,
           sortOrder: postsTable.sortOrder,
@@ -177,6 +179,8 @@ export async function getHomeExplorerData(locale: SiteLocale = 'zh'): Promise<Ac
           id: post.id,
           title: post.title,
           titleEn: post.titleEn,
+          excerpt: post.excerpt,
+          excerptEn: post.excerptEn,
           createdAt: post.createdAt,
           isPinned: post.isPinned,
         });
@@ -201,6 +205,8 @@ export async function getHomeExplorerData(locale: SiteLocale = 'zh'): Promise<Ac
         id: post.id,
         title: post.title,
         titleEn: post.titleEn,
+        excerpt: post.excerpt,
+        excerptEn: post.excerptEn,
         createdAt: post.createdAt,
         isPinned: post.isPinned,
       });
@@ -320,7 +326,7 @@ export async function searchPosts(
     const pg = unwrapPgCause(error);
     const msg = pg?.message ?? '';
     const isMissingChineseConfig =
-      msg.includes('文本搜寻配置') && msg.includes('chinese') ||
+      (msg.includes('文本搜寻配置') && msg.includes('chinese')) ||
       /text search configuration.*chinese.*does not exist/i.test(msg);
     const message = isMissingChineseConfig
       ? '数据库未配置全文检索 chinese（需 zhparser 与迁移，参见 docs/base-config.md）'
@@ -447,8 +453,7 @@ export async function updatePost(
 
     if (data.title !== undefined || data.markdownContent !== undefined) {
       const title = data.title ?? existing.title;
-      const markdown =
-        data.markdownContent !== undefined ? data.markdownContent : existing.markdownContent;
+      const markdown = data.markdownContent !== undefined ? data.markdownContent : existing.markdownContent;
       const searchIndex = buildPostSearchIndexFields(title, markdown);
       updateData.plainBody = searchIndex.plainBody;
       updateData.searchVector = searchIndex.searchVector;

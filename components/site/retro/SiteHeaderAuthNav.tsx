@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { logoutToHome } from '@/server/actions/login';
+import { fetchAuthMeCached } from '@/hooks/admin/auth-me';
 
 type SiteHeaderAuthNavProps = {
   navLinkClass: string;
@@ -18,13 +19,9 @@ export function SiteHeaderAuthNav({ navLinkClass, navButtonClass }: SiteHeaderAu
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/auth/me', { credentials: 'same-origin' })
-      .then((res) => {
-        if (!cancelled) setLoggedIn(res.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setLoggedIn(false);
-      });
+    fetchAuthMeCached().then((res) => {
+      if (!cancelled) setLoggedIn(res.ok);
+    });
     return () => {
       cancelled = true;
     };

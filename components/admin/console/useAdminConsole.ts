@@ -149,6 +149,10 @@ export function useAdminConsole(initialTab: TabKey) {
       togglePostHidden: mutations.togglePostHidden,
       deletePost: mutations.deletePost,
       reorderPosts: mutations.reorderPosts,
+      bulkReplacePostTypes: mutations.bulkReplacePostTypes,
+      bulkDeletePosts: mutations.bulkDeletePosts,
+      bulkSetPostsHidden: mutations.bulkSetPostsHidden,
+      bulkAiPolishPosts: mutations.bulkAiPolishPosts,
     },
     photoForm: {
       newPhotoTitle,

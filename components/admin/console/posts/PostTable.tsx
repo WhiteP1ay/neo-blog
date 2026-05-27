@@ -5,7 +5,7 @@ import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import { Eye, GripVertical, Pencil, Sparkles, Trash2, Wrench } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { ADMIN_REORDER_UNCATEGORIZED_TYPE_ID } from '@/lib/admin-post-constants';
 import { adminPostsListPath } from '@/lib/blog-list-query';
@@ -13,10 +13,20 @@ import type { PostItem, PostTypeAdminRow } from '../types';
 
 type PostTableProps = {
   posts: PostItem[];
-  /** 全量类型目录（用于 Tab 顺序与 code→id）；与 `/api/admin/post-types` 一致 */
   typeCatalog: PostTypeAdminRow[];
-  /** 路径同步的类型筛选：null 或 undefined 表示显示全部；空串表示未分类 */
   selectedType?: string | null;
+  selectedPostIds: Set<number>;
+  onTogglePostSelected: (postId: number) => void;
+  onSelectAllVisible: (postIds: number[]) => void;
+  onDeselectVisible: (postIds: number[]) => void;
+  onClearSelection: () => void;
+  bulkBusy?: boolean;
+  polishProgress?: { current: number; total: number } | null;
+  onOpenBulkType: () => void;
+  onOpenBulkDelete: () => void;
+  onOpenBulkPolish: () => void;
+  onBulkShow: () => void;
+  onBulkHide: () => void;
   form: {
     togglePostHidden: (item: PostItem) => Promise<void>;
     deletePost: (id: number) => Promise<void>;
@@ -31,6 +41,9 @@ const iconBtnMobile =
 const filterLinkClass =
   'min-h-10 touch-manipulation rounded border px-3 py-2 text-sm leading-none hover:bg-muted sm:min-h-0 sm:px-2 sm:py-1';
 
+const bulkBtnClass =
+  'min-h-9 touch-manipulation rounded border px-2.5 py-1.5 text-xs hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm';
+
 function postInSelectedBucket(post: PostItem, selectedCode: string): boolean {
   if (selectedCode === '') {
     return post.types.length === 0;
@@ -43,7 +56,46 @@ function formatTypesCell(post: PostItem): string {
   return post.types.map((t) => t.nameZh).join('、');
 }
 
-/** 移动端卡片内：前台显示 + 预览 + 编辑 + 删除 */
+function SelectAllCheckbox({
+  visibleIds,
+  selectedPostIds,
+  onSelectAllVisible,
+  onDeselectVisible,
+  disabled,
+}: {
+  visibleIds: number[];
+  selectedPostIds: Set<number>;
+  onSelectAllVisible: (postIds: number[]) => void;
+  onDeselectVisible: (postIds: number[]) => void;
+  disabled?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const selectedVisibleCount = visibleIds.filter((id) => selectedPostIds.has(id)).length;
+  const allSelected = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+  const someSelected = selectedVisibleCount > 0 && !allSelected;
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      className="h-4 w-4 rounded border border-input"
+      checked={allSelected}
+      disabled={disabled || visibleIds.length === 0}
+      aria-label={allSelected ? '取消全选当前列表' : '全选当前列表'}
+      onChange={() => {
+        if (allSelected) onDeselectVisible(visibleIds);
+        else onSelectAllVisible(visibleIds);
+      }}
+    />
+  );
+}
+
 function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps['form'] }) {
   const switchId = `post-visible-${post.id}`;
   return (
@@ -94,7 +146,24 @@ function PostCardActions({ post, form }: { post: PostItem; form: PostTableProps[
   );
 }
 
-export function PostTable({ posts, typeCatalog, form, selectedType = null }: PostTableProps) {
+export function PostTable({
+  posts,
+  typeCatalog,
+  form,
+  selectedType = null,
+  selectedPostIds,
+  onTogglePostSelected,
+  onSelectAllVisible,
+  onDeselectVisible,
+  onClearSelection,
+  bulkBusy = false,
+  polishProgress = null,
+  onOpenBulkType,
+  onOpenBulkDelete,
+  onOpenBulkPolish,
+  onBulkShow,
+  onBulkHide,
+}: PostTableProps) {
   const orderedPosts = useMemo(() => [...posts].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id), [posts]);
 
   const codesInPosts = useMemo(() => {
@@ -128,6 +197,8 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
     return orderedPosts.filter((post) => postInSelectedBucket(post, selectedType));
   }, [orderedPosts, selectedType]);
 
+  const visibleIds = useMemo(() => visiblePosts.map((p) => p.id), [visiblePosts]);
+  const selectedCount = selectedPostIds.size;
   const isFiltering = selectedType !== null && selectedType !== undefined;
   const dragEnabled = isFiltering && reorderTypeId !== null;
 
@@ -185,6 +256,33 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
         </div>
       </div>
 
+      {selectedCount > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded border border-primary/30 bg-muted/40 px-3 py-2">
+          <span className="text-sm font-medium">
+            已选 {selectedCount} 篇
+            {polishProgress ? ` · 润色中 ${polishProgress.current}/${polishProgress.total}` : null}
+          </span>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onOpenBulkType}>
+            改类型
+          </button>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onBulkShow}>
+            显示
+          </button>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onBulkHide}>
+            隐藏
+          </button>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onOpenBulkPolish}>
+            AI 润色
+          </button>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onOpenBulkDelete}>
+            删除
+          </button>
+          <button className={bulkBtnClass} type="button" disabled={bulkBusy} onClick={onClearSelection}>
+            取消选择
+          </button>
+        </div>
+      ) : null}
+
       {!isFiltering ? (
         <p className="text-xs text-muted-foreground">仅支持分类内拖拽排序，请先点击上方某个分类后再调整顺序。</p>
       ) : null}
@@ -195,13 +293,23 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
       <div className="space-y-3 md:hidden">
         {visiblePosts.map((post) => (
           <div key={post.id} className="rounded-lg border bg-card p-3 shadow-sm">
-            <div className="min-w-0 space-y-1">
-              <p className="wrap-break-word font-medium leading-snug">{post.title}</p>
-              <p className="text-xs text-muted-foreground">
-                ID {post.id} · {formatTypesCell(post)} · {post.isHidden ? '隐藏' : '显示'}
-              </p>
+            <div className="flex gap-3">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 shrink-0 rounded border border-input"
+                checked={selectedPostIds.has(post.id)}
+                disabled={bulkBusy}
+                aria-label={`选择 ${post.title}`}
+                onChange={() => onTogglePostSelected(post.id)}
+              />
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="wrap-break-word font-medium leading-snug">{post.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  ID {post.id} · {formatTypesCell(post)} · {post.isHidden ? '隐藏' : '显示'}
+                </p>
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2 pl-7">
               <PostCardActions post={post} form={form} />
             </div>
           </div>
@@ -213,6 +321,15 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/40 text-left">
+                <th className="px-3 py-2">
+                  <SelectAllCheckbox
+                    visibleIds={visibleIds}
+                    selectedPostIds={selectedPostIds}
+                    onSelectAllVisible={onSelectAllVisible}
+                    onDeselectVisible={onDeselectVisible}
+                    disabled={bulkBusy}
+                  />
+                </th>
                 <th className="px-3 py-2">
                   <GripVertical className="h-4 w-4" aria-label="拖拽排序列" />
                 </th>
@@ -228,7 +345,15 @@ export function PostTable({ posts, typeCatalog, form, selectedType = null }: Pos
             <SortableContext items={visiblePosts.map((post) => post.id)} strategy={verticalListSortingStrategy}>
               <tbody>
                 {visiblePosts.map((post) => (
-                  <SortablePostRow key={post.id} post={post} form={form} dragDisabled={!dragEnabled} />
+                  <SortablePostRow
+                    key={post.id}
+                    post={post}
+                    form={form}
+                    dragDisabled={!dragEnabled || bulkBusy}
+                    selected={selectedPostIds.has(post.id)}
+                    onToggleSelected={() => onTogglePostSelected(post.id)}
+                    selectionDisabled={bulkBusy}
+                  />
                 ))}
               </tbody>
             </SortableContext>
@@ -243,10 +368,16 @@ function SortablePostRow({
   post,
   form,
   dragDisabled,
+  selected,
+  onToggleSelected,
+  selectionDisabled,
 }: {
   post: PostItem;
   form: PostTableProps['form'];
   dragDisabled: boolean;
+  selected: boolean;
+  onToggleSelected: () => void;
+  selectionDisabled: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: post.id,
@@ -260,6 +391,16 @@ function SortablePostRow({
 
   return (
     <tr ref={setNodeRef} style={style} className="border-b">
+      <td className="px-3 py-2">
+        <input
+          type="checkbox"
+          className="h-4 w-4 rounded border border-input"
+          checked={selected}
+          disabled={selectionDisabled}
+          aria-label={`选择 ${post.title}`}
+          onChange={onToggleSelected}
+        />
+      </td>
       <td className="px-3 py-2">
         <button
           className="cursor-grab rounded border px-2 py-1 text-xs disabled:cursor-not-allowed"

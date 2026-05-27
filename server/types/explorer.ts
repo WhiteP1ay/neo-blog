@@ -6,24 +6,24 @@ export type HomePostPreview = {
   isPinned: boolean;
 };
 
-/** 首页精选卡片：含摘要 / 封面 */
-export type HomeFeaturedPost = {
+/** 前台博文列表卡片：标题 / 摘要 / 日期（中英文按 locale 选取） */
+export type BlogPostCardPreview = {
   id: number;
   title: string;
   excerpt: string | null;
-  coverUrl: string | null;
+  excerptEn: string | null;
   createdAt: Date | null;
   titleEn: string | null;
-  excerptEn: string | null;
 };
 
-/** 首页三栏：单篇列表项（含置顶标记） */
-export type HomeExplorerPostPreview = {
-  id: number;
-  title: string;
-  createdAt: Date | null;
+/** 首页精选卡片：在列表预览基础上含封面 */
+export type HomeFeaturedPost = BlogPostCardPreview & {
+  coverUrl: string | null;
+};
+
+/** 首页三栏 & /blog：单篇列表项（含置顶标记） */
+export type HomeExplorerPostPreview = BlogPostCardPreview & {
   isPinned: boolean;
-  titleEn: string | null;
 };
 
 /**
