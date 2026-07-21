@@ -66,7 +66,9 @@ function readPost(filePath: string): Post | null {
     const raw = fs.readFileSync(filePath, "utf-8");
     const { meta, body } = parseFrontmatter(raw);
 
-    const slug = path.basename(filePath, ".md");
+    const filename = path.basename(filePath, ".md");
+    // Use frontmatter slug if provided, otherwise fall back to filename
+    const slug = (meta.slug as string) || filename;
     const title = (meta.title as string) || slug;
     const date = (meta.date as string) || "";
     const type = (meta.type as string) || undefined;
@@ -121,9 +123,14 @@ export function getAllPosts(): Post[] {
 }
 
 export function getPostBySlug(slug: string): Post | null {
-  const filePath = path.join(POSTS_DIR, `${slug}.md`);
-  if (!fs.existsSync(filePath)) return null;
-  return readPost(filePath);
+  // First try direct file match (for ASCII filenames like test-post, no slug in frontmatter)
+  const directPath = path.join(POSTS_DIR, `${slug}.md`);
+  if (fs.existsSync(directPath)) {
+    return readPost(directPath);
+  }
+
+  // Otherwise scan all posts for matching frontmatter slug
+  return getAllPosts().find((p) => p.slug === slug) || null;
 }
 
 export function getPostsByType(type: string): Post[] {
