@@ -21,10 +21,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# 设置环境变量
+# 构建时创建空 posts 目录，避免 generateStaticParams 报错
+RUN mkdir -p posts
+
 ENV NEXT_TELEMETRY_DISABLED=1
-# 构建时提供一个假的 DATABASE_URL，避免构建失败
-ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
 # 构建 Next.js 应用
 RUN pnpm build
@@ -35,6 +35,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# 运行时从环境变量读取 posts 目录路径，默认 /data/posts
+ENV POSTS_DIR=/data/posts
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -42,7 +44,6 @@ RUN adduser --system --uid 1001 nextjs
 # 复制构建产物
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-# 复制 public 文件夹（standalone 模式不会自动包含）
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs

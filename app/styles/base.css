@@ -1,0 +1,51 @@
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-foreground antialiased;
+    min-height: 100dvh;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 28%, transparent);
+  }
+
+  /* Keyboard focus */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+    outline-style: solid;
+  }
+}
+
+/* --- Header --- */
+.header-bar {
+  @apply bg-slate-900 text-white;
+}
+
+.header-bar a {
+  @apply text-slate-300 transition-colors duration-150 hover:text-white;
+}
+
+/* --- Article list divider --- */
+.post-divider {
+  @apply border-t border-slate-200;
+}
+
+.dark .post-divider {
+  @apply border-slate-800;
+}
+
+/* --- Tag pills --- */
+.tag-pill {
+  @apply inline-block rounded-full bg-tag-bg px-2.5 py-0.5 text-xs font-medium text-tag-fg no-underline transition-colors duration-150 hover:brightness-95;
+}

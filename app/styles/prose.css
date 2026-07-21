@@ -1,0 +1,64 @@
+.article-prose {
+  @apply prose prose-slate max-w-none text-base leading-7;
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-links: #2563eb;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-counters: #64748b;
+  --tw-prose-bullets: #93c5fd;
+  --tw-prose-hr: #e2e8f0;
+  --tw-prose-quotes: #0f172a;
+  --tw-prose-quote-borders: #2563eb;
+  --tw-prose-captions: #64748b;
+  --tw-prose-code: #0f172a;
+  --tw-prose-pre-bg: #f1f5f9;
+  --tw-prose-pre-code: #0f172a;
+}
+
+.dark .article-prose {
+  --tw-prose-body: #cbd5e1;
+  --tw-prose-headings: #f1f5f9;
+  --tw-prose-links: #60a5fa;
+  --tw-prose-bold: #f1f5f9;
+  --tw-prose-counters: #64748b;
+  --tw-prose-bullets: #3b82f6;
+  --tw-prose-hr: #334155;
+  --tw-prose-quotes: #f1f5f9;
+  --tw-prose-quote-borders: #3b82f6;
+  --tw-prose-captions: #94a3b8;
+  --tw-prose-code: #f1f5f9;
+  --tw-prose-pre-bg: #1e293b;
+  --tw-prose-pre-code: #e2e8f0;
+}
+
+.article-prose h1,
+.article-prose h2,
+.article-prose h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.article-prose pre {
+  @apply overflow-x-auto rounded-lg px-4 py-4;
+}
+
+.article-prose code:not(pre code) {
+  @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.9em] text-slate-800;
+}
+
+.dark .article-prose code:not(pre code) {
+  @apply bg-slate-800 text-slate-200;
+}
+
+.article-prose img {
+  @apply rounded-lg;
+}
+
+.article-prose table {
+  @apply block w-full overflow-x-auto rounded-lg;
+}
+
+.shiki {
+  font-size: 0.85rem;
+  line-height: 1.55;
+}

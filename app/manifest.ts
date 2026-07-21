@@ -12,7 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'White Meta',
     short_name: 'White Meta',
-    description: 'White Meta is a blog for whitePlay',
+    description: 'White Meta is a blog for 白玩dev',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -41,9 +41,9 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: SHORTCUT_ICONS,
       },
       {
-        name: '管理',
-        short_name: '管理',
-        url: '/admin',
+        name: '博客',
+        short_name: '博客',
+        url: '/blog',
         icons: SHORTCUT_ICONS,
       },
     ],
