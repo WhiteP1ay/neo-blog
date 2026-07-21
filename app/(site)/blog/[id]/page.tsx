@@ -39,34 +39,36 @@ export default async function PostPage({
         ← 返回文章列表
       </Link>
 
-      <article>
-        {/* Header */}
-        <header className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            {post.title}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-            {post.date && <time>{post.date}</time>}
-            {post.types?.map((t) => (
-              <span key={t} className="tag-pill">{t}</span>
-            ))}
-            {post.tags?.map((tag) => (
-              <span key={tag} className="text-xs text-slate-400">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </header>
+      <div className="paper-card p-8 sm:p-12">
+        <article>
+          {/* Header */}
+          <header className="mb-10">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+              {post.title}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              {post.date && <time>{post.date}</time>}
+              {post.types?.map((t) => (
+                <span key={t} className="tag-pill">{t}</span>
+              ))}
+              {post.tags?.map((tag) => (
+                <span key={tag} className="text-xs text-slate-400">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          </header>
 
-        {/* Content */}
-        <div
-          className="article-prose"
-          dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-        />
-      </article>
+          {/* Content */}
+          <div
+            className="article-prose"
+            dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+          />
+        </article>
+      </div>
 
       {/* Footer nav */}
-      <div className="mt-16 border-t border-slate-200 pt-6">
+      <div className="mt-8 border-t border-slate-200 pt-6">
         <Link
           href="/blog"
           className="inline-flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-blue-600"

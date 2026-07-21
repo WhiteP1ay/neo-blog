@@ -49,3 +49,28 @@
 .tag-pill {
   @apply inline-block rounded-full bg-tag-bg px-2.5 py-0.5 text-xs font-medium text-tag-fg no-underline transition-colors duration-150 hover:brightness-95;
 }
+
+/* --- Paper card (article detail page) --- */
+.paper-card {
+  background-color: var(--paper-bg);
+  background-image:
+    /* Horizontal fibers — subtle warm lines */
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--paper-fiber) 2px,
+      var(--paper-fiber) 3px
+    ),
+    /* Vertical fibers */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      var(--paper-fiber) 2px,
+      var(--paper-fiber) 3px
+    );
+  border: 1px solid var(--paper-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px var(--paper-shadow);
+}
