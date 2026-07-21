@@ -101,7 +101,9 @@ export function getAllPosts(): Post[] {
     return [];
   }
 
-  const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".md"));
+  const files = fs.readdirSync(POSTS_DIR).filter(
+    (f) => f.endsWith(".md") && !f.toLowerCase().startsWith("readme")
+  );
 
   const posts = files
     .map((f) => readPost(path.join(POSTS_DIR, f)))
