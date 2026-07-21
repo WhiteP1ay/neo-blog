@@ -17,7 +17,7 @@ export default async function BlogPage({
 
   const allPosts = getAllPosts();
   const filteredPosts = typeFilter
-    ? allPosts.filter((p) => p.type === typeFilter)
+    ? allPosts.filter((p) => p.types?.includes(typeFilter))
     : allPosts;
   const types = getAllTypes();
 
