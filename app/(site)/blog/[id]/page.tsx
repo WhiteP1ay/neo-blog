@@ -47,7 +47,9 @@ export default async function PostPage({
           </h1>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
             {post.date && <time>{post.date}</time>}
-            {post.type && <span className="tag-pill">{post.type}</span>}
+            {post.types?.map((t) => (
+              <span key={t} className="tag-pill">{t}</span>
+            ))}
             {post.tags?.map((tag) => (
               <span key={tag} className="text-xs text-slate-400">
                 #{tag}

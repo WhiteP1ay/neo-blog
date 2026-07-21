@@ -8,7 +8,7 @@ export interface PostMeta {
   slug: string;
   title: string;
   date: string;
-  type?: string;
+  types?: string[];
   tags?: string[];
   coverUrl?: string;
   excerpt?: string;
@@ -71,7 +71,13 @@ function readPost(filePath: string): Post | null {
     const slug = (meta.slug as string) || filename;
     const title = (meta.title as string) || slug;
     const date = (meta.date as string) || "";
-    const type = (meta.type as string) || undefined;
+    // Support both single string and YAML array for type/types
+    const rawType = meta.types || meta.type;
+    const types = Array.isArray(rawType)
+      ? rawType as string[]
+      : typeof rawType === "string"
+        ? [rawType]
+        : undefined;
     const tags = Array.isArray(meta.tags)
       ? meta.tags
       : typeof meta.tags === "string"
@@ -86,7 +92,7 @@ function readPost(filePath: string): Post | null {
       slug,
       title,
       date,
-      type,
+      types,
       tags,
       coverUrl,
       excerpt,
@@ -134,13 +140,17 @@ export function getPostBySlug(slug: string): Post | null {
 }
 
 export function getPostsByType(type: string): Post[] {
-  return getAllPosts().filter((p) => p.type === type);
+  return getAllPosts().filter((p) => p.types?.includes(type));
 }
 
 export function getAllTypes(): string[] {
-  const types = new Set<string>();
+  const typeSet = new Set<string>();
   for (const post of getAllPosts()) {
-    if (post.type) types.add(post.type);
+    if (post.types) {
+      for (const t of post.types) {
+        typeSet.add(t);
+      }
+    }
   }
-  return Array.from(types).sort();
+  return Array.from(typeSet).sort();
 }
