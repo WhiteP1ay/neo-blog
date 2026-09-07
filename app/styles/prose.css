@@ -1,34 +1,34 @@
 .article-prose {
-  @apply prose prose-slate max-w-none text-base leading-7;
-  --tw-prose-body: #334155;
-  --tw-prose-headings: #0f172a;
-  --tw-prose-links: #2563eb;
-  --tw-prose-bold: #0f172a;
-  --tw-prose-counters: #64748b;
-  --tw-prose-bullets: #93c5fd;
-  --tw-prose-hr: #e2e8f0;
-  --tw-prose-quotes: #0f172a;
-  --tw-prose-quote-borders: #2563eb;
-  --tw-prose-captions: #64748b;
-  --tw-prose-code: #0f172a;
-  --tw-prose-pre-bg: #f5f0e8;
-  --tw-prose-pre-code: #0f172a;
+  @apply prose max-w-none text-base leading-7;
+  --tw-prose-body: oklch(0.35 0.02 80);
+  --tw-prose-headings: oklch(0.18 0.012 80);
+  --tw-prose-links: oklch(0.5 0.2 265);
+  --tw-prose-bold: oklch(0.18 0.012 80);
+  --tw-prose-counters: oklch(0.5 0.02 80);
+  --tw-prose-bullets: oklch(0.62 0.12 255);
+  --tw-prose-hr: oklch(0.84 0.018 90);
+  --tw-prose-quotes: oklch(0.18 0.012 80);
+  --tw-prose-quote-borders: oklch(0.55 0.21 265);
+  --tw-prose-captions: oklch(0.5 0.02 80);
+  --tw-prose-code: oklch(0.18 0.012 80);
+  --tw-prose-pre-bg: oklch(0.92 0.016 95);
+  --tw-prose-pre-code: oklch(0.18 0.012 80);
 }
 
 .dark .article-prose {
-  --tw-prose-body: #cbd5e1;
-  --tw-prose-headings: #f1f5f9;
-  --tw-prose-links: #60a5fa;
-  --tw-prose-bold: #f1f5f9;
-  --tw-prose-counters: #64748b;
-  --tw-prose-bullets: #3b82f6;
-  --tw-prose-hr: #334155;
-  --tw-prose-quotes: #f1f5f9;
-  --tw-prose-quote-borders: #3b82f6;
-  --tw-prose-captions: #94a3b8;
-  --tw-prose-code: #f1f5f9;
-  --tw-prose-pre-bg: #1e293b;
-  --tw-prose-pre-code: #e2e8f0;
+  --tw-prose-body: oklch(0.82 0.016 85);
+  --tw-prose-headings: oklch(0.93 0.012 90);
+  --tw-prose-links: oklch(0.72 0.14 255);
+  --tw-prose-bold: oklch(0.93 0.012 90);
+  --tw-prose-counters: oklch(0.7 0.02 85);
+  --tw-prose-bullets: oklch(0.62 0.16 255);
+  --tw-prose-hr: oklch(0.36 0.02 80);
+  --tw-prose-quotes: oklch(0.93 0.012 90);
+  --tw-prose-quote-borders: oklch(0.65 0.2 260);
+  --tw-prose-captions: oklch(0.7 0.02 85);
+  --tw-prose-code: oklch(0.93 0.012 90);
+  --tw-prose-pre-bg: oklch(0.16 0.014 80);
+  --tw-prose-pre-code: oklch(0.88 0.012 90);
 }
 
 .article-prose h1,
@@ -43,11 +43,7 @@
 }
 
 .article-prose code:not(pre code) {
-  @apply rounded bg-slate-100 px-1.5 py-0.5 text-[0.9em] text-slate-800;
-}
-
-.dark .article-prose code:not(pre code) {
-  @apply bg-slate-800 text-slate-200;
+  @apply rounded bg-muted px-1.5 py-0.5 text-[0.9em] text-foreground;
 }
 
 .article-prose img {

@@ -5,14 +5,19 @@
 
   html {
     scroll-behavior: smooth;
+    background-color: var(--background);
   }
 
   body {
-    @apply bg-slate-50 text-foreground antialiased;
+    @apply text-foreground antialiased;
     min-height: 100dvh;
+    background-color: var(--background);
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     letter-spacing: -0.02em;
   }
 
@@ -20,57 +25,43 @@
     background: color-mix(in oklab, var(--primary) 28%, transparent);
   }
 
-  /* Keyboard focus */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-blue-500;
     outline-style: solid;
   }
 }
 
-/* --- Header --- */
-.header-bar {
-  @apply bg-slate-900 text-white;
+/* Fine newsprint grain over the whole page */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: var(--paper-grain-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 180px 180px;
 }
 
-.header-bar a {
-  @apply text-slate-300 transition-colors duration-150 hover:text-white;
+.dark body::after {
+  mix-blend-mode: overlay;
 }
 
-/* --- Article list divider --- */
-.post-divider {
-  @apply border-t border-slate-200;
+@media print {
+  body::after {
+    display: none;
+  }
 }
 
-.dark .post-divider {
-  @apply border-slate-800;
-}
-
-/* --- Tag pills --- */
 .tag-pill {
   @apply inline-block rounded-full bg-tag-bg px-2.5 py-0.5 text-xs font-medium text-tag-fg no-underline transition-colors duration-150 hover:brightness-95;
 }
 
-/* --- Paper card (article detail page) --- */
 .paper-card {
   background-color: var(--paper-bg);
-  background-image:
-    /* Horizontal fibers — subtle warm lines */
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      var(--paper-fiber) 2px,
-      var(--paper-fiber) 3px
-    ),
-    /* Vertical fibers */
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 2px,
-      var(--paper-fiber) 2px,
-      var(--paper-fiber) 3px
-    );
   border: 1px solid var(--paper-border);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px var(--paper-shadow);
+  box-shadow: 0 1px 2px var(--paper-shadow);
 }

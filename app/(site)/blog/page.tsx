@@ -1,10 +1,10 @@
-import Link from "next/link";
-import type { Metadata } from "next";
-import { getAllPosts, getAllTypes } from "@/lib/posts";
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import { getAllPosts, getAllTypes } from '@/lib/posts';
 
 export const metadata: Metadata = {
-  title: "Blog",
-  description: "全部文章",
+  title: 'Blog',
+  description: '全部文章',
 };
 
 export default async function BlogPage({
@@ -13,20 +13,16 @@ export default async function BlogPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const typeFilter = typeof sp.type === "string" ? sp.type : undefined;
+  const typeFilter = typeof sp.type === 'string' ? sp.type : undefined;
 
   const allPosts = getAllPosts();
-  const filteredPosts = typeFilter
-    ? allPosts.filter((p) => p.types?.includes(typeFilter))
-    : allPosts;
+  const filteredPosts = typeFilter ? allPosts.filter((p) => p.types?.includes(typeFilter)) : allPosts;
   const types = getAllTypes();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          📝 Blog Posts
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">📝 Blog Posts</h1>
       </div>
 
       {/* Type filter */}
@@ -34,7 +30,7 @@ export default async function BlogPage({
         <div className="mb-8 flex flex-wrap gap-2">
           <Link
             href="/blog"
-            className={`tag-pill ${!typeFilter ? "bg-blue-600 text-white hover:bg-blue-700" : ""}`}
+            className={`tag-pill ${!typeFilter ? 'bg-primary text-primary-foreground hover:brightness-95' : ''}`}
           >
             全部
           </Link>
@@ -42,7 +38,7 @@ export default async function BlogPage({
             <Link
               key={type}
               href={`/blog?type=${encodeURIComponent(type)}`}
-              className={`tag-pill ${typeFilter === type ? "bg-blue-600 text-white hover:bg-blue-700" : ""}`}
+              className={`tag-pill ${typeFilter === type ? 'bg-primary text-primary-foreground hover:brightness-95' : ''}`}
             >
               {type}
             </Link>
@@ -51,10 +47,10 @@ export default async function BlogPage({
       )}
 
       {typeFilter && (
-        <p className="mb-6 text-sm text-slate-500">
+        <p className="mb-6 text-sm text-muted-foreground">
           筛选：{typeFilter}
-          {" · "}
-          <Link href="/blog" className="text-blue-600 hover:underline">
+          {' · '}
+          <Link href="/blog" className="text-primary hover:underline">
             清除筛选
           </Link>
         </p>
@@ -62,32 +58,30 @@ export default async function BlogPage({
 
       {/* Post list */}
       {filteredPosts.length === 0 ? (
-        <p className="text-sm text-slate-500">这个分类下还没有文章。</p>
+        <p className="text-sm text-muted-foreground">这个分类下还没有文章。</p>
       ) : (
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-border">
           {filteredPosts.map((post) => (
             <article key={post.slug} className="py-7 first:pt-0 last:pb-0">
               <Link href={`/blog/${post.slug}`} className="group block">
-                <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
+                <h2 className="text-lg font-semibold text-foreground transition-colors duration-150 group-hover:text-primary">
                   {post.title}
                 </h2>
-                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   {post.date && <time>{post.date}</time>}
                   {post.types?.map((t) => (
-                    <span key={t} className="tag-pill">{t}</span>
+                    <span key={t} className="tag-pill">
+                      {t}
+                    </span>
                   ))}
                   {post.tags?.map((tag) => (
-                    <span key={tag} className="text-xs text-slate-400">
+                    <span key={tag} className="text-xs text-muted-foreground/80">
                       #{tag}
                     </span>
                   ))}
                 </div>
-                {post.excerpt && (
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    {post.excerpt}
-                  </p>
-                )}
-                <span className="mt-2 inline-block text-sm font-medium text-blue-600 group-hover:underline">
+                {post.excerpt && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>}
+                <span className="mt-2 inline-block text-sm font-medium text-primary group-hover:underline">
                   Read more →
                 </span>
               </Link>

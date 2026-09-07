@@ -1,29 +1,21 @@
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import type { Metadata } from "next";
-import { getPostBySlug } from "@/lib/posts";
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import { getPostBySlug } from '@/lib/posts';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const post = getPostBySlug(id);
-  if (!post) return { title: "404 | White Meta" };
+  if (!post) return { title: '404 | White Meta' };
   return {
     title: post.title,
     description: post.excerpt,
   };
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const post = getPostBySlug(id);
 
@@ -34,7 +26,7 @@ export default async function PostPage({
       {/* Back link */}
       <Link
         href="/blog"
-        className="mb-8 inline-flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-blue-600"
+        className="mb-8 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
       >
         ← 返回文章列表
       </Link>
@@ -43,16 +35,16 @@ export default async function PostPage({
         <article>
           {/* Header */}
           <header className="mb-10">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              {post.title}
-            </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{post.title}</h1>
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               {post.date && <time>{post.date}</time>}
               {post.types?.map((t) => (
-                <span key={t} className="tag-pill">{t}</span>
+                <span key={t} className="tag-pill">
+                  {t}
+                </span>
               ))}
               {post.tags?.map((tag) => (
-                <span key={tag} className="text-xs text-slate-400">
+                <span key={tag} className="text-xs text-muted-foreground/80">
                   #{tag}
                 </span>
               ))}
@@ -60,18 +52,15 @@ export default async function PostPage({
           </header>
 
           {/* Content */}
-          <div
-            className="article-prose"
-            dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-          />
+          <div className="article-prose" dangerouslySetInnerHTML={{ __html: post.contentHtml }} />
         </article>
       </div>
 
       {/* Footer nav */}
-      <div className="mt-8 border-t border-slate-200 pt-6">
+      <div className="mt-8 border-t border-border pt-6">
         <Link
           href="/blog"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 transition-colors hover:text-blue-600"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors duration-150 hover:text-primary"
         >
           ← 返回文章列表
         </Link>
